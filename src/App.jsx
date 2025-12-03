@@ -25,8 +25,14 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
+  // 始终使用 GoogleOAuthProvider，即使 Client ID 未配置
+  // 这样 Login 组件中的 useGoogleLogin 才能正常工作
+  const validClientId = (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID') 
+    ? GOOGLE_CLIENT_ID 
+    : 'placeholder-client-id'; // 占位符，避免报错
+
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={validClientId}>
       <Router>
         <div className="App">
           <Routes>
