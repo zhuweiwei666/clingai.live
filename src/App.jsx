@@ -12,7 +12,8 @@ import Wallet from './pages/Wallet';
 import useUserStore from './store/userStore';
 
 // Google OAuth Client ID - 需要替换为你的实际Client ID
-const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
+// 注意：Vite 使用 import.meta.env 而不是 process.env
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID';
 
 // 检查 Client ID 是否配置
 if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {

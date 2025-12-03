@@ -44,7 +44,8 @@ export default function Login() {
   };
 
   // 检查 Google Client ID 是否配置
-  const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
+  // 注意：Vite 使用 import.meta.env 而不是 process.env
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   const isGoogleEnabled = googleClientId && googleClientId !== 'YOUR_GOOGLE_CLIENT_ID';
   
   // 调试信息
