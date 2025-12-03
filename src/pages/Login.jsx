@@ -45,14 +45,16 @@ export default function Login() {
 
   // 检查 Google Client ID 是否配置
   // 注意：Vite 使用 import.meta.env 而不是 process.env
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-  const isGoogleEnabled = googleClientId && googleClientId !== 'YOUR_GOOGLE_CLIENT_ID';
+  // 直接使用环境变量，确保 Vite 能正确替换
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const isGoogleEnabled = Boolean(googleClientId && googleClientId !== 'YOUR_GOOGLE_CLIENT_ID' && googleClientId.length > 0);
   
-  // 调试信息
+  // 调试信息 - 强制使用环境变量，确保被替换
   useEffect(() => {
-    console.log('Google Client ID:', googleClientId);
-    console.log('Google Enabled:', isGoogleEnabled);
-  }, [googleClientId, isGoogleEnabled]);
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+    console.log('Google Client ID:', clientId);
+    console.log('Google Enabled:', Boolean(clientId && clientId !== 'YOUR_GOOGLE_CLIENT_ID' && clientId.length > 0));
+  }, []);
 
   // Google登录
   const handleGoogleLogin = useGoogleLogin({
