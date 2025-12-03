@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Sparkles, Mail, Lock } from 'lucide-react';
@@ -46,6 +46,12 @@ export default function Login() {
   // 检查 Google Client ID 是否配置
   const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
   const isGoogleEnabled = googleClientId && googleClientId !== 'YOUR_GOOGLE_CLIENT_ID';
+  
+  // 调试信息
+  useEffect(() => {
+    console.log('Google Client ID:', googleClientId);
+    console.log('Google Enabled:', isGoogleEnabled);
+  }, [googleClientId, isGoogleEnabled]);
 
   // Google登录
   const handleGoogleLogin = useGoogleLogin({
