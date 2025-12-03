@@ -12,21 +12,11 @@ import Wallet from './pages/Wallet';
 import useUserStore from './store/userStore';
 
 // Google OAuth Client ID
-// 注意：Vite 使用 import.meta.env 而不是 process.env
-// 直接使用环境变量，确保 Vite 能正确替换
-// 如果环境变量未设置，使用默认值（构建时会替换）
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com';
+// 直接使用 Client ID，确保 Google 登录功能可用
+const GOOGLE_CLIENT_ID = '1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com';
 
-// 调试：检查 Client ID
-console.log('🔍 Google Client ID from env:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
-console.log('🔍 Google Client ID final:', GOOGLE_CLIENT_ID);
-
-// 检查 Client ID 是否配置
-if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
-  console.warn('⚠️ Google Client ID 未配置，Google 登录功能将不可用');
-} else {
-  console.log('✅ Google Client ID 已配置');
-}
+// 调试：确认 Client ID
+console.log('✅ Google Client ID 已配置:', GOOGLE_CLIENT_ID);
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useUserStore();
@@ -34,14 +24,9 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
-  // 始终使用 GoogleOAuthProvider，即使 Client ID 未配置
-  // 这样 Login 组件中的 useGoogleLogin 才能正常工作
-  const validClientId = (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID') 
-    ? GOOGLE_CLIENT_ID 
-    : 'placeholder-client-id'; // 占位符，避免报错
-
+  // 使用配置的 Client ID
   return (
-    <GoogleOAuthProvider clientId={validClientId}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router>
         <div className="App">
           <Routes>

@@ -43,17 +43,14 @@ export default function Login() {
     }
   };
 
-  // 检查 Google Client ID 是否配置
-  // 注意：Vite 使用 import.meta.env 而不是 process.env
-  // 直接使用环境变量，确保 Vite 能正确替换
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-  const isGoogleEnabled = Boolean(googleClientId && googleClientId !== 'YOUR_GOOGLE_CLIENT_ID' && googleClientId.length > 0);
+  // Google Client ID - 直接使用，确保 Google 登录功能可用
+  const googleClientId = '1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com';
+  const isGoogleEnabled = true; // 始终启用
   
-  // 调试信息 - 强制使用环境变量，确保被替换
+  // 调试信息
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
-    console.log('Google Client ID:', clientId);
-    console.log('Google Enabled:', Boolean(clientId && clientId !== 'YOUR_GOOGLE_CLIENT_ID' && clientId.length > 0));
+    console.log('✅ Google Client ID:', googleClientId);
+    console.log('✅ Google Enabled:', isGoogleEnabled);
   }, []);
 
   // Google登录
