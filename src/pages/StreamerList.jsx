@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Heart, Filter } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { streamerService } from '../services/streamerService';
+import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 
 export default function StreamerList() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useUserStore();
   const [streamers, setStreamers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -14,6 +17,14 @@ export default function StreamerList() {
   useEffect(() => {
     loadStreamers();
   }, [filter]);
+
+  const handleStreamerClick = (streamerId, e) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      toast.error('请先登录后再开始聊天');
+      navigate('/login', { state: { from: { pathname: `/chat/${streamerId}` } } });
+    }
+  };
 
   const loadStreamers = async () => {
     try {
@@ -32,7 +43,13 @@ export default function StreamerList() {
     }
   };
 
-  const handleFavorite = async (id, isFavorite) => {
+  const handleFavorite = async (id, isFavorite, e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error('请先登录');
+      navigate('/login', { state: { from: { pathname: '/streamers' } } });
+      return;
+    }
     try {
       await streamerService.toggleFavorite(id);
       setStreamers(streamers.map(s => 
@@ -104,7 +121,10 @@ export default function StreamerList() {
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className="glass-effect rounded-xl p-4 card-hover group relative"
             >
-              <Link to={`/chat/${streamer.id}`}>
+              <Link 
+                to={`/chat/${streamer.id}`}
+                onClick={(e) => handleStreamerClick(streamer.id, e)}
+              >
                 <div className="relative w-full aspect-square mb-3 rounded-lg overflow-hidden">
                   <img
                     src={streamer.avatar || '/placeholder-avatar.jpg'}
@@ -129,10 +149,7 @@ export default function StreamerList() {
                 </p>
               </Link>
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleFavorite(streamer.id, streamer.is_favorite);
-                }}
+                onClick={(e) => handleFavorite(streamer.id, streamer.is_favorite, e)}
                 className="absolute top-6 right-6 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
               >
                 <Heart

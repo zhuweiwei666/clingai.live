@@ -1,18 +1,27 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Wallet as WalletIcon, Plus, History, Coins } from 'lucide-react';
 import { motion } from 'framer-motion';
+import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 
 export default function Wallet() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useUserStore();
   const [balance, setBalance] = useState(0);
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [showRecharge, setShowRecharge] = useState(false);
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('请先登录');
+      navigate('/login', { state: { from: { pathname: '/wallet' } } });
+      return;
+    }
     loadBalance();
     loadHistory();
-  }, []);
+  }, [isAuthenticated, navigate]);
 
   const loadBalance = async () => {
     // TODO: 调用API获取余额
@@ -28,6 +37,12 @@ export default function Wallet() {
   };
 
   const handleRecharge = () => {
+    if (!isAuthenticated) {
+      toast.error('请先登录');
+      navigate('/login', { state: { from: { pathname: '/wallet' } } });
+      return;
+    }
+
     const amount = parseFloat(rechargeAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error('请输入有效的金额');

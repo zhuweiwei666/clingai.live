@@ -1,16 +1,28 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, MessageCircle, Image, Video, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { streamerService } from '../services/streamerService';
+import useUserStore from '../store/userStore';
+import toast from 'react-hot-toast';
 
 export default function Home() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useUserStore();
   const [featuredStreamers, setFeaturedStreamers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadFeaturedStreamers();
   }, []);
+
+  const handleStreamerClick = (streamerId, e) => {
+    if (!isAuthenticated) {
+      e.preventDefault();
+      toast.error('请先登录后再开始聊天');
+      navigate('/login', { state: { from: { pathname: `/chat/${streamerId}` } } });
+    }
+  };
 
   const loadFeaturedStreamers = async () => {
     try {
@@ -138,6 +150,7 @@ export default function Home() {
               <Link
                 key={streamer.id}
                 to={`/chat/${streamer.id}`}
+                onClick={(e) => handleStreamerClick(streamer.id, e)}
                 className="glass-effect rounded-xl p-4 card-hover group"
               >
                 <div className="relative w-full aspect-square mb-3 rounded-lg overflow-hidden">

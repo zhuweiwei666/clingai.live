@@ -1,14 +1,25 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Home, Users, MessageCircle, User, Wallet, LogOut } from 'lucide-react';
+import { Home, Users, MessageCircle, User, Wallet, LogOut, LogIn } from 'lucide-react';
 import useUserStore from '../store/userStore';
+import toast from 'react-hot-toast';
 
 export default function Layout() {
   const navigate = useNavigate();
-  const { user, logout } = useUserStore();
+  const { user, isAuthenticated, logout } = useUserStore();
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    toast.success('已退出登录');
+    navigate('/');
+  };
+
+  const handleNavClick = (path, requiresAuth) => {
+    if (requiresAuth && !isAuthenticated) {
+      toast.error('请先登录');
+      navigate('/login', { state: { from: { pathname: path } } });
+      return;
+    }
+    navigate(path);
   };
 
   const navItems = [
@@ -33,21 +44,35 @@ export default function Layout() {
             </Link>
             
             <div className="flex items-center space-x-4">
-              {user && (
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm">{user.username?.[0]?.toUpperCase() || 'U'}</span>
+              {isAuthenticated && user ? (
+                <>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                      {user.avatar ? (
+                        <img src={user.avatar} alt={user.username} className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <span className="text-white text-sm">{user.username?.[0]?.toUpperCase() || 'U'}</span>
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-700">{user.username || user.name}</span>
                   </div>
-                  <span className="text-sm text-gray-700">{user.username}</span>
-                </div>
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
+                    title="退出登录"
+                  >
+                    <LogOut size={20} />
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => navigate('/login')}
+                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
+                >
+                  <LogIn size={18} />
+                  登录
+                </button>
               )}
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
-                title="退出登录"
-              >
-                <LogOut size={20} />
-              </button>
             </div>
           </div>
         </div>
@@ -63,6 +88,21 @@ export default function Layout() {
         <div className="flex items-center justify-around py-2">
           {navItems.map((item) => {
             const Icon = item.icon;
+            const requiresAuth = ['/wallet', '/profile'].includes(item.path) || item.path.startsWith('/chat');
+            
+            if (requiresAuth && !isAuthenticated) {
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavClick(item.path, true)}
+                  className="flex flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600 transition-colors"
+                >
+                  <Icon size={24} />
+                  <span className="text-xs">{item.label}</span>
+                </button>
+              );
+            }
+            
             return (
               <Link
                 key={item.path}

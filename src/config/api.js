@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
     REGISTER: '/api/user/register',
     PROFILE: '/api/user/profile',
     UPDATE: '/api/user/update',
+    GOOGLE_LOGIN: '/api/user/google-login',
   },
   // AI主播
   AI_STREAMER: {

@@ -24,5 +24,10 @@ export const userService = {
   updateProfile: async (userData) => {
     return apiClient.put(API_ENDPOINTS.USER.UPDATE, userData);
   },
+
+  // Google登录
+  googleLogin: async (googleData) => {
+    return apiClient.post(API_ENDPOINTS.USER.GOOGLE_LOGIN || '/api/user/google-login', googleData);
+  },
 };
 

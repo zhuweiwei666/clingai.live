@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Send, ArrowLeft, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { chatService } from '../services/chatService';
 import { streamerService } from '../services/streamerService';
+import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 
 export default function Chat() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useUserStore();
   const [streamer, setStreamer] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -16,10 +19,16 @@ export default function Chat() {
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
 
+  // 检查登录状态
   useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('请先登录');
+      navigate('/login', { state: { from: { pathname: `/chat/${id}` } } });
+      return;
+    }
     loadStreamer();
     loadHistory();
-  }, [id]);
+  }, [id, isAuthenticated, navigate]);
 
   useEffect(() => {
     scrollToBottom();
@@ -47,6 +56,12 @@ export default function Chat() {
   };
 
   const sendMessage = async () => {
+    if (!isAuthenticated) {
+      toast.error('请先登录');
+      navigate('/login', { state: { from: { pathname: `/chat/${id}` } } });
+      return;
+    }
+
     if (!inputMessage.trim() || sending) return;
 
     const userMessage = {
