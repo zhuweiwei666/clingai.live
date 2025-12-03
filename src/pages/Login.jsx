@@ -43,9 +43,18 @@ export default function Login() {
     }
   };
 
+  // 检查 Google Client ID 是否配置
+  const googleClientId = process.env.VITE_GOOGLE_CLIENT_ID;
+  const isGoogleEnabled = googleClientId && googleClientId !== 'YOUR_GOOGLE_CLIENT_ID';
+
   // Google登录
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      if (!isGoogleEnabled) {
+        toast.error('Google 登录未配置，请联系管理员');
+        return;
+      }
+
       setGoogleLoading(true);
       try {
         // 获取Google用户信息
@@ -82,8 +91,13 @@ export default function Login() {
         setGoogleLoading(false);
       }
     },
-    onError: () => {
-      toast.error('Google登录失败');
+    onError: (error) => {
+      console.error('Google登录错误:', error);
+      if (!isGoogleEnabled) {
+        toast.error('Google 登录未配置');
+      } else {
+        toast.error('Google登录失败');
+      }
       setGoogleLoading(false);
     },
   });
@@ -160,11 +174,12 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Google登录按钮 */}
+        {/* Google登录按钮 - 始终显示 */}
         <button
           onClick={handleGoogleLogin}
-          disabled={loading || googleLoading}
+          disabled={loading || googleLoading || !isGoogleEnabled}
           className="w-full py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+          title={!isGoogleEnabled ? 'Google 登录未配置' : ''}
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

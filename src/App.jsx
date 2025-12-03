@@ -25,37 +25,6 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
-  // 如果 Client ID 未配置，仍然渲染应用但不提供 Google OAuth Provider
-  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
-    return (
-      <Router>
-        <div className="App">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="streamers" element={<StreamerList />} />
-            </Route>
-            <Route
-              path="/"
-              element={
-                <PrivateRoute>
-                  <Layout />
-                </PrivateRoute>
-              }
-            >
-              <Route path="chat/:id" element={<Chat />} />
-              <Route path="profile" element={<Profile />} />
-              <Route path="wallet" element={<Wallet />} />
-            </Route>
-          </Routes>
-          <Toaster position="top-right" />
-        </div>
-      </Router>
-    );
-  }
-
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router>
