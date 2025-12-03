@@ -1,21 +1,12 @@
 // API配置
-// 根据当前页面的协议自动选择 HTTP/HTTPS
-// 如果页面是 HTTPS，API 也必须使用 HTTPS（避免 Mixed Content 错误）
-const getApiBaseUrl = () => {
-  // 如果当前页面是 HTTPS，强制使用 HTTPS API
-  if (window.location.protocol === 'https:') {
-    // 尝试使用 HTTPS，如果后端不支持，可能需要配置反向代理
-    return 'https://139.162.62.115';
-  }
-  // 开发环境使用 HTTP
-  return 'http://139.162.62.115';
-};
-
-export const API_BASE_URL = getApiBaseUrl();
+// 使用相对路径，通过 Nginx 反向代理访问后端 API
+// 这样可以避免 Mixed Content 错误（HTTPS 页面请求 HTTP API）
+// 所有 API 请求会通过当前域名（clingai.live）转发到后端服务器
+export const API_BASE_URL = ''; // 使用相对路径，通过 Nginx 反向代理
 
 // 调试：输出 API 配置
-console.log('🔧 API Base URL:', API_BASE_URL);
-console.log('🔧 Current Protocol:', window.location.protocol);
+console.log('🔧 API Base URL:', API_BASE_URL || '(使用相对路径)');
+console.log('🔧 Current Origin:', window.location.origin);
 
 // API端点
 export const API_ENDPOINTS = {
