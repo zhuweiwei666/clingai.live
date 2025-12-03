@@ -43,15 +43,17 @@ export default function Login() {
     }
   };
 
-  // Google Client ID - 直接使用，确保 Google 登录功能可用
-  const googleClientId = '1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com';
+  // Google Client ID - 直接硬编码，确保 Google 登录功能可用
+  // 使用字符串拼接避免被压缩工具优化掉
+  const googleClientId = '1031646438202-' + 'g9kg86khnp6tdh13b8e75f5p6r95jutg' + '.apps.googleusercontent.com';
   const isGoogleEnabled = true; // 始终启用
   
-  // 调试信息
+  // 调试信息 - 强制输出，确保代码被执行
   useEffect(() => {
-    console.log('✅ Google Client ID:', googleClientId);
-    console.log('✅ Google Enabled:', isGoogleEnabled);
-  }, []);
+    console.log('✅✅✅ Google Client ID 已配置:', googleClientId);
+    console.log('✅✅✅ Google Enabled:', isGoogleEnabled);
+    console.log('✅✅✅ Google Client ID 长度:', googleClientId.length);
+  }, [googleClientId, isGoogleEnabled]);
 
   // Google登录
   const handleGoogleLogin = useGoogleLogin({

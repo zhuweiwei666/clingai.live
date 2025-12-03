@@ -13,10 +13,12 @@ import useUserStore from './store/userStore';
 
 // Google OAuth Client ID
 // 直接使用 Client ID，确保 Google 登录功能可用
-const GOOGLE_CLIENT_ID = '1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com';
+// 使用字符串拼接避免被压缩工具优化掉
+const GOOGLE_CLIENT_ID = '1031646438202-' + 'g9kg86khnp6tdh13b8e75f5p6r95jutg' + '.apps.googleusercontent.com';
 
-// 调试：确认 Client ID
-console.log('✅ Google Client ID 已配置:', GOOGLE_CLIENT_ID);
+// 调试：确认 Client ID - 强制输出
+console.log('✅✅✅ Google Client ID 已配置:', GOOGLE_CLIENT_ID);
+console.log('✅✅✅ Client ID 长度:', GOOGLE_CLIENT_ID.length);
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useUserStore();
