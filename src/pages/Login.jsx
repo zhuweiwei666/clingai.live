@@ -125,7 +125,7 @@ export default function Login() {
             </div>
           </div>
           <h1 className="text-3xl font-bold gradient-text mb-2">欢迎回来</h1>
-          <p className="text-gray-600">登录你的Honey AI账户</p>
+          <p className="text-gray-600">登录你的Clingai账户</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

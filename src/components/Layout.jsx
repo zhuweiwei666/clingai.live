@@ -40,7 +40,7 @@ export default function Layout() {
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-xl">H</span>
               </div>
-              <span className="text-2xl font-bold gradient-text">Honey AI</span>
+              <span className="text-2xl font-bold gradient-text">Clingai</span>
             </Link>
             
             <div className="flex items-center space-x-4">

@@ -64,7 +64,7 @@ export default function Register() {
             </div>
           </div>
           <h1 className="text-3xl font-bold gradient-text mb-2">创建账户</h1>
-          <p className="text-gray-600">加入Honey AI，开启AI之旅</p>
+          <p className="text-gray-600">加入Clingai，开启AI之旅</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

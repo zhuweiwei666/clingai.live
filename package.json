@@ -1,8 +1,8 @@
 {
-  "name": "honey-ai",
+  "name": "clingai-live",
   "version": "1.0.0",
   "type": "module",
-  "description": "AI女友网站 - 基于React的现代化AI伴侣平台",
+  "description": "Clingai.live - AI女友网站",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
