@@ -27,7 +27,7 @@ export const userService = {
 
   // Google登录
   googleLogin: async (googleData) => {
-    return apiClient.post(API_ENDPOINTS.USER.GOOGLE_LOGIN || '/api/user/google-login', googleData);
+    return apiClient.post(API_ENDPOINTS.USER.GOOGLE_LOGIN, googleData);
   },
 };
 
