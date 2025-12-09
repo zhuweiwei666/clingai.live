@@ -1,10 +1,11 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { Home, Users, MessageCircle, User, Wallet, LogOut, LogIn } from 'lucide-react';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Home, MessageCircle, User, LogOut, LogIn } from 'lucide-react';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 
 export default function Layout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, isAuthenticated, logout } = useUserStore();
 
   const handleLogout = () => {
@@ -23,95 +24,110 @@ export default function Layout() {
   };
 
   const navItems = [
-    { icon: Home, label: '首页', path: '/' },
-    { icon: Users, label: 'AI主播', path: '/streamers' },
-    { icon: MessageCircle, label: '聊天', path: '/streamers' },
-    { icon: Wallet, label: '钱包', path: '/wallet' },
-    { icon: User, label: '我的', path: '/profile' },
+    { icon: Home, label: '首页', path: '/', requiresAuth: false },
+    { icon: MessageCircle, label: '消息', path: '/messages', requiresAuth: true },
+    { icon: User, label: '个人中心', path: '/profile', requiresAuth: true },
   ];
 
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-dark-primary flex flex-col">
       {/* 顶部导航栏 */}
-      <header className="glass-effect sticky top-0 z-50 border-b border-purple-200/50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">H</span>
-              </div>
-              <span className="text-2xl font-bold gradient-text">Clingai</span>
-            </Link>
-            
-            <div className="flex items-center space-x-4">
-              {isAuthenticated && user ? (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt={user.username} className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <span className="text-white text-sm">{user.username?.[0]?.toUpperCase() || 'U'}</span>
-                      )}
-                    </div>
-                    <span className="text-sm text-gray-700">{user.username || user.name}</span>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="p-2 text-gray-600 hover:text-purple-600 transition-colors"
-                    title="退出登录"
-                  >
-                    <LogOut size={20} />
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => navigate('/login')}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center gap-2"
-                >
-                  <LogIn size={18} />
-                  登录
-                </button>
-              )}
+      <header className="glass-dark sticky top-0 z-50 safe-area-top">
+        <div className="flex items-center justify-between px-4 py-3">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center shadow-lg animate-pulse-glow">
+              <Home className="text-white" size={22} />
             </div>
+            <span className="text-xl font-bold gradient-text">Clingai</span>
+          </Link>
+          
+          <div className="flex items-center gap-3">
+            {isAuthenticated && user ? (
+              <>
+                <div className="flex items-center gap-2 bg-dark-elevated px-3 py-2 rounded-full">
+                  <div className="w-7 h-7 gradient-bg rounded-full flex items-center justify-center overflow-hidden">
+                    {(user.avatar || user.picture) ? (
+                      <img 
+                        src={user.avatar || user.picture} 
+                        alt={user.username || user.name} 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = `<span class="text-white text-xs font-semibold">${(user.username || user.name)?.[0]?.toUpperCase() || 'U'}</span>`;
+                        }}
+                      />
+                    ) : (
+                      <span className="text-white text-xs font-semibold">{(user.username || user.name)?.[0]?.toUpperCase() || 'U'}</span>
+                    )}
+                  </div>
+                  <span className="text-sm text-text-secondary max-w-[80px] truncate">{user.username || user.name}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-text-muted hover:text-accent-pink transition-colors"
+                  title="退出登录"
+                >
+                  <LogOut size={20} />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="btn-primary py-2 px-4 text-sm"
+              >
+                <LogIn size={16} />
+                登录
+              </button>
+            )}
           </div>
         </div>
       </header>
 
       {/* 主要内容区域 */}
-      <main className="flex-1 container mx-auto px-4 py-6">
+      <main className="flex-1 safe-area-bottom">
         <Outlet />
       </main>
 
-      {/* 底部导航栏（移动端） */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-effect border-t border-purple-200/50">
-        <div className="flex items-center justify-around py-2">
+      {/* 底部导航栏 */}
+      <nav className="bottom-nav">
+        <div className="flex items-center justify-around">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const requiresAuth = ['/wallet', '/profile'].includes(item.path) || item.path.startsWith('/chat');
+            const active = isActive(item.path);
             
-            if (requiresAuth && !isAuthenticated) {
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavClick(item.path, true)}
-                  className="flex flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600 transition-colors"
-                >
-                  <Icon size={24} />
-                  <span className="text-xs">{item.label}</span>
-                </button>
-              );
-            }
+            const handleClick = (e) => {
+              e.preventDefault();
+              if (item.requiresAuth && !isAuthenticated) {
+                handleNavClick(item.path, true);
+              } else {
+                navigate(item.path);
+              }
+            };
             
             return (
-              <Link
+              <button
                 key={item.path}
-                to={item.path}
-                className="flex flex-col items-center space-y-1 p-2 text-gray-600 hover:text-purple-600 transition-colors"
+                onClick={handleClick}
+                className={`bottom-nav-item ${active ? 'active' : ''}`}
               >
-                <Icon size={24} />
-                <span className="text-xs">{item.label}</span>
-              </Link>
+                {active && <div className="nav-indicator" />}
+                <div className="relative">
+                  <Icon size={24} strokeWidth={active ? 2.5 : 1.5} />
+                  {item.badge && (
+                    <span className="absolute -top-1 -right-3 bg-gradient-accent text-[8px] text-white font-bold px-1.5 py-0.5 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className={active ? 'font-semibold' : ''}>{item.label}</span>
+              </button>
             );
           })}
         </div>
@@ -119,4 +135,3 @@ export default function Layout() {
     </div>
   );
 }
-

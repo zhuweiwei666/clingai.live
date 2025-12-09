@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import StreamerList from './pages/StreamerList';
+import Messages from './pages/Messages';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Wallet from './pages/Wallet';
@@ -48,6 +49,7 @@ function App() {
                 </PrivateRoute>
               }
             >
+              <Route path="messages" element={<Messages />} />
               <Route path="chat/:id" element={<Chat />} />
               <Route path="profile" element={<Profile />} />
               <Route path="wallet" element={<Wallet />} />

@@ -1,22 +1,156 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Heart, Filter } from 'lucide-react';
+import { Sparkles, Play } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { streamerService } from '../services/streamerService';
+import { agentService } from '../services/agentService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
+
+// 带悬停播放视频的卡片组件
+function StreamerCard({ streamer, index, onStreamerClick }) {
+  const [isHovering, setIsHovering] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef(null);
+  
+  const streamerId = streamer._id;
+  const avatarUrl = streamer.avatarUrl || streamer.avatar;
+  // 获取视频URL - 优先使用coverVideoUrl，然后是coverVideoUrls数组，最后是previewVideos
+  const videoUrl = streamer.coverVideoUrl || 
+    (streamer.coverVideoUrls && streamer.coverVideoUrls[0]) ||
+    (streamer.previewVideos && streamer.previewVideos[0]);
+  
+  const hasVideo = videoUrl && !videoError;
+  
+  // 处理鼠标进入
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    if (videoRef.current && hasVideo) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {
+        // 自动播放失败（可能是浏览器策略）
+        setVideoError(true);
+      });
+    }
+  };
+  
+  // 处理鼠标离开
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+  
+  // 处理触摸开始（移动端）
+  const handleTouchStart = () => {
+    if (!isHovering) {
+      handleMouseEnter();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3, delay: index * 0.03 }}
+    >
+      <Link
+        to={`/chat/${streamerId}`}
+        onClick={(e) => onStreamerClick(streamerId, e)}
+        className="block relative group"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+      >
+        <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-dark-elevated">
+          {/* 静态图片 - 默认显示 */}
+          <img
+            src={avatarUrl || '/placeholder-avatar.jpg'}
+            alt={streamer.name}
+            className={`w-full h-full object-cover transition-all duration-300 ${
+              isHovering && hasVideo && videoLoaded ? 'opacity-0' : 'opacity-100'
+            } group-hover:scale-105`}
+            onError={(e) => {
+              e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop';
+            }}
+          />
+          
+          {/* 视频 - 悬停时播放 */}
+          {hasVideo && (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              onLoadedData={() => setVideoLoaded(true)}
+              onError={() => setVideoError(true)}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                isHovering && videoLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          )}
+          
+          {/* 视频播放指示器 */}
+          {hasVideo && !isHovering && (
+            <div className="absolute top-3 left-3 z-10">
+              <div className="w-7 h-7 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center">
+                <Play size={14} className="text-white ml-0.5" fill="currentColor" />
+              </div>
+            </div>
+          )}
+          
+          {/* 在线状态指示器 */}
+          {streamer.status === 'online' && (
+            <div className="absolute top-3 right-3 z-10">
+              <span className="w-3 h-3 bg-green-500 rounded-full inline-block shadow-lg shadow-green-500/50" />
+            </div>
+          )}
+          
+          {/* 底部信息覆盖层 */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent">
+            <div className="flex items-center gap-1 mb-1">
+              <Sparkles size={12} className="text-[#b8e986]" />
+              <h3 className="font-semibold text-white text-sm">{streamer.name}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-white/80">
+                {streamer.style === 'realistic' ? 'realistic' : 'anime'}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 bg-red-500/80 rounded-full text-white font-medium">
+                AI
+              </span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
 
 export default function StreamerList() {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserStore();
   const [streamers, setStreamers] = useState([]);
+  const [allStreamers, setAllStreamers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all'); // all, real, cartoon
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     loadStreamers();
-  }, [filter]);
+  }, []);
+
+  useEffect(() => {
+    // 前端过滤
+    if (filter === 'all') {
+      setStreamers(allStreamers);
+    } else {
+      setStreamers(allStreamers.filter(a => a.style === filter));
+    }
+  }, [filter, allStreamers]);
 
   const handleStreamerClick = (streamerId, e) => {
     if (!isAuthenticated) {
@@ -29,139 +163,78 @@ export default function StreamerList() {
   const loadStreamers = async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (filter !== 'all') {
-        params.style = filter;
-      }
-      const response = await streamerService.getList(params);
-      setStreamers(response.data || []);
+      const response = await agentService.getList();
+      const agents = response.data || [];
+      console.log('🎬 加载AI伴侣列表，检查视频URL:', agents.map(a => ({
+        name: a.name,
+        coverVideoUrl: a.coverVideoUrl,
+        previewVideos: a.previewVideos
+      })));
+      setAllStreamers(agents);
+      setStreamers(agents);
     } catch (error) {
-      console.error('加载主播列表失败:', error);
+      console.error('加载AI伴侣列表失败:', error);
       toast.error('加载失败，请稍后重试');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFavorite = async (id, isFavorite, e) => {
-    e.preventDefault();
-    if (!isAuthenticated) {
-      toast.error('请先登录');
-      navigate('/login', { state: { from: { pathname: '/streamers' } } });
-      return;
-    }
-    try {
-      await streamerService.toggleFavorite(id);
-      setStreamers(streamers.map(s => 
-        s.id === id ? { ...s, is_favorite: !isFavorite } : s
-      ));
-      toast.success(isFavorite ? '已取消收藏' : '已收藏');
-    } catch (error) {
-      toast.error('操作失败，请稍后重试');
-    }
-  };
-
-  const filteredStreamers = streamers.filter(streamer =>
-    streamer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    streamer.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 筛选选项 - 参考iOS App设计
+  const filterTabs = [
+    { value: 'all', label: 'Popular', icon: '🔥' },
+    { value: 'anime', label: 'Anime', icon: '✨' },
+    { value: 'realistic', label: 'Realistic', icon: '📸' },
+  ];
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* 搜索和筛选栏 */}
-      <div className="glass-effect rounded-2xl p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="搜索AI主播..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <Filter className="text-gray-400" size={20} />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-            >
-              <option value="all">全部</option>
-              <option value="real">真人风格</option>
-              <option value="cartoon">卡通风格</option>
-            </select>
+    <div className="min-h-screen bg-dark-primary">
+      {/* 标签筛选栏 - iOS风格 */}
+      <div className="sticky top-[60px] z-40 bg-dark-primary/95 backdrop-blur-lg">
+        <div className="p-4">
+          <div className="flex items-center bg-dark-elevated/80 rounded-2xl p-1.5 border border-border/50">
+            {filterTabs.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setFilter(tab.value)}
+                className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  filter === tab.value
+                    ? 'bg-[#b8e986] text-dark-primary shadow-lg'
+                    : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* 主播列表 */}
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 gap-3 p-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="glass-effect rounded-xl p-4 animate-pulse">
-              <div className="w-full aspect-square bg-gray-200 rounded-lg mb-3"></div>
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-            </div>
+            <div key={i} className="aspect-[3/4] rounded-2xl skeleton" />
           ))}
         </div>
-      ) : filteredStreamers.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">暂无AI主播</p>
+      ) : streamers.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <div className="text-6xl mb-4">😢</div>
+          <p className="text-text-secondary text-lg mb-2">暂无AI伴侣</p>
+          <p className="text-text-muted text-sm">换个分类试试吧</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredStreamers.map((streamer, index) => (
-            <motion.div
-              key={streamer.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className="glass-effect rounded-xl p-4 card-hover group relative"
-            >
-              <Link 
-                to={`/chat/${streamer.id}`}
-                onClick={(e) => handleStreamerClick(streamer.id, e)}
-              >
-                <div className="relative w-full aspect-square mb-3 rounded-lg overflow-hidden">
-                  <img
-                    src={streamer.avatar || '/placeholder-avatar.jpg'}
-                    alt={streamer.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/200?text=AI';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <p className="text-white text-sm line-clamp-2">
-                      {streamer.description || 'AI智能伴侣'}
-                    </p>
-                  </div>
-                </div>
-                <h3 className="font-semibold text-gray-800 truncate mb-1">
-                  {streamer.name}
-                </h3>
-                <p className="text-xs text-gray-500">
-                  {streamer.style === 'real' ? '真人风格' : '卡通风格'}
-                </p>
-              </Link>
-              <button
-                onClick={(e) => handleFavorite(streamer.id, streamer.is_favorite, e)}
-                className="absolute top-6 right-6 p-2 bg-white/90 rounded-full hover:bg-white transition-colors"
-              >
-                <Heart
-                  size={20}
-                  className={streamer.is_favorite ? 'text-red-500 fill-red-500' : 'text-gray-400'}
-                />
-              </button>
-            </motion.div>
+        <div className="grid grid-cols-2 gap-3 p-4 pb-24">
+          {streamers.map((streamer, index) => (
+            <StreamerCard
+              key={streamer._id}
+              streamer={streamer}
+              index={index}
+              onStreamerClick={handleStreamerClick}
+            />
           ))}
         </div>
       )}
     </div>
   );
 }
-

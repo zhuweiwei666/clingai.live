@@ -4,6 +4,7 @@ import { API_ENDPOINTS } from '../config/api.js';
 export const userService = {
   // 登录
   login: async (username, password) => {
+    console.log('📡 [userService.login] 发起登录请求');
     return apiClient.post(API_ENDPOINTS.USER.LOGIN, {
       username,
       password,
@@ -12,22 +13,47 @@ export const userService = {
 
   // 注册
   register: async (userData) => {
-    return apiClient.post(API_ENDPOINTS.USER.REGISTER, userData);
-  },
-
-  // 获取用户信息
-  getProfile: async () => {
-    return apiClient.get(API_ENDPOINTS.USER.PROFILE);
-  },
-
-  // 更新用户信息
-  updateProfile: async (userData) => {
-    return apiClient.put(API_ENDPOINTS.USER.UPDATE, userData);
+    console.log('📡 [userService.register] 发起注册请求');
+    return apiClient.post(API_ENDPOINTS.USER.REGISTER, {
+      username: userData.username,
+      password: userData.password,
+      email: userData.email,
+    });
   },
 
   // Google登录
   googleLogin: async (googleData) => {
-    return apiClient.post(API_ENDPOINTS.USER.GOOGLE_LOGIN, googleData);
+    console.log('========================================');
+    console.log('📡 [userService.googleLogin] 发起Google登录请求');
+    console.log('📡 [userService.googleLogin] API端点:', API_ENDPOINTS.USER.GOOGLE_LOGIN);
+    console.log('📡 [userService.googleLogin] 请求数据:', {
+      google_id: googleData.google_id,
+      email: googleData.email,
+      name: googleData.name,
+      picture: googleData.picture?.slice(0, 30) + '...',
+    });
+    console.log('========================================');
+    
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.USER.GOOGLE_LOGIN, {
+        google_id: googleData.google_id,
+        email: googleData.email,
+        name: googleData.name,
+        picture: googleData.picture,
+      });
+      
+      console.log('========================================');
+      console.log('📡 [userService.googleLogin] 请求成功');
+      console.log('📡 [userService.googleLogin] 响应:', response);
+      console.log('========================================');
+      
+      return response;
+    } catch (error) {
+      console.log('========================================');
+      console.error('📡 [userService.googleLogin] 请求失败');
+      console.error('📡 [userService.googleLogin] 错误:', error);
+      console.log('========================================');
+      throw error;
+    }
   },
 };
-

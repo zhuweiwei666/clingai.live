@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Calendar, Edit2, Save, X } from 'lucide-react';
+import { User, Mail, Calendar, Edit2, Save, X, Settings, ChevronRight, LogOut, Heart, History, HelpCircle, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { userService } from '../services/userService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
-  const { user, setUser } = useUserStore();
+  const navigate = useNavigate();
+  const { user, setUser, logout } = useUserStore();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
@@ -48,119 +50,204 @@ export default function Profile() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    toast.success('已退出登录');
+    navigate('/');
+  };
+
+  const menuItems = [
+    { icon: Heart, label: '我的收藏', badge: '12', path: '/favorites' },
+    { icon: History, label: '聊天记录', path: '/history' },
+    { icon: Settings, label: '设置', path: '/settings' },
+    { icon: HelpCircle, label: '帮助中心', path: '/help' },
+    { icon: Shield, label: '隐私政策', path: '/privacy' },
+  ];
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-20">
+    <div className="min-h-screen bg-dark-primary pb-24">
+      {/* 个人信息卡片 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-effect rounded-2xl p-8"
+        className="relative overflow-hidden"
       >
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold gradient-text">个人资料</h1>
-          {!isEditing ? (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              <Edit2 size={18} />
-              编辑
-            </button>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  setIsEditing(false);
-                  loadProfile();
-                }}
-                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <X size={20} />
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={loading}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-              >
-                <Save size={18} />
-                保存
-              </button>
+        {/* 背景渐变 */}
+        <div className="absolute inset-0 bg-gradient-to-b from-accent-start/20 to-transparent h-48"></div>
+        
+        <div className="relative px-6 pt-8 pb-6">
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-2xl overflow-hidden gradient-border p-[2px]">
+                  {formData.avatar ? (
+                    <img
+                      src={formData.avatar}
+                      alt="Avatar"
+                      className="w-full h-full object-cover rounded-2xl"
+                      onError={(e) => {
+                        e.target.src = '';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full gradient-bg rounded-2xl flex items-center justify-center">
+                      <User className="text-white" size={36} />
+                    </div>
+                  )}
+                </div>
+                <button className="absolute -bottom-1 -right-1 w-7 h-7 gradient-bg rounded-lg flex items-center justify-center shadow-lg">
+                  <Edit2 size={14} className="text-white" />
+                </button>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-text-primary">{formData.username || '未设置昵称'}</h2>
+                <p className="text-sm text-text-muted">{formData.email || '未绑定邮箱'}</p>
+              </div>
             </div>
+            
+            {!isEditing ? (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="px-4 py-2 bg-dark-elevated border border-border rounded-xl text-text-secondary text-sm hover:border-accent-start transition-colors"
+              >
+                编辑资料
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setIsEditing(false);
+                    loadProfile();
+                  }}
+                  className="p-2 bg-dark-elevated rounded-xl text-text-muted"
+                >
+                  <X size={18} />
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={loading}
+                  className="px-4 py-2 gradient-bg rounded-xl text-white text-sm flex items-center gap-1"
+                >
+                  <Save size={14} />
+                  保存
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 编辑表单 */}
+          {isEditing && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="space-y-4 mt-6"
+            >
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">用户名</label>
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  className="input-dark w-full"
+                  placeholder="请输入用户名"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">邮箱</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="input-dark w-full"
+                  placeholder="请输入邮箱"
+                />
+              </div>
+            </motion.div>
           )}
         </div>
-
-        <div className="flex flex-col items-center mb-8">
-          <div className="relative">
-            <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              {formData.avatar ? (
-                <img
-                  src={formData.avatar}
-                  alt="Avatar"
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = '';
-                  }}
-                />
-              ) : (
-                <User className="text-white" size={64} />
-              )}
-            </div>
-            {isEditing && (
-              <button className="absolute bottom-0 right-0 p-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition-colors">
-                <Edit2 size={16} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <User size={18} />
-              用户名
-            </label>
-            {isEditing ? (
-              <input
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-              />
-            ) : (
-              <p className="px-4 py-3 bg-gray-50 rounded-lg">{formData.username || '未设置'}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <Mail size={18} />
-              邮箱
-            </label>
-            {isEditing ? (
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
-              />
-            ) : (
-              <p className="px-4 py-3 bg-gray-50 rounded-lg">{formData.email || '未设置'}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <Calendar size={18} />
-              注册时间
-            </label>
-            <p className="px-4 py-3 bg-gray-50 rounded-lg">
-              {user?.created_at
-                ? new Date(user.created_at).toLocaleDateString('zh-CN')
-                : '未知'}
-            </p>
-          </div>
-        </div>
       </motion.div>
+
+      {/* 会员卡片 */}
+      <div className="px-4 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="gradient-bg rounded-2xl p-5 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+          <div className="relative">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-white/80 text-sm">当前等级</p>
+                <h3 className="text-2xl font-bold text-white">普通会员</h3>
+              </div>
+              <div className="text-right">
+                <p className="text-white/80 text-sm">积分</p>
+                <h3 className="text-2xl font-bold text-white">1,280</h3>
+              </div>
+            </div>
+            <button className="w-full py-2.5 bg-white/20 rounded-xl text-white font-medium text-sm backdrop-blur-sm">
+              升级VIP享更多特权
+            </button>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* 菜单列表 */}
+      <div className="px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="bg-dark-card rounded-2xl overflow-hidden"
+        >
+          {menuItems.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={index}
+                onClick={() => toast('功能开发中')}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-dark-elevated transition-colors border-b border-border last:border-0"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-dark-elevated rounded-xl flex items-center justify-center">
+                    <Icon size={20} className="text-text-secondary" />
+                  </div>
+                  <span className="text-text-primary font-medium">{item.label}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {item.badge && (
+                    <span className="px-2 py-0.5 bg-accent-pink/20 rounded-full text-xs text-accent-pink">
+                      {item.badge}
+                    </span>
+                  )}
+                  <ChevronRight size={20} className="text-text-muted" />
+                </div>
+              </button>
+            );
+          })}
+        </motion.div>
+      </div>
+
+      {/* 退出登录 */}
+      <div className="px-4 mt-6">
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 py-4 bg-dark-card rounded-2xl text-red-500 font-medium"
+        >
+          <LogOut size={20} />
+          退出登录
+        </motion.button>
+      </div>
+
+      {/* 版本信息 */}
+      <p className="text-center text-text-muted text-xs mt-8">
+        Clingai v1.0.0
+      </p>
     </div>
   );
 }
-

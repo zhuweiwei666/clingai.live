@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Sparkles, MessageCircle, Image, Video, TrendingUp } from 'lucide-react';
+import { Crown, Zap, Heart, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { streamerService } from '../services/streamerService';
+import { agentService } from '../services/agentService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 
@@ -27,155 +27,177 @@ export default function Home() {
   const loadFeaturedStreamers = async () => {
     try {
       setLoading(true);
-      const response = await streamerService.getList({ limit: 6 });
-      setFeaturedStreamers(response.data || []);
+      const response = await agentService.getList();
+      // 后端返回: { success, data: [...] }
+      // 取前8个作为推荐
+      const agents = response.data || [];
+      setFeaturedStreamers(agents.slice(0, 8));
     } catch (error) {
-      console.error('加载推荐主播失败:', error);
+      console.error('加载推荐AI伴侣失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const features = [
-    {
-      icon: MessageCircle,
-      title: '智能聊天',
-      description: '与AI女友进行自然流畅的对话',
-      color: 'from-purple-500 to-pink-500',
-    },
-    {
-      icon: Image,
-      title: '图片生成',
-      description: 'AI生成精美图片',
-      color: 'from-blue-500 to-cyan-500',
-    },
-    {
-      icon: Video,
-      title: '视频生成',
-      description: '创建专属AI视频',
-      color: 'from-pink-500 to-rose-500',
-    },
-    {
-      icon: TrendingUp,
-      title: '个性化',
-      description: '定制你的专属AI伴侣',
-      color: 'from-orange-500 to-red-500',
-    },
+  // 顶部分类标签
+  const categories = [
+    { id: 'all', label: 'AI伴侣', active: true },
+    { id: 'chat', label: '私密聊天', active: false },
+    { id: 'video', label: '视频生成', active: false },
+    { id: 'image', label: '图片生成', active: false },
   ];
 
-  return (
-    <div className="space-y-8 pb-20">
-      {/* Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="text-center py-12"
-      >
-        <div className="flex justify-center mb-6">
-          <motion.div
-            animate={{ rotate: [0, 10, -10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-2xl"
-          >
-            <Sparkles className="text-white" size={40} />
-          </motion.div>
-        </div>
-        <h1 className="text-5xl font-bold gradient-text mb-4">
-          遇见你的AI女友
-        </h1>
-        <p className="text-xl text-gray-600 mb-8">
-          智能、温暖、贴心的AI伴侣，陪伴你的每一天
-        </p>
-        <Link
-          to="/streamers"
-          className="inline-block px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-        >
-          开始探索
-        </Link>
-      </motion.div>
+  // 模拟徽章数据
+  const getBadge = (index) => {
+    const badges = [
+      { type: 'super', label: 'Super', icon: Crown },
+      { type: 'new', label: '🔥 New 🔥', icon: null },
+      { type: 'viral', label: '🔥 火爆 🔥', icon: null },
+      { type: 'hot', label: 'HOT', icon: Zap },
+      null,
+      { type: 'new', label: '✨ 新人 ✨', icon: null },
+    ];
+    return badges[index % badges.length];
+  };
 
-      {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {features.map((feature, index) => {
-          const Icon = feature.icon;
-          return (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="glass-effect rounded-2xl p-6 card-hover"
-            >
-              <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-4`}>
-                <Icon className="text-white" size={24} />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-gray-600">{feature.description}</p>
-            </motion.div>
-          );
-        })}
+  return (
+    <div className="min-h-screen bg-dark-primary">
+      {/* 分类标签栏 */}
+      <div className="tab-nav">
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            className={`tab-item ${cat.active ? 'active' : ''}`}
+          >
+            {cat.label}
+          </button>
+        ))}
       </div>
 
-      {/* Featured Streamers */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-3xl font-bold gradient-text">推荐AI主播</h2>
-          <Link
-            to="/streamers"
-            className="text-purple-600 hover:text-purple-700 font-semibold"
-          >
-            查看更多 →
-          </Link>
-        </div>
+      {/* 热门推荐区 */}
+      <div className="section-header">
+        <span className="text-2xl">🔥</span>
+        <span className="gradient-text font-bold">热门推荐: AI伴侣</span>
+      </div>
 
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="glass-effect rounded-xl p-4 animate-pulse"
+      {/* 主播卡片网格 */}
+      {loading ? (
+        <div className="grid-cards">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="card">
+              <div className="card-image skeleton" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid-cards">
+          {featuredStreamers.map((streamer, index) => {
+            const badge = getBadge(index);
+            // 使用后端返回的字段名 (_id, avatarUrl, etc.)
+            const streamerId = streamer._id;
+            const avatarUrl = streamer.avatarUrl || streamer.avatar;
+            
+            return (
+              <motion.div
+                key={streamerId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
               >
-                <div className="w-full aspect-square bg-gray-200 rounded-lg mb-3"></div>
-                <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                <Link
+                  to={`/chat/${streamerId}`}
+                  onClick={(e) => handleStreamerClick(streamerId, e)}
+                  className="card block group"
+                >
+                  <div className="card-image">
+                    <img
+                      src={avatarUrl || '/placeholder-avatar.jpg'}
+                      alt={streamer.name}
+                      onError={(e) => {
+                        e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop';
+                      }}
+                    />
+                    
+                    {/* 顶部徽章 */}
+                    {badge && (
+                      <div className="absolute top-3 left-3 z-10">
+                        <span className={`badge badge-${badge.type}`}>
+                          {badge.icon && <badge.icon size={12} />}
+                          {badge.label}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* 在线状态 */}
+                    {streamer.status === 'online' && (
+                      <div className="absolute top-3 right-3 z-10">
+                        <span className="w-3 h-3 bg-green-500 rounded-full inline-block animate-pulse" />
+                      </div>
+                    )}
+                    
+                    {/* 底部渐变覆盖层 */}
+                    <div className="card-overlay">
+                      <h3 className="card-title line-clamp-1">{streamer.name}</h3>
+                      {index % 3 === 0 && (
+                        <span className="badge badge-new w-fit">
+                          🔥 New 🔥
+                        </span>
+                      )}
+                      {index % 3 === 1 && (
+                        <span className="badge badge-viral w-fit">
+                          🔥 火爆 🔥
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* 查看更多按钮 */}
+      <div className="px-4 py-6">
+        <Link
+          to="/streamers"
+          className="flex items-center justify-center gap-2 w-full py-4 bg-dark-elevated border border-border rounded-2xl text-text-secondary hover:text-text-primary hover:border-accent-start transition-all"
+        >
+          <span>查看更多AI伴侣</span>
+          <ChevronRight size={20} />
+        </Link>
+      </div>
+
+      {/* 功能特色区 */}
+      <div className="px-4 pb-8">
+        <div className="section-header px-0 mb-4">
+          <span className="text-2xl">✨</span>
+          <span className="gradient-text font-bold">特色功能</span>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { icon: '💬', title: '私密聊天', desc: '专属AI伴侣对话', color: 'from-pink-500 to-rose-500' },
+            { icon: '🎬', title: '视频生成', desc: '生成专属视频', color: 'from-purple-500 to-indigo-500' },
+            { icon: '🖼️', title: '图片创作', desc: 'AI图片生成', color: 'from-orange-500 to-amber-500' },
+            { icon: '💝', title: '个性定制', desc: '打造专属伴侣', color: 'from-cyan-500 to-blue-500' },
+          ].map((feature, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.5 + idx * 0.1 }}
+              className="bg-dark-card border border-border rounded-2xl p-4 hover:border-accent-start/50 transition-all cursor-pointer group"
+            >
+              <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <span className="text-2xl">{feature.icon}</span>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {featuredStreamers.map((streamer) => (
-              <Link
-                key={streamer.id}
-                to={`/chat/${streamer.id}`}
-                onClick={(e) => handleStreamerClick(streamer.id, e)}
-                className="glass-effect rounded-xl p-4 card-hover group"
-              >
-                <div className="relative w-full aspect-square mb-3 rounded-lg overflow-hidden">
-                  <img
-                    src={streamer.avatar || '/placeholder-avatar.jpg'}
-                    alt={streamer.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/200?text=AI';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </div>
-                <h3 className="font-semibold text-gray-800 truncate">
-                  {streamer.name}
-                </h3>
-                <p className="text-sm text-gray-500 truncate">
-                  {streamer.description || 'AI智能伴侣'}
-                </p>
-              </Link>
-            ))}
-          </div>
-        )}
+              <h3 className="font-semibold text-text-primary mb-1">{feature.title}</h3>
+              <p className="text-sm text-text-muted">{feature.desc}</p>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
-
