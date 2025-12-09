@@ -444,7 +444,7 @@ body {
 }
 
 /* ========================================
-   Scrollbar Styling
+   Scrollbar Styling - 优化聊天界面滚动
    ======================================== */
 
 ::-webkit-scrollbar {
@@ -453,16 +453,31 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-elevated);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 聊天界面专用滚动条 */
+.chat-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* ========================================
@@ -529,4 +544,182 @@ body {
 
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* ========================================
+   Chat Message Animations - 消息动画优化
+   ======================================== */
+
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes messageBounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.message-enter {
+  animation: messageSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ========================================
+   Input Focus Effects - 输入框焦点效果
+   ======================================== */
+
+.chat-input:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(255, 107, 138, 0.2);
+}
+
+.chat-input:focus::placeholder {
+  opacity: 0.6;
+}
+
+/* ========================================
+   Smooth Transitions - 平滑过渡
+   ======================================== */
+
+.smooth-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.smooth-transition-fast {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   Message Bubble Styles - 消息气泡样式
+   ======================================== */
+
+.message-bubble {
+  position: relative;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.message-bubble::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.message-bubble:hover::before {
+  opacity: 1;
+}
+
+/* ========================================
+   Typing Indicator - 打字指示器
+   ======================================== */
+
+@keyframes typing {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.typing-cursor {
+  animation: typing 0.8s ease-in-out infinite;
+}
+
+/* ========================================
+   Button Hover Effects - 按钮悬停效果
+   ======================================== */
+
+.btn-smooth {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+.btn-smooth:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-smooth:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ========================================
+   Glass Morphism - 毛玻璃效果
+   ======================================== */
+
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ========================================
+   Loading States - 加载状态优化
+   ======================================== */
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.loading-pulse {
+  animation: pulse-soft 1.5s ease-in-out infinite;
+}
+
+/* ========================================
+   Smooth Scroll - 平滑滚动
+   ======================================== */
+
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ========================================
+   Text Selection - 文本选择优化
+   ======================================== */
+
+::selection {
+  background: rgba(255, 107, 138, 0.3);
+  color: white;
+}
+
+::-moz-selection {
+  background: rgba(255, 107, 138, 0.3);
+  color: white;
 }

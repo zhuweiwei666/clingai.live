@@ -63,7 +63,7 @@ export default function Home() {
       {/* 主播卡片网格 */}
       {loading ? (
         <div className="grid-cards">
-          {[...Array(8)].map((_, i) => (
+          {[...Array(12)].map((_, i) => (
             <div key={i} className="card">
               <div className="card-image skeleton" />
             </div>
