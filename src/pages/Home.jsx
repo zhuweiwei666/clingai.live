@@ -29,9 +29,9 @@ export default function Home() {
       setLoading(true);
       const response = await agentService.getList();
       // 后端返回: { success, data: [...] }
-      // 取前8个作为推荐
+      // 显示所有AI伴侣
       const agents = response.data || [];
-      setFeaturedStreamers(agents.slice(0, 8));
+      setFeaturedStreamers(agents);
     } catch (error) {
       console.error('加载推荐AI伴侣失败:', error);
     } finally {
