@@ -547,6 +547,44 @@ body {
 }
 
 /* ========================================
+   WhatsApp Style Chat - 聊天界面样式
+   ======================================== */
+
+.bg-chat-pattern {
+  background-color: #0b141a;
+  background-size: 100px 100px;
+  opacity: 0.4;
+}
+
+/* WhatsApp打字动画 */
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  30% {
+    transform: translateY(-10px);
+    opacity: 1;
+  }
+}
+
+/* 消息气泡尾巴样式 */
+.message-tail {
+  position: absolute;
+  width: 8px;
+  height: 13px;
+  overflow: hidden;
+}
+
+.message-tail::before {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+/* ========================================
    Chat Message Animations - 消息动画优化
    ======================================== */
 
@@ -561,17 +599,8 @@ body {
   }
 }
 
-@keyframes messageBounce {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-}
-
 .message-enter {
-  animation: messageSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: messageSlideIn 0.2s ease-out;
 }
 
 /* ========================================

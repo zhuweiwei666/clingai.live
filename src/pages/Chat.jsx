@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, ArrowLeft, Loader2, Image, Play, Square, Sparkles } from 'lucide-react';
+import { Send, ArrowLeft, Image, Play, Square, Check, CheckCheck, Smile, Paperclip } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { chatService } from '../services/chatService';
 import { agentService } from '../services/agentService';
@@ -16,7 +16,6 @@ export default function Chat() {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
-  const [intimacy, setIntimacy] = useState(0);
   const [imageMode, setImageMode] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState(null);
@@ -31,7 +30,7 @@ export default function Chat() {
   useEffect(() => {
     if (!isAuthenticated) {
       toast.error('请先登录');
-      navigate('/login', { state: { from: { pathname: `/chat/${id}` } } });
+      navigate('/login', { state: { from: { pathname: `/chat/${id}` } } } });
       return;
     }
     loadAgent();
@@ -63,9 +62,8 @@ export default function Chat() {
             currentIndex: currentIndex + 1,
             displayText: fullText.slice(0, currentIndex + 1)
           });
-        }, 20); // 打字速度：每20ms一个字符
+        }, 15); // WhatsApp风格：稍快一点
       } else {
-        // 打字完成，更新消息
         setMessages(prev => prev.map(msg => 
           msg.id === messageId ? { ...msg, content: fullText } : msg
         ));
@@ -100,8 +98,8 @@ export default function Chat() {
         audioUrl: msg.audioUrl,
         imageUrl: msg.imageUrl,
         created_at: msg.created_at || new Date().toISOString(),
+        status: 'read', // WhatsApp风格：已读状态
       })));
-      setIntimacy(response.data?.intimacy || 0);
     } catch (error) {
       console.error('加载聊天记录失败:', error);
     } finally {
@@ -109,7 +107,7 @@ export default function Chat() {
     }
   };
 
-  // 发送文字消息
+  // 发送消息
   const sendMessage = async () => {
     if (!isAuthenticated) {
       toast.error('请先登录');
@@ -129,6 +127,7 @@ export default function Chat() {
       role: 'user',
       withImage: requestWithImage,
       created_at: new Date().toISOString(),
+      status: 'sending', // 发送中
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -136,19 +135,32 @@ export default function Chat() {
     setSending(true);
     inputRef.current?.focus();
 
+    // 模拟发送成功，更新状态
+    setTimeout(() => {
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, status: 'sent' } : msg
+      ));
+    }, 500);
+
     try {
       const response = await chatService.sendMessage(id, messageContent);
       const responseData = response.data || response || {};
       const aiReply = responseData.message || responseData.reply || responseData.content;
       const audioUrl = responseData.audioUrl || responseData.audio_url || responseData.audio;
       
+      // 更新用户消息为已读
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, status: 'read' } : msg
+      ));
+      
       const aiMessageId = messageId + 1;
       const aiMessage = {
         id: aiMessageId,
-        content: '', // 先设为空，打字效果会填充
+        content: '',
         role: 'assistant',
         audioUrl,
         created_at: new Date().toISOString(),
+        status: 'read',
       };
       
       setMessages(prev => [...prev, aiMessage]);
@@ -163,7 +175,6 @@ export default function Chat() {
         });
       }
       
-      // 如果开启了图片模式，额外请求生成图片
       if (requestWithImage) {
         setImageMode(false);
         requestImage();
@@ -174,14 +185,9 @@ export default function Chat() {
       const errorMessage = error.message || '请求失败，请稍后重试';
       toast.error(errorMessage);
       
-      const errorMsg = {
-        id: messageId + 1,
-        content: `请求失败: ${errorMessage}`,
-        role: 'assistant',
-        isError: true,
-        created_at: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageId ? { ...msg, status: 'error' } : msg
+      ));
     } finally {
       setSending(false);
     }
@@ -204,16 +210,12 @@ export default function Chat() {
           role: 'assistant',
           imageUrl,
           created_at: new Date().toISOString(),
+          status: 'read',
         };
         setMessages(prev => [...prev, imageMessage]);
-        toast.success('图片生成成功');
-      } else {
-        toast.error('图片生成失败：未返回图片');
       }
     } catch (error) {
       console.error('❌ 图片生成失败:', error);
-      const errorMsg = error.message || '图片生成失败';
-      toast.error(errorMsg);
     } finally {
       setGeneratingImage(false);
     }
@@ -235,12 +237,9 @@ export default function Chat() {
           msg.id === messageId ? { ...msg, audioUrl } : msg
         ));
         playAudio(messageId, audioUrl);
-      } else {
-        toast.error('语音生成失败');
       }
     } catch (error) {
       console.error('❌ 语音生成失败:', error);
-      toast.error('语音生成失败');
     } finally {
       setLoadingVoiceId(null);
     }
@@ -262,7 +261,6 @@ export default function Chat() {
       .then(() => setPlayingAudioId(messageId))
       .catch((err) => {
         console.error('播放失败:', err);
-        toast.error('播放失败');
       });
   };
 
@@ -272,329 +270,250 @@ export default function Chat() {
     }, 100);
   };
 
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}小时前`;
+    
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
   const avatarUrl = agent?.avatarUrl || agent?.avatar;
-  const backgroundUrl = agent?.backgroundUrl || agent?.coverUrl || avatarUrl;
 
   if (loading && !agent) {
     return (
-      <div className="flex items-center justify-center h-screen bg-dark-primary">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <Loader2 className="animate-spin text-accent-pink" size={40} />
-          <p className="text-text-secondary text-sm">加载中...</p>
-        </motion.div>
+      <div className="flex items-center justify-center h-screen bg-[#0b141a]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-16 h-16 rounded-full bg-[#202c33] animate-pulse" />
+          <p className="text-[#8696a0] text-sm">加载中...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen relative overflow-hidden bg-dark-primary">
+    <div className="flex flex-col h-screen bg-[#0b141a]">
       <audio ref={audioRef} className="hidden" />
       
-      {/* 全屏背景图 */}
-      {backgroundUrl && (
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="absolute inset-0 z-0"
-        >
-          <img 
-            src={backgroundUrl} 
-            alt="" 
-            className="w-full h-full object-cover" 
-            onError={(e) => e.target.style.display = 'none'} 
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-black/40" />
-        </motion.div>
-      )}
-      
-      {/* 头部 - 优化设计 */}
-      <motion.div 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="sticky top-0 z-40 px-4 py-3 flex items-center gap-3 safe-area-top bg-black/40 backdrop-blur-xl border-b border-white/10"
-      >
-        <motion.button 
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+      {/* WhatsApp风格头部 */}
+      <div className="bg-[#202c33] px-4 py-3 flex items-center gap-3 safe-area-top border-b border-[#313d45]">
+        <button 
           onClick={() => navigate('/messages')} 
-          className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full transition-all backdrop-blur-sm"
+          className="p-2 text-[#8696a0] hover:text-white transition-colors"
         >
-          <ArrowLeft size={20} className="text-white" />
-        </motion.button>
+          <ArrowLeft size={24} />
+        </button>
         {agent && (
           <div className="flex-1 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 ring-2 ring-white/10">
+            <div className="w-10 h-10 rounded-full overflow-hidden">
               <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
             </div>
-            <div>
-              <h2 className="font-semibold text-white text-base">{agent.name}</h2>
-              <p className="text-xs text-white/60">在线</p>
+            <div className="flex-1">
+              <h2 className="font-medium text-white text-base">{agent.name}</h2>
+              <p className="text-xs text-[#8696a0]">在线</p>
             </div>
           </div>
         )}
-        <div className="w-10" />
-      </motion.div>
+      </div>
 
-      {/* 消息列表 - 优化滚动和间距 */}
+      {/* 消息列表 - WhatsApp风格背景 */}
       <div 
         ref={chatContainerRef} 
-        className="flex-1 overflow-y-auto relative z-10 scroll-smooth"
-        style={{ 
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(255,255,255,0.2) transparent'
+        className="flex-1 overflow-y-auto bg-[#0b141a] bg-chat-pattern"
+        style={{
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'grid\' width=\'100\' height=\'100\' patternUnits=\'userSpaceOnUse\'%3E%3Cpath d=\'M 100 0 L 0 0 0 100\' fill=\'none\' stroke=\'%231a2329\' stroke-width=\'1\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'100\' height=\'100\' fill=\'url(%23grid)\'/%3E%3C/svg%3E")',
         }}
       >
-        <div className="px-4 py-6 space-y-4 min-h-full flex flex-col">
+        <div className="px-4 py-2 space-y-1 min-h-full flex flex-col">
           {messages.length === 0 && !loading && agent && (
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex-1 flex flex-col items-center justify-center text-center py-12"
-            >
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2 }}
-                className="w-20 h-20 rounded-full overflow-hidden mb-4 border-4 border-white/20"
-              >
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
+              <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
                 <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
-              </motion.div>
-              <p className="text-white/90 text-base mb-6 max-w-xs">{agent.description || '很高兴认识你~'}</p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {['你好呀！', '今天怎么样？', '想和你聊聊天'].map((msg, idx) => (
-                  <motion.button
-                    key={idx}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + idx * 0.1 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      setInputMessage(msg);
-                      inputRef.current?.focus();
-                    }}
-                    className="px-5 py-2.5 bg-white/15 backdrop-blur-md border border-white/20 rounded-full text-sm text-white hover:bg-white/25 transition-all shadow-lg"
-                  >
-                    {msg}
-                  </motion.button>
-                ))}
               </div>
-            </motion.div>
+              <p className="text-[#8696a0] text-base mb-6 max-w-xs">{agent.description || '很高兴认识你~'}</p>
+            </div>
           )}
 
           <AnimatePresence mode="popLayout">
             {messages.map((message, index) => {
               const isTyping = typingMessage?.messageId === message.id;
               const displayContent = isTyping ? typingMessage.displayText : message.content;
+              const isUser = message.role === 'user';
               
               return (
                 <motion.div
                   key={message.id}
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ 
-                    duration: 0.3,
-                    delay: index === messages.length - 1 ? 0.1 : 0
-                  }}
-                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-end gap-1`}
                 >
-                  {message.role !== 'user' && agent && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: 0.2 }}
-                      className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-white/30 shadow-lg"
-                    >
+                  {!isUser && agent && (
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
                       <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
-                    </motion.div>
+                    </div>
                   )}
                   
-                  <div className={`max-w-[75%] flex flex-col ${message.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-[65%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                     {displayContent && (
-                      <motion.div
-                        initial={{ scale: 0.9 }}
-                        animate={{ scale: 1 }}
-                        className={`rounded-2xl px-4 py-3 shadow-xl ${
-                          message.role === 'user' 
-                            ? 'bg-gradient-to-br from-[#c8e550] to-[#a8d030] text-gray-900 rounded-tr-sm' 
-                            : 'bg-white/95 backdrop-blur-sm text-gray-800 rounded-tl-sm'
-                        } ${message.isError ? 'bg-red-100 text-red-700' : ''}`}
-                      >
-                        {message.role === 'user' && message.withImage && (
-                          <div className="flex items-center gap-1 text-blue-700 text-xs mb-1.5 font-medium">
-                            <Image size={12} /><span>+图片</span>
+                      <div className={`relative px-3 py-2 rounded-lg shadow-sm ${
+                        isUser 
+                          ? 'bg-[#005c4b] text-white rounded-tr-none' // WhatsApp绿色
+                          : 'bg-[#202c33] text-[#e9edef] rounded-tl-none' // WhatsApp白色
+                      }`}>
+                        {/* 消息气泡尾巴 */}
+                        {isUser ? (
+                          <div className="absolute right-0 bottom-0 w-3 h-3 overflow-hidden">
+                            <div className="absolute right-0 bottom-0 w-6 h-6 bg-[#0b141a] rounded-tl-full" 
+                              style={{ transform: 'translate(50%, 50%)' }} />
+                            <div className="absolute right-0 bottom-0 w-6 h-6 bg-[#005c4b] rounded-tl-full" 
+                              style={{ transform: 'translate(50%, 50%) scale(0.7)' }} />
+                          </div>
+                        ) : (
+                          <div className="absolute left-0 bottom-0 w-3 h-3 overflow-hidden">
+                            <div className="absolute left-0 bottom-0 w-6 h-6 bg-[#0b141a] rounded-tr-full" 
+                              style={{ transform: 'translate(-50%, 50%)' }} />
+                            <div className="absolute left-0 bottom-0 w-6 h-6 bg-[#202c33] rounded-tr-full" 
+                              style={{ transform: 'translate(-50%, 50%) scale(0.7)' }} />
                           </div>
                         )}
-                        <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">
+                        
+                        <p className="text-[14.2px] leading-[19px] whitespace-pre-wrap break-words relative z-10">
                           {displayContent}
                           {isTyping && (
-                            <motion.span
-                              animate={{ opacity: [1, 0] }}
-                              transition={{ duration: 0.8, repeat: Infinity }}
-                              className="inline-block w-2 h-4 bg-current ml-1"
-                            />
+                            <span className="inline-block w-1 h-4 bg-current ml-0.5 animate-pulse" />
                           )}
                         </p>
-                      </motion.div>
-                    )}
-                    
-                    {/* 语音按钮 - AI消息 */}
-                    {message.role === 'assistant' && displayContent && !message.isError && !isTyping && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="mt-2"
-                      >
-                        <button
-                          onClick={() => {
-                            if (message.audioUrl) {
-                              playAudio(message.id, message.audioUrl);
-                            } else {
-                              requestVoice(message.id, message.content);
-                            }
-                          }}
-                          disabled={loadingVoiceId === message.id}
-                          className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-xs text-white hover:bg-white/30 transition-all disabled:opacity-50 shadow-lg border border-white/10"
-                        >
-                          {loadingVoiceId === message.id ? (
-                            <><Loader2 size={14} className="animate-spin" /><span>生成中...</span></>
-                          ) : playingAudioId === message.id ? (
-                            <><Square size={14} fill="currentColor" /><span>停止</span></>
-                          ) : (
-                            <><Play size={14} fill="currentColor" /><span>播放语音</span></>
-                          )}
-                        </button>
-                      </motion.div>
+                      </div>
                     )}
                     
                     {/* 图片显示 */}
                     {message.imageUrl && (
-                      <motion.div
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="mt-2 rounded-2xl overflow-hidden max-w-[280px] shadow-2xl border-2 border-white/20"
-                      >
+                      <div className={`mt-1 rounded-lg overflow-hidden max-w-[280px] ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
                         <img 
                           src={message.imageUrl} 
                           alt="AI生成图片" 
-                          className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity" 
+                          className="w-full h-auto cursor-pointer" 
                           onClick={() => window.open(message.imageUrl, '_blank')} 
                         />
-                      </motion.div>
+                      </div>
                     )}
                     
-                    <p className={`text-[11px] mt-1.5 px-2 text-white/50 ${message.role === 'user' ? 'text-right' : ''}`}>
-                      {new Date(message.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  
-                  {message.role === 'user' && (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#c8e550] to-[#a8d030] flex items-center justify-center text-gray-900 font-semibold text-sm flex-shrink-0 shadow-lg">
-                      {useUserStore.getState().user?.username?.[0]?.toUpperCase() || 'U'}
+                    {/* 时间戳和状态 - WhatsApp风格 */}
+                    <div className={`flex items-center gap-1 mt-0.5 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
+                      <span className="text-[11.5px] text-[#8696a0]">
+                        {formatTime(message.created_at)}
+                      </span>
+                      {isUser && (
+                        <span className="text-[#8696a0]">
+                          {message.status === 'sending' ? (
+                            <span className="text-[#8696a0]">⏱</span>
+                          ) : message.status === 'sent' ? (
+                            <Check size={16} className="text-[#8696a0]" />
+                          ) : message.status === 'read' ? (
+                            <CheckCheck size={16} className="text-[#53bdeb]" />
+                          ) : (
+                            <span className="text-red-500">✕</span>
+                          )}
+                        </span>
+                      )}
                     </div>
-                  )}
+                    
+                    {/* 语音按钮 - AI消息 */}
+                    {!isUser && displayContent && !isTyping && (
+                      <button
+                        onClick={() => {
+                          if (message.audioUrl) {
+                            playAudio(message.id, message.audioUrl);
+                          } else {
+                            requestVoice(message.id, message.content);
+                          }
+                        }}
+                        disabled={loadingVoiceId === message.id}
+                        className="mt-1 px-3 py-1.5 bg-[#202c33] hover:bg-[#2a3942] rounded-lg text-xs text-[#8696a0] hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {loadingVoiceId === message.id ? (
+                          <>⏳ 生成中...</>
+                        ) : playingAudioId === message.id ? (
+                          <><Square size={12} fill="currentColor" /> 停止</>
+                        ) : (
+                          <><Play size={12} fill="currentColor" /> 播放语音</>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </motion.div>
               );
             })}
           </AnimatePresence>
           
-          {/* 发送中 - 优化动画 */}
+          {/* 发送中指示器 - WhatsApp风格 */}
           {sending && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start items-end gap-2"
-            >
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 shadow-lg">
+            <div className="flex justify-start items-end gap-1">
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
                 {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
               </div>
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl rounded-tl-sm px-5 py-4 shadow-xl">
-                <div className="flex gap-1.5">
+              <div className="bg-[#202c33] rounded-lg rounded-tl-none px-3 py-2 shadow-sm">
+                <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
-                    <motion.span
+                    <div
                       key={i}
-                      className="w-2 h-2 bg-accent-pink rounded-full"
-                      animate={{ 
-                        y: [0, -8, 0],
-                        opacity: [0.5, 1, 0.5]
-                      }}
-                      transition={{
-                        duration: 0.6,
-                        repeat: Infinity,
-                        delay: i * 0.2
+                      className="w-1 h-4 bg-[#8696a0] rounded-full"
+                      style={{
+                        animation: `typing 1.4s infinite`,
+                        animationDelay: `${i * 0.2}s`
                       }}
                     />
                   ))}
                 </div>
               </div>
-            </motion.div>
+            </div>
           )}
           
           {/* 生成图片中 */}
           {generatingImage && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-start items-end gap-2"
-            >
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30 shadow-lg">
+            <div className="flex justify-start items-end gap-1">
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
                 {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
               </div>
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl rounded-tl-sm px-5 py-4 shadow-xl flex items-center gap-3 text-gray-700 text-sm">
-                <Loader2 className="animate-spin text-accent-pink" size={18} />
-                <span>生成图片中...</span>
+              <div className="bg-[#202c33] rounded-lg rounded-tl-none px-3 py-2 text-[#8696a0] text-xs">
+                生成图片中...
               </div>
-            </motion.div>
+            </div>
           )}
           
           <div ref={messagesEndRef} className="h-2" />
         </div>
       </div>
 
-      {/* 输入框 - 优化设计和交互 */}
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="relative z-10 p-4 safe-area-bottom bg-black/40 backdrop-blur-xl border-t border-white/10"
-      >
+      {/* 输入框 - WhatsApp风格 */}
+      <div className="bg-[#202c33] px-2 py-2 safe-area-bottom border-t border-[#313d45]">
         {imageMode && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-3 text-center text-xs text-blue-300 flex items-center justify-center gap-2"
-          >
-            <Sparkles size={14} />
-            <span>图片模式已开启 - 发送消息后AI将回复文字和图片</span>
-          </motion.div>
+          <div className="px-3 py-1.5 mb-2 text-xs text-[#8696a0] bg-[#2a3942] rounded-lg mx-2">
+            📷 图片模式已开启
+          </div>
         )}
         
-        <div className="flex items-end gap-3">
-          {/* 图片模式按钮 */}
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+        <div className="flex items-end gap-2 px-2">
+          {/* 附件按钮 */}
+          <button
             onClick={() => setImageMode(!imageMode)}
-            disabled={sending || generatingImage}
-            className={`p-3 rounded-2xl transition-all disabled:opacity-50 flex-shrink-0 ${
-              imageMode 
-                ? 'bg-blue-500 ring-2 ring-blue-300 shadow-lg shadow-blue-500/50' 
-                : 'bg-white/15 hover:bg-white/25 backdrop-blur-sm'
-            }`}
-            title={imageMode ? '图片模式已开启' : '点击开启图片模式'}
+            className="p-3 text-[#8696a0] hover:text-white transition-colors"
           >
-            <Image size={20} className="text-white" />
-          </motion.button>
+            {imageMode ? <Image size={24} className="text-blue-400" /> : <Paperclip size={24} />}
+          </button>
           
+          {/* 输入框 */}
           <div className="flex-1 relative">
-            <motion.input
+            <input
               ref={inputRef}
               type="text"
               value={inputMessage}
@@ -605,46 +524,30 @@ export default function Chat() {
                   sendMessage(); 
                 } 
               }}
-              placeholder={imageMode ? '输入消息，AI将回复文字+图片...' : '输入消息...'}
-              className={`w-full px-5 py-4 bg-white/15 backdrop-blur-md border-2 rounded-2xl text-white placeholder-white/50 focus:outline-none transition-all text-[15px] ${
-                imageMode 
-                  ? 'border-blue-400/50 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30' 
-                  : 'border-white/20 focus:border-white/40 focus:ring-2 focus:ring-white/20'
-              } ${sending || generatingImage ? 'opacity-50 cursor-not-allowed' : ''}`}
+              placeholder="输入消息"
+              className="w-full px-4 py-3 bg-[#2a3942] text-white placeholder-[#8696a0] rounded-full text-[15px] focus:outline-none focus:ring-2 focus:ring-[#005c4b]/50 transition-all"
               disabled={sending || generatingImage}
             />
-            {imageMode && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-blue-300 text-xs font-medium"
-              >
-                <Image size={12} /><span>+图片</span>
-              </motion.div>
-            )}
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          {/* 发送按钮 */}
+          <button
             onClick={() => sendMessage()}
             disabled={!inputMessage.trim() || sending || generatingImage}
-            className={`p-4 rounded-2xl transition-all disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0 shadow-lg ${
-              imageMode 
-                ? 'bg-blue-500 hover:bg-blue-600' 
-                : inputMessage.trim()
-                  ? 'bg-gradient-to-br from-accent-start to-accent-end hover:from-accent-pink hover:to-accent-orange'
-                  : 'bg-white/15 hover:bg-white/25'
+            className={`p-3 rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
+              inputMessage.trim()
+                ? 'bg-[#005c4b] hover:bg-[#006b58] text-white'
+                : 'bg-[#2a3942] text-[#8696a0]'
             }`}
           >
             {sending ? (
-              <Loader2 className="animate-spin text-white" size={22} />
+              <span className="text-white">⏳</span>
             ) : (
-              <Send size={22} className="text-white" />
+              <Send size={20} className={inputMessage.trim() ? 'text-white' : 'text-[#8696a0]'} />
             )}
-          </motion.button>
+          </button>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
