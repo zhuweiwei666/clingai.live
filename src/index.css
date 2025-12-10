@@ -493,6 +493,30 @@ body {
 }
 
 /* ========================================
+   Mobile Touch Optimization - 移动端触摸优化
+   ======================================== */
+
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 移动端按钮最小点击区域 */
+@media (max-width: 640px) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* 移动端输入框优化 */
+@media (max-width: 640px) {
+  input, textarea {
+    font-size: 16px; /* 防止iOS自动缩放 */
+  }
+}
+
+/* ========================================
    Grid Layouts
    ======================================== */
 
