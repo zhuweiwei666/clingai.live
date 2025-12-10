@@ -21,11 +21,13 @@ export default function Chat() {
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const [loadingVoiceId, setLoadingVoiceId] = useState(null);
   const [typingMessage, setTypingMessage] = useState(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const audioRef = useRef(null);
   const inputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const inputContainerRef = useRef(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -47,6 +49,53 @@ export default function Chat() {
       const handleEnded = () => setPlayingAudioId(null);
       audio.addEventListener('ended', handleEnded);
       return () => audio.removeEventListener('ended', handleEnded);
+    }
+  }, []);
+
+  // 检测键盘显示/隐藏，动态调整底部间距
+  useEffect(() => {
+    const handleResize = () => {
+      // 计算可视区域高度变化，判断键盘是否显示
+      const viewportHeight = window.visualViewport?.height || window.innerHeight;
+      const windowHeight = window.innerHeight;
+      const heightDiff = windowHeight - viewportHeight;
+      
+      // 如果高度差大于150px，认为键盘已显示
+      if (heightDiff > 150) {
+        setKeyboardHeight(heightDiff);
+      } else {
+        setKeyboardHeight(0);
+      }
+    };
+
+    // 使用 visualViewport API（移动端支持更好）
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    } else {
+      window.addEventListener('resize', handleResize);
+    }
+
+    // 输入框聚焦/失焦时也检测
+    const input = inputRef.current;
+    if (input) {
+      const handleFocus = () => {
+        setTimeout(handleResize, 300); // 延迟检测，等待键盘动画
+      };
+      const handleBlur = () => {
+        setTimeout(() => setKeyboardHeight(0), 300);
+      };
+      input.addEventListener('focus', handleFocus);
+      input.addEventListener('blur', handleBlur);
+      
+      return () => {
+        if (window.visualViewport) {
+          window.visualViewport.removeEventListener('resize', handleResize);
+        } else {
+          window.removeEventListener('resize', handleResize);
+        }
+        input.removeEventListener('focus', handleFocus);
+        input.removeEventListener('blur', handleBlur);
+      };
     }
   }, []);
 
@@ -497,7 +546,13 @@ export default function Chat() {
       </div>
 
       {/* 输入框 - WhatsApp风格，移动端优化 */}
-      <div className="bg-[#202c33] px-2 sm:px-4 py-2 sm:py-3 safe-area-bottom border-t border-[#313d45] sticky bottom-0 z-50">
+      <div 
+        ref={inputContainerRef}
+        className="bg-[#202c33] px-2 sm:px-4 py-2 sm:py-3 border-t border-[#313d45] sticky bottom-0 z-50 transition-all duration-300"
+        style={{
+          paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : '0.5rem',
+        }}
+      >
         {imageMode && (
           <div className="px-3 py-1.5 mb-2 text-xs text-[#8696a0] bg-[#2a3942] rounded-lg mx-2">
             📷 图片模式已开启
