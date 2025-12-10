@@ -30,7 +30,7 @@ export default function Chat() {
   useEffect(() => {
     if (!isAuthenticated) {
       toast.error('请先登录');
-      navigate('/login', { state: { from: { pathname: `/chat/${id}` } } } });
+      navigate('/login', { state: { from: { pathname: `/chat/${id}` } } });
       return;
     }
     loadAgent();
