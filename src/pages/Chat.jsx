@@ -389,7 +389,7 @@ export default function Chat() {
           <div className="flex-1 flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden flex-shrink-0 border-2 border-border">
               <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
-            </div>
+      </div>
             <div className="flex-1 min-w-0">
               <h2 className="font-semibold text-text-primary text-base sm:text-lg truncate">{agent.name}</h2>
               <p className="text-xs text-text-muted">在线</p>
@@ -431,10 +431,10 @@ export default function Chat() {
                 >
                   {!isUser && agent && (
                     <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border" style={{ marginBottom: '2px' }}>
-                      <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  
+                  <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+              
                   <div className={`max-w-[75%] sm:max-w-[65%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                     {displayContent && (
                       <div className={`relative px-4 py-3 rounded-2xl shadow-lg ${
@@ -507,7 +507,7 @@ export default function Chat() {
                     </button>
                     )}
                   </div>
-                  
+                
                   {/* 用户头像 - 显示在消息右侧 */}
                   {isUser && user && (
                     <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border" style={{ marginBottom: '2px' }}>
@@ -526,11 +526,11 @@ export default function Chat() {
                           <span className="text-white text-xs font-semibold">
                             {(user.username || user.name || '我')?.[0]?.toUpperCase() || 'U'}
                           </span>
-                        </div>
-                      )}
-                    </div>
+                  </div>
+                )}
+              </div>
                   )}
-                </motion.div>
+            </motion.div>
               );
             })}
         </AnimatePresence>

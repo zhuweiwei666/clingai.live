@@ -88,8 +88,8 @@ export default function Home() {
           <div className="flex items-center gap-2 text-text-secondary text-sm">
             <div className="w-4 h-4 border-2 border-accent-pink border-t-transparent rounded-full animate-spin" />
             <span>刷新中...</span>
-          </div>
-        </div>
+      </div>
+      </div>
       )}
 
       {/* 主播卡片网格 */}
@@ -100,15 +100,15 @@ export default function Home() {
         onTouchEnd={handleTouchEnd}
         ref={scrollContainerRef}
       >
-        {loading ? (
-          <div className="grid-cards">
+      {loading ? (
+        <div className="grid-cards">
           {[...Array(12)].map((_, i) => (
             <div key={i} className="card">
               <div className="card-image skeleton" />
             </div>
           ))}
         </div>
-        ) : (
+      ) : (
         <div className="grid-cards">
           {featuredStreamers.map((streamer, index) => {
             // 使用后端返回的字段名 (_id, avatarUrl, etc.)
@@ -153,7 +153,7 @@ export default function Home() {
             );
           })}
         </div>
-        )}
+      )}
       </div>
     </div>
   );

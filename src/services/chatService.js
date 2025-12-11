@@ -45,10 +45,10 @@ export const chatService = {
       // 如果 TTS 失败，尝试 VOICE 端点
       if (error.response?.status === 404 || error.message?.includes('NOT_FOUND')) {
         console.log('⚠️ TTS 端点不存在，尝试 VOICE 端点...');
-        return apiClient.post(API_ENDPOINTS.CHAT.VOICE, {
-          agentId,
-          text,
-        });
+    return apiClient.post(API_ENDPOINTS.CHAT.VOICE, {
+      agentId,
+      text,
+    });
       }
       throw error;
     }

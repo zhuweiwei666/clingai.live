@@ -210,8 +210,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 8px 16px;
+  gap: 2px;
+  padding: 4px 12px;
   color: var(--text-muted);
   transition: all 0.2s ease;
   position: relative;
@@ -226,7 +226,7 @@ body {
 }
 
 .bottom-nav-item span {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
 }
 
@@ -489,7 +489,7 @@ body {
 }
 
 .safe-area-bottom {
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
 }
 
 /* 聊天页面输入框 - 不需要底部导航栏的间距 */
