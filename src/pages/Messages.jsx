@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Loader2, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { agentService } from '../services/agentService';
 import { chatService } from '../services/chatService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 import { useCache } from '../hooks/useCache';
 import { CACHE_KEYS, cacheManager } from '../utils/cache';
+import MessageItem from '../components/MessageItem';
 
 export default function Messages() {
   const navigate = useNavigate();
@@ -19,7 +19,57 @@ export default function Messages() {
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
 
-  // 使用缓存Hook加载数据
+  // 优化：先快速加载localStorage数据，然后后台更新
+  const [localConversations, setLocalConversations] = useState([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // 快速加载localStorage数据
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
+      const cachedList = cacheManager.get(CACHE_KEYS.MESSAGES_LIST);
+      
+      if (cachedList && Array.isArray(cachedList) && cachedList.length > 0) {
+        // 如果有缓存，立即显示
+        setLocalConversations(cachedList);
+        setIsInitialLoad(false);
+      } else if (Object.keys(recentChats).length > 0) {
+        // 从localStorage快速构建列表
+        agentService.getList().then((response) => {
+          const agents = response.data || [];
+          const quickList = agents
+            .filter(agent => {
+              const chatData = recentChats[agent._id];
+              return chatData && chatData.lastMessage;
+            })
+            .map(agent => ({
+              agent,
+              lastMessage: recentChats[agent._id].lastMessage,
+              hasHistory: true,
+            }))
+            .sort((a, b) => {
+              if (a.lastMessage && b.lastMessage) {
+                return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at);
+              }
+              return 0;
+            });
+          
+          if (quickList.length > 0) {
+            setLocalConversations(quickList);
+            setIsInitialLoad(false);
+          }
+        }).catch(() => {
+          // 忽略错误，继续等待API加载
+        });
+      }
+    } catch (error) {
+      console.error('快速加载localStorage失败:', error);
+    }
+  }, [isAuthenticated]);
+
+  // 使用缓存Hook加载完整数据（后台更新）
   const { data: conversationsData, loading, refresh, error } = useCache(
     CACHE_KEYS.MESSAGES_LIST,
     async () => {
@@ -31,24 +81,59 @@ export default function Messages() {
         const response = await agentService.getList();
         const agents = response.data || [];
         
-        // 为每个agent检查是否有聊天历史
-        const conversationsWithHistory = await Promise.all(
+        // 优化：先检查localStorage，减少API调用
+        const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
+        
+        // 为每个agent检查是否有聊天历史（并行处理，但优先使用localStorage）
+        const conversationsWithHistory = await Promise.allSettled(
           agents.map(async (agent) => {
+            // 先检查localStorage
+            const chatData = recentChats[agent._id];
+            if (chatData && chatData.lastMessage) {
+              // 有localStorage数据，先返回，后台验证
+              const quickResult = {
+                agent,
+                lastMessage: chatData.lastMessage,
+                hasHistory: true,
+              };
+              
+              // 后台验证API（不阻塞）
+              chatService.getHistory(agent._id).then((historyResponse) => {
+                const history = historyResponse.data?.history || [];
+                if (history.length > 0) {
+                  const lastMessage = history[history.length - 1];
+                  // 更新缓存
+                  const updated = {
+                    agent,
+                    lastMessage: {
+                      content: lastMessage.content,
+                      role: lastMessage.role,
+                      created_at: lastMessage.created_at,
+                    },
+                    hasHistory: true,
+                  };
+                  // 异步更新，不阻塞当前渲染
+                  setTimeout(() => {
+                    const current = cacheManager.get(CACHE_KEYS.MESSAGES_LIST) || [];
+                    const updatedList = current.map(c => 
+                      c.agent._id === agent._id ? updated : c
+                    );
+                    cacheManager.set(CACHE_KEYS.MESSAGES_LIST, updatedList, 5 * 60 * 1000);
+                  }, 0);
+                }
+              }).catch(() => {
+                // 忽略错误，使用localStorage数据
+              });
+              
+              return quickResult;
+            }
+            
+            // 没有localStorage，调用API
             try {
               const historyResponse = await chatService.getHistory(agent._id);
               const history = historyResponse.data?.history || [];
               
               if (history.length === 0) {
-                // 没有历史记录，检查localStorage
-                const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
-                const chatData = recentChats[agent._id];
-                if (chatData && chatData.lastMessage) {
-                  return {
-                    agent,
-                    lastMessage: chatData.lastMessage,
-                    hasHistory: true,
-                  };
-                }
                 return null; // 没有对话历史，不显示
               }
               
@@ -64,23 +149,15 @@ export default function Messages() {
                 hasHistory: true,
               };
             } catch (error) {
-              // 如果API调用失败，检查localStorage
-              const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
-              const chatData = recentChats[agent._id];
-              if (chatData && chatData.lastMessage) {
-                return {
-                  agent,
-                  lastMessage: chatData.lastMessage,
-                  hasHistory: true,
-                };
-              }
               return null; // 没有对话历史，不显示
             }
           })
         );
         
-        // 过滤掉null值（没有对话历史的）
-        const validConversations = conversationsWithHistory.filter(conv => conv !== null);
+        // 处理Promise.allSettled结果
+        const validConversations = conversationsWithHistory
+          .map(result => result.status === 'fulfilled' ? result.value : null)
+          .filter(conv => conv !== null);
         
         // 按最后消息时间排序
         validConversations.sort((a, b) => {
@@ -89,6 +166,12 @@ export default function Messages() {
           }
           return 0;
         });
+        
+        // 更新本地状态
+        if (validConversations.length > 0) {
+          setLocalConversations(validConversations);
+          setIsInitialLoad(false);
+        }
         
         return validConversations;
       } catch (error) {
@@ -103,8 +186,18 @@ export default function Messages() {
     }
   );
 
-  // 确保 conversations 总是数组
-  const conversations = Array.isArray(conversationsData) ? conversationsData : [];
+  // 优先使用本地快速加载的数据，如果没有则使用API数据
+  const conversations = (localConversations.length > 0 && isInitialLoad) 
+    ? localConversations 
+    : (Array.isArray(conversationsData) ? conversationsData : []);
+  
+  // 当API数据加载完成后，更新本地状态
+  useEffect(() => {
+    if (conversationsData && Array.isArray(conversationsData) && conversationsData.length > 0) {
+      setLocalConversations(conversationsData);
+      setIsInitialLoad(false);
+    }
+  }, [conversationsData]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -244,9 +337,20 @@ export default function Messages() {
             重试
           </button>
         </div>
-      ) : loading ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="animate-spin text-accent-pink" size={32} />
+      ) : (loading && isInitialLoad && conversations.length === 0) ? (
+        // 骨架屏 - 立即显示
+        <div className="pb-24 px-2">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="glass-card mx-2 my-1.5 rounded-2xl p-4 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 rounded-full bg-dark-elevated flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="h-4 bg-dark-elevated rounded mb-2 w-3/4" />
+                  <div className="h-3 bg-dark-elevated rounded w-full" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : filteredConversations.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4">
@@ -274,64 +378,14 @@ export default function Messages() {
           onTouchEnd={handleTouchEnd}
           ref={scrollContainerRef}
         >
-          {filteredConversations.map((conv, index) => {
-            const { agent, lastMessage } = conv;
-            const avatarUrl = agent.avatarUrl || agent.avatar;
-            
-            return (
-              <motion.div
-                key={agent._id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-              >
-                <Link
-                  to={`/chat/${agent._id}`}
-                  state={{ fromMessages: true }}
-                  className="block px-4 py-3 glass-card mx-2 my-1.5 rounded-2xl hover:glass-elevated transition-all duration-300 border-b-0"
-                >
-                  <div className="flex items-center gap-3">
-                    {/* 头像 */}
-                    <div className="relative flex-shrink-0">
-                      <div className="w-14 h-14 rounded-full overflow-hidden bg-dark-elevated border-2 border-border">
-                        <img
-                          src={avatarUrl || '/placeholder-avatar.jpg'}
-                          alt={agent.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop';
-                          }}
-                        />
-                      </div>
-                      {agent.status === 'online' && (
-                        <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-dark-primary" />
-                      )}
-                    </div>
-                    
-                    {/* 消息内容 */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <h3 className="font-semibold text-text-primary truncate">{agent.name}</h3>
-                        {lastMessage && (
-                          <span className="text-xs text-text-muted flex-shrink-0 ml-2">
-                            {formatTime(lastMessage.created_at)}
-                          </span>
-                        )}
-                      </div>
-                      {lastMessage ? (
-                        <p className="text-sm text-text-secondary line-clamp-1">
-                          {lastMessage.role === 'user' ? '你: ' : ''}
-                          {lastMessage.content}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-text-muted italic">点击开始聊天</p>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
+          {filteredConversations.map((conv, index) => (
+            <MessageItem
+              key={conv.agent._id}
+              conv={conv}
+              index={index}
+              formatTime={formatTime}
+            />
+          ))}
         </div>
       )}
     </div>
