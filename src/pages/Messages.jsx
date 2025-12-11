@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Loader2, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { agentService } from '../services/agentService';
@@ -7,12 +7,18 @@ import { chatService } from '../services/chatService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 
+// 缓存键名
+const CACHE_KEY = 'messages_cache';
+const CACHE_EXPIRY = 5 * 60 * 1000; // 5分钟缓存
+
 export default function Messages() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated } = useUserStore();
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const cacheRef = useRef(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -20,54 +26,136 @@ export default function Messages() {
       navigate('/login', { state: { from: { pathname: '/messages' } } });
       return;
     }
-    loadConversations();
+    
+    // 检查缓存
+    const cached = getCachedData();
+    if (cached && !isCacheExpired(cached)) {
+      setConversations(cached.data);
+      setLoading(false);
+      // 后台刷新数据
+      loadConversations(true);
+    } else {
+      loadConversations(false);
+    }
   }, [isAuthenticated, navigate]);
 
-  const loadConversations = async () => {
+  // 监听路由变化，从聊天页面返回时刷新缓存
+  useEffect(() => {
+    if (location.state?.fromChat) {
+      // 从聊天页面返回，刷新数据
+      loadConversations(false);
+    }
+  }, [location.state]);
+
+  // 获取缓存数据
+  const getCachedData = () => {
     try {
-      setLoading(true);
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      console.error('读取缓存失败:', e);
+    }
+    return null;
+  };
+
+  // 检查缓存是否过期
+  const isCacheExpired = (cached) => {
+    if (!cached || !cached.timestamp) return true;
+    return Date.now() - cached.timestamp > CACHE_EXPIRY;
+  };
+
+  // 保存缓存
+  const saveCache = (data) => {
+    try {
+      const cacheData = {
+        data,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      cacheRef.current = cacheData;
+    } catch (e) {
+      console.error('保存缓存失败:', e);
+    }
+  };
+
+  const loadConversations = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      
       // 获取所有AI伴侣
       const response = await agentService.getList();
       const agents = response.data || [];
       
-      // 简化版本：只显示所有AI伴侣，不加载历史记录（避免性能问题）
-      // 用户点击进入聊天页面时会自动加载历史记录
-      const conversationsList = agents.map((agent) => ({
-        agent,
-        lastMessage: null,
-        hasHistory: false,
-      }));
-      
-      // 尝试从localStorage获取最近聊天的记录
-      try {
-        const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
-        conversationsList.forEach((conv) => {
-          const chatData = recentChats[conv.agent._id];
-          if (chatData && chatData.lastMessage) {
-            conv.lastMessage = chatData.lastMessage;
-            conv.hasHistory = true;
+      // 为每个agent检查是否有聊天历史
+      const conversationsWithHistory = await Promise.all(
+        agents.map(async (agent) => {
+          try {
+            const historyResponse = await chatService.getHistory(agent._id);
+            const history = historyResponse.data?.history || [];
+            
+            if (history.length === 0) {
+              // 没有历史记录，检查localStorage
+              const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
+              const chatData = recentChats[agent._id];
+              if (chatData && chatData.lastMessage) {
+                return {
+                  agent,
+                  lastMessage: chatData.lastMessage,
+                  hasHistory: true,
+                };
+              }
+              return null; // 没有对话历史，不显示
+            }
+            
+            // 有历史记录，获取最后一条消息
+            const lastMessage = history[history.length - 1];
+            return {
+              agent,
+              lastMessage: {
+                content: lastMessage.content,
+                role: lastMessage.role,
+                created_at: lastMessage.created_at,
+              },
+              hasHistory: true,
+            };
+          } catch (error) {
+            // 如果API调用失败，检查localStorage
+            const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
+            const chatData = recentChats[agent._id];
+            if (chatData && chatData.lastMessage) {
+              return {
+                agent,
+                lastMessage: chatData.lastMessage,
+                hasHistory: true,
+              };
+            }
+            return null; // 没有对话历史，不显示
           }
-        });
-      } catch (e) {
-        // localStorage读取失败，忽略
-      }
+        })
+      );
       
-      // 按最后消息时间排序，有消息的在前
-      conversationsList.sort((a, b) => {
-        if (a.hasHistory && !b.hasHistory) return -1;
-        if (!a.hasHistory && b.hasHistory) return 1;
+      // 过滤掉null值（没有对话历史的）
+      const validConversations = conversationsWithHistory.filter(conv => conv !== null);
+      
+      // 按最后消息时间排序
+      validConversations.sort((a, b) => {
         if (a.lastMessage && b.lastMessage) {
           return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at);
         }
         return 0;
       });
       
-      setConversations(conversationsList);
+      setConversations(validConversations);
+      saveCache(validConversations);
     } catch (error) {
       console.error('加载消息列表失败:', error);
-      toast.error('加载失败，请稍后重试');
+      if (!silent) {
+        toast.error('加载失败，请稍后重试');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -85,17 +173,15 @@ export default function Messages() {
     const date = new Date(dateString);
     const now = new Date();
     const diff = now - date;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const minutes = Math.floor(diff / 60000);
     
-    if (days === 0) {
-      return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    } else if (days === 1) {
-      return '昨天';
-    } else if (days < 7) {
-      return `${days}天前`;
-    } else {
-      return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-    }
+    if (minutes < 1) return '刚刚';
+    if (minutes < 60) return `${minutes}分钟前`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}小时前`;
+    
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   if (!isAuthenticated) {
@@ -137,7 +223,7 @@ export default function Messages() {
           {!searchQuery && (
             <Link
               to="/"
-              className="mt-4 px-6 py-2 bg-gradient-accent rounded-full text-white font-semibold hover:opacity-90 transition-opacity"
+              className="mt-4 px-6 py-2 gradient-bg rounded-full text-white font-semibold hover:opacity-90 transition-opacity"
             >
               去首页
             </Link>
@@ -146,7 +232,7 @@ export default function Messages() {
       ) : (
         <div className="pb-24">
           {filteredConversations.map((conv, index) => {
-            const { agent, lastMessage, hasHistory } = conv;
+            const { agent, lastMessage } = conv;
             const avatarUrl = agent.avatarUrl || agent.avatar;
             
             return (
@@ -158,6 +244,7 @@ export default function Messages() {
               >
                 <Link
                   to={`/chat/${agent._id}`}
+                  state={{ fromMessages: true }}
                   className="block px-4 py-3 hover:bg-dark-elevated/50 transition-colors border-b border-border/30"
                 >
                   <div className="flex items-center gap-3">

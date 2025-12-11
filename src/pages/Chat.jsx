@@ -175,6 +175,9 @@ export default function Chat() {
         });
       }
       
+      // 更新localStorage中的最近聊天记录
+      updateRecentChats(userMessage, aiReply);
+      
       if (requestWithImage) {
         setImageMode(false);
         requestImage();
@@ -274,6 +277,34 @@ export default function Chat() {
     }, 100);
   };
 
+  // 更新最近聊天记录到localStorage
+  const updateRecentChats = (userMessage, aiReply) => {
+    try {
+      const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
+      const lastMessage = aiReply ? {
+        content: aiReply,
+        role: 'assistant',
+        created_at: new Date().toISOString(),
+      } : {
+        content: userMessage.content,
+        role: 'user',
+        created_at: userMessage.created_at,
+      };
+      
+      recentChats[id] = {
+        lastMessage,
+        updatedAt: Date.now(),
+      };
+      
+      localStorage.setItem('recentChats', JSON.stringify(recentChats));
+      
+      // 清除消息列表缓存，强制刷新
+      localStorage.removeItem('messages_cache');
+    } catch (e) {
+      console.error('更新最近聊天记录失败:', e);
+    }
+  };
+
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -310,7 +341,7 @@ export default function Chat() {
       <div className="glass-dark px-2 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 safe-area-top border-b border-border sticky top-0 z-50">
         {/* 返回按钮 - 移动端优化，更大更明显 */}
         <button 
-          onClick={() => navigate('/messages')} 
+          onClick={() => navigate('/messages', { state: { fromChat: true } })} 
           className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary active:bg-dark-elevated rounded-xl transition-all touch-manipulation"
           aria-label="返回"
         >
