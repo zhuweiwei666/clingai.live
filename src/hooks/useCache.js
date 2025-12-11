@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { cacheManager, CACHE_KEYS } from '../utils/cache';
+import { cacheManager } from '../utils/cache';
 
 /**
  * 带缓存的异步数据加载Hook
@@ -21,9 +21,13 @@ export function useCache(cacheKey, fetchFn, options = {}) {
   // 优化：立即从缓存初始化数据
   const [data, setData] = useState(() => {
     if (enableCache && immediate) {
-      const cached = cacheManager.get(cacheKey);
-      if (cached) {
-        return cached;
+      try {
+        const cached = cacheManager.get(cacheKey);
+        if (cached !== null && cached !== undefined) {
+          return cached;
+        }
+      } catch (error) {
+        console.error('初始化缓存读取失败:', error);
       }
     }
     return null;
@@ -31,9 +35,13 @@ export function useCache(cacheKey, fetchFn, options = {}) {
   const [loading, setLoading] = useState(() => {
     // 如果有缓存数据，不显示loading
     if (enableCache && immediate) {
-      const cached = cacheManager.get(cacheKey);
-      if (cached) {
-        return false; // 有缓存，不显示loading
+      try {
+        const cached = cacheManager.get(cacheKey);
+        if (cached !== null && cached !== undefined) {
+          return false; // 有缓存，不显示loading
+        }
+      } catch (error) {
+        console.error('初始化loading状态检查失败:', error);
       }
     }
     return immediate;

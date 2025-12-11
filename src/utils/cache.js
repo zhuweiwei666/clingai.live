@@ -28,28 +28,38 @@ class CacheManager {
 
   // 获取缓存
   get(key) {
-    // 先从内存获取
-    const cached = this.cache.get(key);
-    if (cached && Date.now() < cached.expiry) {
-      return cached.data;
-    }
-    
-    // 内存中没有或过期，尝试从localStorage获取
     try {
-      const stored = localStorage.getItem(`cache_${key}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Date.now() < parsed.expiry) {
-          // 恢复到内存缓存
-          this.cache.set(key, parsed);
-          return parsed.data;
-        } else {
-          // 过期，删除
+      // 先从内存获取
+      const cached = this.cache.get(key);
+      if (cached && Date.now() < cached.expiry) {
+        return cached.data;
+      }
+      
+      // 内存中没有或过期，尝试从localStorage获取
+      try {
+        const stored = localStorage.getItem(`cache_${key}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && Date.now() < parsed.expiry) {
+            // 恢复到内存缓存
+            this.cache.set(key, parsed);
+            return parsed.data;
+          } else {
+            // 过期，删除
+            localStorage.removeItem(`cache_${key}`);
+          }
+        }
+      } catch (e) {
+        console.warn('从localStorage读取缓存失败:', e);
+        // 清理可能损坏的缓存
+        try {
           localStorage.removeItem(`cache_${key}`);
+        } catch (cleanupError) {
+          // 忽略清理错误
         }
       }
-    } catch (e) {
-      console.warn('从localStorage读取缓存失败:', e);
+    } catch (error) {
+      console.error('获取缓存失败:', error);
     }
     
     return null;
