@@ -78,7 +78,7 @@ export default function Register() {
               animate={{ scale: 1 }}
               transition={{ type: "spring", duration: 0.6, delay: 0.1 }}
             >
-              <div className="w-20 h-20 gradient-bg rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-glow">
+              <div className="w-20 h-20 gradient-bg rounded-3xl flex items-center justify-center shadow-2xl">
                 <Sparkles className="text-white" size={40} />
               </div>
             </motion.div>
