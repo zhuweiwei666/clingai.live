@@ -356,10 +356,11 @@ export default function Chat() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-end gap-1`}
+                  className={`flex ${isUser ? 'justify-end' : 'justify-start'} items-end`}
+                  style={{ gap: '6px' }}
                 >
                   {!isUser && agent && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ marginBottom: '2px' }}>
                       <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
                     </div>
                   )}
@@ -455,7 +456,7 @@ export default function Chat() {
                   
                   {/* 用户头像 - 显示在消息右侧 */}
                   {isUser && user && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ marginBottom: '2px' }}>
                       {user.avatar || user.picture ? (
                         <img 
                           src={user.avatar || user.picture} 
@@ -482,8 +483,8 @@ export default function Chat() {
         
           {/* 发送中指示器 - WhatsApp风格 */}
         {sending && (
-            <div className="flex justify-start items-end gap-1">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
+            <div className="flex justify-start items-end" style={{ gap: '6px' }}>
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ marginBottom: '2px' }}>
               {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
             </div>
               <div className="bg-[#202c33] rounded-lg rounded-tl-none px-3 py-2 shadow-sm">
@@ -505,8 +506,8 @@ export default function Chat() {
         
         {/* 生成图片中 */}
         {generatingImage && (
-            <div className="flex justify-start items-end gap-1">
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
+            <div className="flex justify-start items-end" style={{ gap: '6px' }}>
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ marginBottom: '2px' }}>
               {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
             </div>
               <div className="bg-[#202c33] rounded-lg rounded-tl-none px-3 py-2 text-[#8696a0] text-xs">
