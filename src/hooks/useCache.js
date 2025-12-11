@@ -21,6 +21,13 @@ export function useCache(cacheKey, fetchFn, options = {}) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(immediate);
   const [error, setError] = useState(null);
+  
+  // 确保初始状态正确
+  useEffect(() => {
+    if (!immediate && data === null && !loading) {
+      setData([]); // 设置默认值，避免null导致渲染问题
+    }
+  }, [immediate, data, loading]);
   const abortControllerRef = useRef(null);
 
   const loadData = useCallback(async (force = false) => {

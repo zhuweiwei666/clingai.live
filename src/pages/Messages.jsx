@@ -19,8 +19,8 @@ export default function Messages() {
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
 
-  // 使用缓存Hook加载数据（只在已登录时加载）
-  const { data: conversations = [], loading, refresh, error } = useCache(
+  // 使用缓存Hook加载数据
+  const { data: conversationsData, loading, refresh, error } = useCache(
     CACHE_KEYS.MESSAGES_LIST,
     async () => {
       if (!isAuthenticated) {
@@ -103,13 +103,12 @@ export default function Messages() {
     }
   );
 
+  // 确保 conversations 总是数组
+  const conversations = Array.isArray(conversationsData) ? conversationsData : [];
+
   useEffect(() => {
     if (!isAuthenticated) {
-      // 延迟导航，避免立即返回null导致黑屏
-      const timer = setTimeout(() => {
-        navigate('/login', { state: { from: { pathname: '/messages' } } });
-      }, 100);
-      return () => clearTimeout(timer);
+      navigate('/login', { state: { from: { pathname: '/messages' } } });
     }
   }, [isAuthenticated, navigate]);
 
@@ -190,17 +189,20 @@ export default function Messages() {
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  // 如果未登录，显示加载状态而不是返回null
+  // 如果未登录，显示加载状态
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-dark-primary flex items-center justify-center">
-        <Loader2 className="animate-spin text-accent-pink" size={32} />
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="animate-spin text-accent-pink" size={32} />
+          <p className="text-text-secondary text-sm">正在跳转到登录页面...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-dark-primary flex flex-col">
+    <div className="min-h-screen bg-dark-primary flex flex-col" style={{ minHeight: '100vh' }}>
       {/* 下拉刷新指示器 */}
       {isRefreshing && (
         <div className="fixed top-[60px] left-0 right-0 z-50 flex items-center justify-center py-2 bg-dark-primary/95 backdrop-blur-lg">
