@@ -293,10 +293,10 @@ export default function Chat() {
 
   if (loading && !agent) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0b141a]">
+      <div className="flex items-center justify-center h-screen bg-dark-primary">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-[#202c33] animate-pulse" />
-          <p className="text-[#8696a0] text-sm">加载中...</p>
+          <div className="w-16 h-16 rounded-full bg-dark-elevated animate-pulse" />
+          <p className="text-text-secondary text-sm">加载中...</p>
         </div>
       </div>
     );
@@ -311,39 +311,36 @@ export default function Chat() {
         {/* 返回按钮 - 移动端优化，更大更明显 */}
         <button 
           onClick={() => navigate('/messages')} 
-          className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-[#8696a0] hover:text-white active:bg-[#2a3942] rounded-lg transition-all touch-manipulation"
+          className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary active:bg-dark-elevated rounded-lg transition-all touch-manipulation"
           aria-label="返回"
         >
           <ArrowLeft size={26} className="sm:w-6 sm:h-6" />
         </button>
         {agent && (
           <div className="flex-1 flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden flex-shrink-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden flex-shrink-0 border-2 border-border">
               <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
-      </div>
+            </div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-medium text-white text-base sm:text-lg truncate">{agent.name}</h2>
-              <p className="text-xs text-[#8696a0]">在线</p>
+              <h2 className="font-semibold text-text-primary text-base sm:text-lg truncate">{agent.name}</h2>
+              <p className="text-xs text-text-muted">在线</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* 消息列表 - WhatsApp风格背景，移动端优化 */}
+      {/* 消息列表 - 统一风格背景 */}
       <div 
         ref={chatContainerRef} 
-        className="flex-1 overflow-y-auto bg-[#0b141a] bg-chat-pattern"
-        style={{
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'grid\' width=\'100\' height=\'100\' patternUnits=\'userSpaceOnUse\'%3E%3Cpath d=\'M 100 0 L 0 0 0 100\' fill=\'none\' stroke=\'%231a2329\' stroke-width=\'1\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'100\' height=\'100\' fill=\'url(%23grid)\'/%3E%3C/svg%3E")',
-        }}
+        className="flex-1 overflow-y-auto bg-dark-primary"
       >
         <div className="px-3 sm:px-4 py-2 sm:py-3 space-y-1.5 sm:space-y-1 min-h-full flex flex-col">
           {messages.length === 0 && !loading && agent && (
             <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
-              <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
+              <div className="w-20 h-20 rounded-full overflow-hidden mb-4 border-2 border-border">
                 <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
               </div>
-              <p className="text-[#8696a0] text-base mb-6 max-w-xs">{agent.description || '很高兴认识你~'}</p>
+              <p className="text-text-secondary text-base mb-6 max-w-xs">{agent.description || '很高兴认识你~'}</p>
             </div>
           )}
 
@@ -364,36 +361,20 @@ export default function Chat() {
                   style={{ gap: '6px' }}
                 >
                   {!isUser && agent && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ marginBottom: '2px' }}>
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border" style={{ marginBottom: '2px' }}>
                       <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
                     </div>
                   )}
                   
                   <div className={`max-w-[75%] sm:max-w-[65%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                     {displayContent && (
-                      <div className={`relative px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg shadow-sm ${
+                      <div className={`relative px-4 py-3 rounded-2xl shadow-lg ${
                         isUser 
-                          ? 'bg-[#005c4b] text-white rounded-tr-none' // WhatsApp绿色
-                          : 'bg-[#202c33] text-[#e9edef] rounded-tl-none' // WhatsApp白色
+                          ? 'bg-gradient-to-br from-accent-start to-accent-end text-white' // 统一渐变
+                          : 'bg-dark-card text-text-primary border border-border' // 统一卡片样式
                       }`}>
-                        {/* 消息气泡尾巴 */}
-                        {isUser ? (
-                          <div className="absolute right-0 bottom-0 w-3 h-3 overflow-hidden">
-                            <div className="absolute right-0 bottom-0 w-6 h-6 bg-[#0b141a] rounded-tl-full" 
-                              style={{ transform: 'translate(50%, 50%)' }} />
-                            <div className="absolute right-0 bottom-0 w-6 h-6 bg-[#005c4b] rounded-tl-full" 
-                              style={{ transform: 'translate(50%, 50%) scale(0.7)' }} />
-                          </div>
-                        ) : (
-                          <div className="absolute left-0 bottom-0 w-3 h-3 overflow-hidden">
-                            <div className="absolute left-0 bottom-0 w-6 h-6 bg-[#0b141a] rounded-tr-full" 
-                              style={{ transform: 'translate(-50%, 50%)' }} />
-                            <div className="absolute left-0 bottom-0 w-6 h-6 bg-[#202c33] rounded-tr-full" 
-                              style={{ transform: 'translate(-50%, 50%) scale(0.7)' }} />
-                          </div>
-                        )}
                         
-                        <p className="text-[14.2px] leading-[19px] whitespace-pre-wrap break-words relative z-10">
+                        <p className="text-[15px] leading-[21px] whitespace-pre-wrap break-words relative z-10">
                           {displayContent}
                           {isTyping && (
                             <span className="inline-block w-1 h-4 bg-current ml-0.5 animate-pulse" />
@@ -404,7 +385,7 @@ export default function Chat() {
                     
                     {/* 图片显示 */}
                     {message.imageUrl && (
-                      <div className={`mt-1 rounded-lg overflow-hidden max-w-[280px] ${isUser ? 'rounded-tr-none' : 'rounded-tl-none'}`}>
+                      <div className="mt-2 rounded-xl overflow-hidden max-w-[280px] border border-border shadow-lg">
                         <img 
                           src={message.imageUrl} 
                           alt="AI生成图片" 
@@ -414,19 +395,19 @@ export default function Chat() {
                   </div>
                 )}
                     
-                    {/* 时间戳和状态 - WhatsApp风格 */}
-                    <div className={`flex items-center gap-1 mt-0.5 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
-                      <span className="text-[11.5px] text-[#8696a0]">
+                    {/* 时间戳和状态 */}
+                    <div className={`flex items-center gap-1.5 mt-1 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
+                      <span className="text-[11px] text-text-muted">
                         {formatTime(message.created_at)}
                       </span>
                       {isUser && (
-                        <span className="text-[#8696a0]">
+                        <span className="text-text-muted">
                           {message.status === 'sending' ? (
-                            <span className="text-[#8696a0]">⏱</span>
+                            <span className="text-text-muted">⏱</span>
                           ) : message.status === 'sent' ? (
-                            <Check size={16} className="text-[#8696a0]" />
+                            <Check size={14} className="text-text-muted" />
                           ) : message.status === 'read' ? (
-                            <CheckCheck size={16} className="text-[#53bdeb]" />
+                            <CheckCheck size={14} className="text-accent-pink" />
                           ) : (
                             <span className="text-red-500">✕</span>
                           )}
@@ -445,7 +426,7 @@ export default function Chat() {
                         }
                       }}
                       disabled={loadingVoiceId === message.id}
-                        className="mt-1 px-3 py-1.5 bg-[#202c33] hover:bg-[#2a3942] rounded-lg text-xs text-[#8696a0] hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2"
+                        className="mt-1.5 px-3 py-1.5 bg-dark-elevated hover:bg-dark-card border border-border rounded-lg text-xs text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
                       {loadingVoiceId === message.id ? (
                           <>⏳ 生成中...</>
@@ -460,7 +441,7 @@ export default function Chat() {
                   
                   {/* 用户头像 - 显示在消息右侧 */}
                   {isUser && user && (
-                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ marginBottom: '2px' }}>
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border" style={{ marginBottom: '2px' }}>
                       {user.avatar || user.picture ? (
                         <img 
                           src={user.avatar || user.picture} 
@@ -468,11 +449,11 @@ export default function Chat() {
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             e.target.style.display = 'none';
-                            e.target.parentElement.innerHTML = `<span class="text-white text-xs font-semibold flex items-center justify-center w-full h-full bg-[#005c4b]">${(user.username || user.name || '我')?.[0]?.toUpperCase() || 'U'}</span>`;
+                            e.target.parentElement.innerHTML = `<span class="text-white text-xs font-semibold flex items-center justify-center w-full h-full gradient-bg">${(user.username || user.name || '我')?.[0]?.toUpperCase() || 'U'}</span>`;
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full bg-[#005c4b] flex items-center justify-center">
+                        <div className="w-full h-full gradient-bg flex items-center justify-center">
                           <span className="text-white text-xs font-semibold">
                             {(user.username || user.name || '我')?.[0]?.toUpperCase() || 'U'}
                           </span>
@@ -485,13 +466,13 @@ export default function Chat() {
             })}
         </AnimatePresence>
         
-          {/* 发送中指示器 - WhatsApp风格 */}
+          {/* 发送中指示器 */}
         {sending && (
             <div className="flex justify-start items-end" style={{ gap: '6px' }}>
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ marginBottom: '2px' }}>
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border" style={{ marginBottom: '2px' }}>
               {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
             </div>
-              <div className="bg-[#202c33] rounded-lg rounded-tl-none px-3 py-2 shadow-sm">
+              <div className="bg-dark-card border border-border rounded-2xl rounded-tl-md px-4 py-3 shadow-lg">
               <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
                     <div
@@ -511,10 +492,11 @@ export default function Chat() {
         {/* 生成图片中 */}
         {generatingImage && (
             <div className="flex justify-start items-end" style={{ gap: '6px' }}>
-              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0" style={{ marginBottom: '2px' }}>
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border" style={{ marginBottom: '2px' }}>
               {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
             </div>
-              <div className="bg-[#202c33] rounded-lg rounded-tl-none px-3 py-2 text-[#8696a0] text-xs">
+              <div className="bg-dark-card border border-border rounded-2xl rounded-tl-md px-4 py-3 text-text-secondary text-sm flex items-center gap-2">
+                <Loader2 className="animate-spin text-accent-pink" size={14} />
                 生成图片中...
               </div>
             </div>
@@ -524,10 +506,10 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* 输入框 - WhatsApp风格，移动端优化 */}
-      <div className="bg-[#202c33] px-2 sm:px-4 py-2 sm:py-3 chat-input-area safe-area-bottom border-t border-[#313d45] sticky bottom-0 z-50">
+      {/* 输入框 - 统一风格，移动端优化 */}
+      <div className="glass-dark px-2 sm:px-4 py-2 sm:py-3 chat-input-area safe-area-bottom border-t border-border sticky bottom-0 z-50">
         {imageMode && (
-          <div className="px-3 py-1.5 mb-2 text-xs text-[#8696a0] bg-[#2a3942] rounded-lg mx-2">
+          <div className="px-3 py-1.5 mb-2 text-xs text-text-secondary bg-dark-elevated border border-border rounded-lg mx-2">
             📷 图片模式已开启
           </div>
         )}
@@ -536,10 +518,10 @@ export default function Chat() {
           {/* 附件按钮 - 移动端优化 */}
           <button
             onClick={() => setImageMode(!imageMode)}
-            className="p-3 sm:p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-[#8696a0] hover:text-white active:bg-[#2a3942] rounded-lg transition-all touch-manipulation"
+            className="p-3 sm:p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary active:bg-dark-elevated rounded-xl transition-all touch-manipulation"
             aria-label={imageMode ? "关闭图片模式" : "附件"}
           >
-            {imageMode ? <Image size={24} className="text-blue-400" /> : <Paperclip size={24} />}
+            {imageMode ? <Image size={24} className="text-accent-pink" /> : <Paperclip size={24} />}
           </button>
           
           {/* 输入框 - 移动端优化 */}
@@ -556,7 +538,7 @@ export default function Chat() {
                 } 
               }}
               placeholder="输入消息"
-              className="w-full px-4 py-3 sm:py-2.5 bg-[#2a3942] text-white placeholder-[#8696a0] rounded-full text-[15px] sm:text-base focus:outline-none focus:ring-2 focus:ring-[#005c4b]/50 transition-all"
+              className="w-full px-4 py-3 sm:py-2.5 bg-dark-elevated border border-border text-text-primary placeholder-text-muted rounded-2xl text-[15px] sm:text-base focus:outline-none focus:ring-2 focus:ring-accent-start/50 focus:border-accent-start transition-all"
               disabled={sending || generatingImage}
             />
           </div>
@@ -565,17 +547,17 @@ export default function Chat() {
           <button
             onClick={() => sendMessage()}
             disabled={!inputMessage.trim() || sending || generatingImage}
-            className={`p-3 sm:p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation active:scale-95 ${
+            className={`p-3 sm:p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-2xl transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation active:scale-95 ${
               inputMessage.trim()
-                ? 'bg-[#005c4b] hover:bg-[#006b58] text-white'
-                : 'bg-[#2a3942] text-[#8696a0]'
+                ? 'gradient-bg text-white shadow-lg'
+                : 'bg-dark-elevated border border-border text-text-muted'
             }`}
             aria-label="发送"
           >
             {sending ? (
-              <span className="text-white text-lg">⏳</span>
+              <Loader2 className="animate-spin text-white" size={20} />
             ) : (
-              <Send size={22} className={inputMessage.trim() ? 'text-white' : 'text-[#8696a0]'} />
+              <Send size={22} className={inputMessage.trim() ? 'text-white' : 'text-text-muted'} />
             )}
           </button>
         </div>
