@@ -19,10 +19,13 @@ export default function Messages() {
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
 
-  // 使用缓存Hook加载数据
+  // 使用缓存Hook加载数据（只在已登录时加载）
   const { data: conversations = [], loading, refresh } = useCache(
     CACHE_KEYS.MESSAGES_LIST,
     async () => {
+      if (!isAuthenticated) {
+        return [];
+      }
       // 获取所有AI伴侣
       const response = await agentService.getList();
       const agents = response.data || [];
@@ -91,6 +94,7 @@ export default function Messages() {
     {
       ttl: 5 * 60 * 1000, // 5分钟缓存
       enableCache: true,
+      immediate: isAuthenticated, // 只在已登录时立即加载
     }
   );
 

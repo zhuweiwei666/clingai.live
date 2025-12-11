@@ -92,7 +92,8 @@ export function useCache(cacheKey, fetchFn, options = {}) {
         abortControllerRef.current.abort();
       }
     };
-  }, [loadData, immediate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [immediate]);
 
   return {
     data,
