@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Mail, Calendar, Edit2, Save, X, Settings, ChevronRight, LogOut, Heart, History, HelpCircle, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { userService } from '../services/userService';
+import { walletService } from '../services/walletService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
