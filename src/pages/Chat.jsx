@@ -6,6 +6,8 @@ import { chatService } from '../services/chatService';
 import { agentService } from '../services/agentService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
+import { useCache } from '../hooks/useCache';
+import { CACHE_KEYS, cacheManager } from '../utils/cache';
 
 export default function Chat() {
   const { id } = useParams();
@@ -77,29 +79,63 @@ export default function Chat() {
     };
   }, [typingMessage]);
 
-  const loadAgent = async () => {
-    try {
+  // 使用缓存加载AI伴侣信息
+  const { data: agentData } = useCache(
+    CACHE_KEYS.AGENT_DETAIL(id),
+    async () => {
       const response = await agentService.getDetail(id);
-      setAgent(response.data);
-    } catch (error) {
-      console.error('加载AI伴侣信息失败:', error);
+      return response.data;
+    },
+    {
+      ttl: 30 * 60 * 1000, // 30分钟缓存
+      enableCache: true,
     }
-  };
+  );
+
+  useEffect(() => {
+    if (agentData) {
+      setAgent(agentData);
+    }
+  }, [agentData]);
 
   const loadHistory = async () => {
     try {
       setLoading(true);
+      
+      // 先检查缓存
+      const cachedHistory = cacheManager.get(CACHE_KEYS.CHAT_HISTORY(id));
+      if (cachedHistory) {
+        setMessages(cachedHistory);
+        setLoading(false);
+        // 后台刷新
+        loadHistoryFromAPI();
+        return;
+      }
+      
+      await loadHistoryFromAPI();
+    } catch (error) {
+      console.error('加载聊天记录失败:', error);
+      setLoading(false);
+    }
+  };
+
+  const loadHistoryFromAPI = async () => {
+    try {
       const response = await chatService.getHistory(id);
       const historyData = response.data?.history || [];
-      setMessages(historyData.map((msg, idx) => ({
+      const messages = historyData.map((msg, idx) => ({
         id: `history-${idx}`,
         content: msg.content,
         role: msg.role,
         audioUrl: msg.audioUrl,
         imageUrl: msg.imageUrl,
         created_at: msg.created_at || new Date().toISOString(),
-        status: 'read', // WhatsApp风格：已读状态
-      })));
+        status: 'read',
+      }));
+      
+      setMessages(messages);
+      // 保存到缓存
+      cacheManager.set(CACHE_KEYS.CHAT_HISTORY(id), messages, 5 * 60 * 1000);
     } catch (error) {
       console.error('加载聊天记录失败:', error);
     } finally {
@@ -177,6 +213,9 @@ export default function Chat() {
       
       // 更新localStorage中的最近聊天记录
       updateRecentChats(userMessage, aiReply);
+      
+      // 清除消息列表缓存，确保返回时显示最新数据
+      cacheManager.delete(CACHE_KEYS.MESSAGES_LIST);
       
       if (requestWithImage) {
         setImageMode(false);

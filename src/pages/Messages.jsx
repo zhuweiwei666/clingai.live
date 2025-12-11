@@ -6,84 +6,23 @@ import { agentService } from '../services/agentService';
 import { chatService } from '../services/chatService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
-
-// 缓存键名
-const CACHE_KEY = 'messages_cache';
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5分钟缓存
+import { useCache } from '../hooks/useCache';
+import { CACHE_KEYS, cacheManager } from '../utils/cache';
 
 export default function Messages() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated } = useUserStore();
-  const [conversations, setConversations] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const cacheRef = useRef(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      toast.error('请先登录');
-      navigate('/login', { state: { from: { pathname: '/messages' } } });
-      return;
-    }
-    
-    // 检查缓存
-    const cached = getCachedData();
-    if (cached && !isCacheExpired(cached)) {
-      setConversations(cached.data);
-      setLoading(false);
-      // 后台刷新数据
-      loadConversations(true);
-    } else {
-      loadConversations(false);
-    }
-  }, [isAuthenticated, navigate]);
-
-  // 监听路由变化，从聊天页面返回时刷新缓存
-  useEffect(() => {
-    if (location.state?.fromChat) {
-      // 从聊天页面返回，刷新数据
-      loadConversations(false);
-    }
-  }, [location.state]);
-
-  // 获取缓存数据
-  const getCachedData = () => {
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch (e) {
-      console.error('读取缓存失败:', e);
-    }
-    return null;
-  };
-
-  // 检查缓存是否过期
-  const isCacheExpired = (cached) => {
-    if (!cached || !cached.timestamp) return true;
-    return Date.now() - cached.timestamp > CACHE_EXPIRY;
-  };
-
-  // 保存缓存
-  const saveCache = (data) => {
-    try {
-      const cacheData = {
-        data,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-      cacheRef.current = cacheData;
-    } catch (e) {
-      console.error('保存缓存失败:', e);
-    }
-  };
-
-  const loadConversations = async (silent = false) => {
-    try {
-      if (!silent) setLoading(true);
-      
+  // 使用缓存Hook加载数据
+  const { data: conversations = [], loading, refresh } = useCache(
+    CACHE_KEYS.MESSAGES_LIST,
+    async () => {
       // 获取所有AI伴侣
       const response = await agentService.getList();
       const agents = response.data || [];
@@ -147,17 +86,75 @@ export default function Messages() {
         return 0;
       });
       
-      setConversations(validConversations);
-      saveCache(validConversations);
-    } catch (error) {
-      console.error('加载消息列表失败:', error);
-      if (!silent) {
-        toast.error('加载失败，请稍后重试');
+      return validConversations;
+    },
+    {
+      ttl: 5 * 60 * 1000, // 5分钟缓存
+      enableCache: true,
+    }
+  );
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      toast.error('请先登录');
+      navigate('/login', { state: { from: { pathname: '/messages' } } });
+      return;
+    }
+  }, [isAuthenticated, navigate]);
+
+  // 监听路由变化，从聊天页面返回时刷新缓存
+  useEffect(() => {
+    if (location.state?.fromChat) {
+      // 从聊天页面返回，清除缓存并刷新
+      cacheManager.delete(CACHE_KEYS.MESSAGES_LIST);
+      refresh();
+    }
+  }, [location.state, refresh]);
+
+  // 下拉刷新处理
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndY.current = e.touches[0].clientY;
+    const scrollTop = scrollContainerRef.current?.scrollTop || 0;
+    
+    // 只有在顶部且向下滑动时才显示刷新提示
+    if (scrollTop === 0 && touchEndY.current > touchStartY.current) {
+      const pullDistance = touchEndY.current - touchStartY.current;
+      if (pullDistance > 50 && !isRefreshing) {
+        // 可以显示刷新提示
       }
-    } finally {
-      if (!silent) setLoading(false);
     }
   };
+
+  const handleTouchEnd = () => {
+    const scrollTop = scrollContainerRef.current?.scrollTop || 0;
+    const pullDistance = touchEndY.current - touchStartY.current;
+    
+    // 在顶部且下拉超过80px时触发刷新
+    if (scrollTop === 0 && pullDistance > 80 && !isRefreshing) {
+      handleRefresh();
+    }
+    
+    touchStartY.current = 0;
+    touchEndY.current = 0;
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refresh();
+      toast.success('刷新成功');
+    } catch (error) {
+      toast.error('刷新失败');
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
+  const loadConversations = async (silent = false) => {
 
   const filteredConversations = conversations.filter((conv) => {
     if (!searchQuery) return true;
@@ -189,7 +186,23 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-screen bg-dark-primary">
+    <div 
+      className="min-h-screen bg-dark-primary"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      ref={scrollContainerRef}
+    >
+      {/* 下拉刷新指示器 */}
+      {isRefreshing && (
+        <div className="fixed top-[60px] left-0 right-0 z-50 flex items-center justify-center py-2 bg-dark-primary/95 backdrop-blur-lg">
+          <div className="flex items-center gap-2 text-text-secondary text-sm">
+            <div className="w-4 h-4 border-2 border-accent-pink border-t-transparent rounded-full animate-spin" />
+            <span>刷新中...</span>
+          </div>
+        </div>
+      )}
+
       {/* 搜索栏 */}
       <div className="sticky top-[60px] z-40 bg-dark-primary/95 backdrop-blur-lg border-b border-border/50">
         <div className="p-4">

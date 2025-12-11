@@ -1,20 +1,33 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Crown, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { agentService } from '../services/agentService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
+import { useCache } from '../hooks/useCache';
+import { CACHE_KEYS } from '../utils/cache';
 
 export default function Home() {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserStore();
-  const [featuredStreamers, setFeaturedStreamers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
 
-  useEffect(() => {
-    loadFeaturedStreamers();
-  }, []);
+  // 使用缓存Hook加载数据
+  const { data: featuredStreamers = [], loading, refresh } = useCache(
+    CACHE_KEYS.AGENTS_LIST,
+    async () => {
+      const response = await agentService.getList();
+      return response.data || [];
+    },
+    {
+      ttl: 10 * 60 * 1000, // 10分钟缓存
+      enableCache: true,
+    }
+  );
 
   const handleStreamerClick = (streamerId, e) => {
     if (!isAuthenticated) {
@@ -24,18 +37,46 @@ export default function Home() {
     }
   };
 
-  const loadFeaturedStreamers = async () => {
+  // 下拉刷新处理
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndY.current = e.touches[0].clientY;
+    const scrollTop = scrollContainerRef.current?.scrollTop || 0;
+    
+    // 只有在顶部且向下滑动时才显示刷新提示
+    if (scrollTop === 0 && touchEndY.current > touchStartY.current) {
+      const pullDistance = touchEndY.current - touchStartY.current;
+      if (pullDistance > 50 && !isRefreshing) {
+        // 可以显示刷新提示
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const scrollTop = scrollContainerRef.current?.scrollTop || 0;
+    const pullDistance = touchEndY.current - touchStartY.current;
+    
+    // 在顶部且下拉超过80px时触发刷新
+    if (scrollTop === 0 && pullDistance > 80 && !isRefreshing) {
+      handleRefresh();
+    }
+    
+    touchStartY.current = 0;
+    touchEndY.current = 0;
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
     try {
-      setLoading(true);
-      const response = await agentService.getList();
-      // 后端返回: { success, data: [...] }
-      // 显示所有AI伴侣
-      const agents = response.data || [];
-      setFeaturedStreamers(agents);
+      await refresh();
+      toast.success('刷新成功');
     } catch (error) {
-      console.error('加载推荐AI伴侣失败:', error);
+      toast.error('刷新失败');
     } finally {
-      setLoading(false);
+      setTimeout(() => setIsRefreshing(false), 500);
     }
   };
 
@@ -53,7 +94,23 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-dark-primary">
+    <div 
+      className="min-h-screen bg-dark-primary relative"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      ref={scrollContainerRef}
+    >
+      {/* 下拉刷新指示器 */}
+      {isRefreshing && (
+        <div className="fixed top-[60px] left-0 right-0 z-50 flex items-center justify-center py-2 bg-dark-primary/95 backdrop-blur-lg">
+          <div className="flex items-center gap-2 text-text-secondary text-sm">
+            <div className="w-4 h-4 border-2 border-accent-pink border-t-transparent rounded-full animate-spin" />
+            <span>刷新中...</span>
+          </div>
+        </div>
+      )}
+
       {/* 热门推荐区 */}
       <div className="section-header">
         <span className="text-2xl">🔥</span>
