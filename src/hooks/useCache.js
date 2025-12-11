@@ -109,7 +109,14 @@ export function useCache(cacheKey, fetchFn, options = {}) {
   // 初始加载
   useEffect(() => {
     if (immediate) {
-      loadData(false);
+      // 如果已经有缓存数据，不立即加载，只在后台刷新
+      if (enableCache && data !== null) {
+        // 有缓存数据，后台刷新
+        loadData(true);
+      } else {
+        // 没有缓存，立即加载
+        loadData(false);
+      }
     }
 
     return () => {
