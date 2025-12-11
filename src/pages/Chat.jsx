@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, ArrowLeft, Image, Play, Square, Check, CheckCheck, Smile, Paperclip } from 'lucide-react';
+import { Send, ArrowLeft, Image, Play, Square, Check, CheckCheck, Smile, Paperclip, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { chatService } from '../services/chatService';
 import { agentService } from '../services/agentService';
