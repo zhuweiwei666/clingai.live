@@ -160,23 +160,6 @@ export default function Home() {
   const featuredStreamers = localStreamers.length > 0 ? localStreamers : (featuredStreamersData || []);
   const showLoading = isInitialLoad && loading && featuredStreamers.length === 0;
   
-  // 确保组件总是返回内容，避免黑屏
-  if (!featuredStreamers && !showLoading) {
-    // 如果既没有数据也不在加载，显示空状态
-    return (
-      <div className="min-h-screen bg-dark-primary flex flex-col">
-        <div className="flex flex-col items-center justify-center py-20 px-4">
-          <p className="text-text-secondary text-lg mb-2">加载中...</p>
-          <button
-            onClick={() => refresh()}
-            className="mt-4 px-6 py-2 gradient-bg rounded-full text-white font-semibold hover:opacity-90 transition-opacity"
-          >
-            刷新
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const handleStreamerClick = (streamerId, e) => {
     if (!isAuthenticated) {
@@ -268,7 +251,7 @@ export default function Home() {
             刷新
           </button>
         </div>
-      ) : (
+      ) : featuredStreamers.length > 0 ? (
         <div className="grid-cards">
           {featuredStreamers.map((streamer, index) => {
             return (
@@ -280,6 +263,15 @@ export default function Home() {
               />
             );
           })}
+        </div>
+      ) : (
+        // 兜底：确保总是有内容显示
+        <div className="grid-cards">
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="card">
+              <div className="card-image skeleton" />
+            </div>
+          ))}
         </div>
       )}
       </div>
