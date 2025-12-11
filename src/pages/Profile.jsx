@@ -203,7 +203,14 @@ export default function Profile() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="gradient-bg rounded-3xl p-5 relative overflow-hidden shadow-xl"
+          className="relative rounded-3xl p-5 overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, rgba(255, 107, 138, 0.3) 0%, rgba(255, 142, 83, 0.3) 100%)',
+            backdropFilter: 'blur(30px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(30px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          }}
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative">
@@ -217,7 +224,21 @@ export default function Profile() {
                 <h3 className="text-2xl font-bold text-white">1,280</h3>
               </div>
             </div>
-            <button className="w-full py-2.5 glass-card bg-white/20 rounded-2xl text-white font-medium text-sm backdrop-blur-sm hover:bg-white/30 transition-all duration-300">
+            <button 
+              className="w-full py-2.5 rounded-2xl text-white font-medium text-sm transition-all duration-300"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(10px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              }}
+            >
               升级VIP享更多特权
             </button>
           </div>
