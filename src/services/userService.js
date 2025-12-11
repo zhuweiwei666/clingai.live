@@ -56,4 +56,16 @@ export const userService = {
       throw error;
     }
   },
+
+  // 获取用户信息
+  getProfile: async () => {
+    console.log('📡 [userService.getProfile] 发起获取用户信息请求');
+    return apiClient.get(API_ENDPOINTS.USER.PROFILE || '/api/user/profile');
+  },
+
+  // 更新用户信息
+  updateProfile: async (userData) => {
+    console.log('📡 [userService.updateProfile] 发起更新用户信息请求');
+    return apiClient.put(API_ENDPOINTS.USER.PROFILE || '/api/user/profile', userData);
+  },
 };

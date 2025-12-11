@@ -18,6 +18,15 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // 优先使用store中的用户信息（特别是Google登录的信息）
+    if (user) {
+      setFormData({
+        username: user.username || user.name || '',
+        email: user.email || '',
+        avatar: user.avatar || user.picture || '',
+      });
+    }
+    // 然后从后端加载最新信息
     loadProfile();
   }, []);
 
@@ -25,14 +34,31 @@ export default function Profile() {
     try {
       const response = await userService.getProfile();
       const userData = response.data || response;
+      // 合并store中的用户信息和后端返回的信息，优先使用后端数据
+      const mergedUserData = {
+        ...user,
+        ...userData,
+        // 确保Google登录的信息被保留
+        username: userData.username || userData.name || user?.username || user?.name || '',
+        email: userData.email || user?.email || '',
+        avatar: userData.avatar || userData.picture || user?.avatar || user?.picture || '',
+      };
       setFormData({
-        username: userData.username || '',
-        email: userData.email || '',
-        avatar: userData.avatar || '',
+        username: mergedUserData.username || mergedUserData.name || '',
+        email: mergedUserData.email || '',
+        avatar: mergedUserData.avatar || mergedUserData.picture || '',
       });
-      setUser(userData);
+      setUser(mergedUserData);
     } catch (error) {
       console.error('加载用户信息失败:', error);
+      // 如果后端加载失败，至少使用store中的信息
+      if (user) {
+        setFormData({
+          username: user.username || user.name || '',
+          email: user.email || '',
+          avatar: user.avatar || user.picture || '',
+        });
+      }
     }
   };
 
@@ -80,9 +106,9 @@ export default function Profile() {
             <div className="flex items-center gap-4">
               <div className="relative">
                 <div className="w-20 h-20 rounded-2xl overflow-hidden gradient-border p-[2px]">
-                  {formData.avatar ? (
+                  {(formData.avatar || user?.avatar || user?.picture) ? (
                     <img
-                      src={formData.avatar}
+                      src={formData.avatar || user?.avatar || user?.picture}
                       alt="Avatar"
                       className="w-full h-full object-cover rounded-2xl"
                       onError={(e) => {
@@ -100,8 +126,12 @@ export default function Profile() {
                 </button>
               </div>
               <div>
-                <h2 className="text-xl font-bold text-text-primary">{formData.username || '未设置昵称'}</h2>
-                <p className="text-sm text-text-muted">{formData.email || '未绑定邮箱'}</p>
+                <h2 className="text-xl font-bold text-text-primary">
+                  {formData.username || user?.username || user?.name || '未设置昵称'}
+                </h2>
+                <p className="text-sm text-text-muted">
+                  {formData.email || user?.email || '未绑定邮箱'}
+                </p>
               </div>
             </div>
             

@@ -132,14 +132,22 @@ export default function Login() {
         if (token) {
           console.log('✅ [步骤4] 登录成功，保存Token和用户信息');
           setToken(token);
-          // 确保头像字段正确保存
+          // 确保Google登录信息完整保存：优先使用后端返回的数据，但确保Google信息不丢失
           const userData = user ? {
             ...user,
+            // 确保Google信息被正确保存
+            username: user.username || user.name || googleUserInfo.name,
+            name: user.name || googleUserInfo.name,
+            email: user.email || googleUserInfo.email,
             avatar: user.avatar || user.picture || googleUserInfo.picture,
+            picture: user.picture || googleUserInfo.picture,
           } : {
+            // 如果后端没有返回用户数据，使用Google信息
             username: googleUserInfo.name,
+            name: googleUserInfo.name,
             email: googleUserInfo.email,
             avatar: googleUserInfo.picture,
+            picture: googleUserInfo.picture,
           };
           console.log('✅ [步骤4] 保存的用户数据:', JSON.stringify(userData, null, 2));
           setUser(userData);

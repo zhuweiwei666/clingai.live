@@ -1,18 +1,12 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, User, LogOut, LogIn } from 'lucide-react';
+import { Home, MessageCircle, User } from 'lucide-react';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useUserStore();
-
-  const handleLogout = () => {
-    logout();
-    toast.success('已退出登录');
-    navigate('/');
-  };
+  const { isAuthenticated } = useUserStore();
 
   const handleNavClick = (path, requiresAuth) => {
     if (requiresAuth && !isAuthenticated) {
