@@ -17,6 +17,7 @@ export default function Profile() {
     avatar: '',
   });
   const [loading, setLoading] = useState(false);
+  const [balance, setBalance] = useState(0);
 
   useEffect(() => {
     // 优先使用store中的用户信息（特别是Google登录的信息）
@@ -26,9 +27,12 @@ export default function Profile() {
         email: user.email || '',
         avatar: user.avatar || user.picture || '',
       });
+      // 初始化余额
+      setBalance(user.balance || 0);
     }
     // 然后从后端加载最新信息
     loadProfile();
+    loadBalance();
   }, []);
 
   const loadProfile = async () => {
@@ -43,12 +47,15 @@ export default function Profile() {
         username: userData.username || userData.name || user?.username || user?.name || '',
         email: userData.email || user?.email || '',
         avatar: userData.avatar || userData.picture || user?.avatar || user?.picture || '',
+        // 更新余额
+        balance: userData.balance !== undefined ? userData.balance : (user?.balance || 0),
       };
       setFormData({
         username: mergedUserData.username || mergedUserData.name || '',
         email: mergedUserData.email || '',
         avatar: mergedUserData.avatar || mergedUserData.picture || '',
       });
+      setBalance(mergedUserData.balance || 0);
       setUser(mergedUserData);
     } catch (error) {
       console.error('加载用户信息失败:', error);
@@ -59,6 +66,28 @@ export default function Profile() {
           email: user.email || '',
           avatar: user.avatar || user.picture || '',
         });
+        setBalance(user.balance || 0);
+      }
+    }
+  };
+
+  const loadBalance = async () => {
+    try {
+      const response = await walletService.getBalance();
+      // 后端返回格式可能是: { success, data: { balance } } 或 { data: { balance } }
+      const actualBalance = response.data?.balance ?? response.data?.balance ?? (response.data ?? 0);
+      if (actualBalance !== undefined && actualBalance !== null) {
+        setBalance(Number(actualBalance));
+        // 同时更新user store中的余额
+        if (user) {
+          setUser({ ...user, balance: Number(actualBalance) });
+        }
+      }
+    } catch (error) {
+      console.error('加载余额失败:', error);
+      // 如果获取失败，使用用户store中的余额
+      if (user?.balance !== undefined) {
+        setBalance(user.balance);
       }
     }
   };
@@ -221,8 +250,8 @@ export default function Profile() {
                 <h3 className="text-2xl font-bold text-white">普通会员</h3>
               </div>
               <div className="text-right">
-                <p className="text-white/80 text-sm">积分</p>
-                <h3 className="text-2xl font-bold text-white">1,280</h3>
+                <p className="text-white/80 text-sm">余额</p>
+                <h3 className="text-2xl font-bold text-white">{balance.toLocaleString()}</h3>
               </div>
             </div>
             <button 
