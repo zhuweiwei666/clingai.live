@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Loader2, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -20,92 +20,96 @@ export default function Messages() {
   const touchEndY = useRef(0);
 
   // 使用缓存Hook加载数据（只在已登录时加载）
-  const loadConversations = useCallback(async () => {
-    if (!isAuthenticated) {
-      return [];
-    }
-    // 获取所有AI伴侣
-    const response = await agentService.getList();
-    const agents = response.data || [];
-    
-    // 为每个agent检查是否有聊天历史
-    const conversationsWithHistory = await Promise.all(
-      agents.map(async (agent) => {
-        try {
-          const historyResponse = await chatService.getHistory(agent._id);
-          const history = historyResponse.data?.history || [];
-          
-          if (history.length === 0) {
-            // 没有历史记录，检查localStorage
-            const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
-            const chatData = recentChats[agent._id];
-            if (chatData && chatData.lastMessage) {
+  const { data: conversations = [], loading, refresh, error } = useCache(
+    CACHE_KEYS.MESSAGES_LIST,
+    async () => {
+      if (!isAuthenticated) {
+        return [];
+      }
+      try {
+        // 获取所有AI伴侣
+        const response = await agentService.getList();
+        const agents = response.data || [];
+        
+        // 为每个agent检查是否有聊天历史
+        const conversationsWithHistory = await Promise.all(
+          agents.map(async (agent) => {
+            try {
+              const historyResponse = await chatService.getHistory(agent._id);
+              const history = historyResponse.data?.history || [];
+              
+              if (history.length === 0) {
+                // 没有历史记录，检查localStorage
+                const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
+                const chatData = recentChats[agent._id];
+                if (chatData && chatData.lastMessage) {
+                  return {
+                    agent,
+                    lastMessage: chatData.lastMessage,
+                    hasHistory: true,
+                  };
+                }
+                return null; // 没有对话历史，不显示
+              }
+              
+              // 有历史记录，获取最后一条消息
+              const lastMessage = history[history.length - 1];
               return {
                 agent,
-                lastMessage: chatData.lastMessage,
+                lastMessage: {
+                  content: lastMessage.content,
+                  role: lastMessage.role,
+                  created_at: lastMessage.created_at,
+                },
                 hasHistory: true,
               };
+            } catch (error) {
+              // 如果API调用失败，检查localStorage
+              const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
+              const chatData = recentChats[agent._id];
+              if (chatData && chatData.lastMessage) {
+                return {
+                  agent,
+                  lastMessage: chatData.lastMessage,
+                  hasHistory: true,
+                };
+              }
+              return null; // 没有对话历史，不显示
             }
-            return null; // 没有对话历史，不显示
+          })
+        );
+        
+        // 过滤掉null值（没有对话历史的）
+        const validConversations = conversationsWithHistory.filter(conv => conv !== null);
+        
+        // 按最后消息时间排序
+        validConversations.sort((a, b) => {
+          if (a.lastMessage && b.lastMessage) {
+            return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at);
           }
-          
-          // 有历史记录，获取最后一条消息
-          const lastMessage = history[history.length - 1];
-          return {
-            agent,
-            lastMessage: {
-              content: lastMessage.content,
-              role: lastMessage.role,
-              created_at: lastMessage.created_at,
-            },
-            hasHistory: true,
-          };
-        } catch (error) {
-          // 如果API调用失败，检查localStorage
-          const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
-          const chatData = recentChats[agent._id];
-          if (chatData && chatData.lastMessage) {
-            return {
-              agent,
-              lastMessage: chatData.lastMessage,
-              hasHistory: true,
-            };
-          }
-          return null; // 没有对话历史，不显示
-        }
-      })
-    );
-    
-    // 过滤掉null值（没有对话历史的）
-    const validConversations = conversationsWithHistory.filter(conv => conv !== null);
-    
-    // 按最后消息时间排序
-    validConversations.sort((a, b) => {
-      if (a.lastMessage && b.lastMessage) {
-        return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at);
+          return 0;
+        });
+        
+        return validConversations;
+      } catch (error) {
+        console.error('加载消息列表失败:', error);
+        return [];
       }
-      return 0;
-    });
-    
-    return validConversations;
-  }, [isAuthenticated]);
-
-  const { data: conversations = [], loading, refresh } = useCache(
-    CACHE_KEYS.MESSAGES_LIST,
-    loadConversations,
+    },
     {
       ttl: 5 * 60 * 1000, // 5分钟缓存
       enableCache: true,
       immediate: isAuthenticated, // 只在已登录时立即加载
-      deps: [isAuthenticated], // 当登录状态变化时重新加载
     }
   );
 
   useEffect(() => {
     if (!isAuthenticated) {
-      toast.error('请先登录');
-      navigate('/login', { state: { from: { pathname: '/messages' } } });
-      return;
+      // 延迟导航，避免立即返回null导致黑屏
+      const timer = setTimeout(() => {
+        navigate('/login', { state: { from: { pathname: '/messages' } } });
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [isAuthenticated, navigate]);
 
@@ -186,13 +190,11 @@ export default function Messages() {
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
+  // 如果未登录，显示加载状态而不是返回null
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-dark-primary flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin text-accent-pink mx-auto mb-4" size={32} />
-          <p className="text-text-secondary">正在跳转到登录页面...</p>
-        </div>
+        <Loader2 className="animate-spin text-accent-pink" size={32} />
       </div>
     );
   }
@@ -226,7 +228,21 @@ export default function Messages() {
       </div>
 
       {/* 消息列表 */}
-      {loading ? (
+      {error ? (
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <MessageCircle className="text-text-muted mb-4" size={48} />
+          <p className="text-text-secondary text-lg mb-2">加载失败</p>
+          <p className="text-text-muted text-sm text-center mb-4">
+            {error.message || '请稍后重试'}
+          </p>
+          <button
+            onClick={() => refresh()}
+            className="px-6 py-2 gradient-bg rounded-full text-white font-semibold hover:opacity-90 transition-opacity"
+          >
+            重试
+          </button>
+        </div>
+      ) : loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="animate-spin text-accent-pink" size={32} />
         </div>
