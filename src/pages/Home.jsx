@@ -1,5 +1,4 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Crown, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useRef, useEffect } from 'react';
 import { agentService } from '../services/agentService';
@@ -80,18 +79,6 @@ export default function Home() {
     }
   };
 
-  // 模拟徽章数据
-  const getBadge = (index) => {
-    const badges = [
-      { type: 'super', label: 'Super', icon: Crown },
-      { type: 'new', label: '🔥 New 🔥', icon: null },
-      { type: 'viral', label: '🔥 火爆 🔥', icon: null },
-      { type: 'hot', label: 'HOT', icon: Zap },
-      null,
-      { type: 'new', label: '✨ 新人 ✨', icon: null },
-    ];
-    return badges[index % badges.length];
-  };
 
   return (
     <div className="min-h-screen bg-dark-primary flex flex-col">
@@ -115,12 +102,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* 热门推荐区 */}
-      <div className="section-header">
-        <span className="text-2xl">🔥</span>
-        <span className="gradient-text font-bold">热门推荐: AI伴侣</span>
-      </div>
-
       {/* 主播卡片网格 */}
       <div
         className="flex-1 overflow-y-auto"
@@ -137,10 +118,9 @@ export default function Home() {
             </div>
           ))}
         </div>
-      ) : (
+        ) : (
         <div className="grid-cards">
           {featuredStreamers.map((streamer, index) => {
-            const badge = getBadge(index);
             // 使用后端返回的字段名 (_id, avatarUrl, etc.)
             const streamerId = streamer._id;
             const avatarUrl = streamer.avatarUrl || streamer.avatar;
@@ -166,16 +146,6 @@ export default function Home() {
                       }}
                     />
                     
-                    {/* 顶部徽章 */}
-                    {badge && (
-                      <div className="absolute top-3 left-3 z-10">
-                        <span className={`badge badge-${badge.type}`}>
-                          {badge.icon && <badge.icon size={12} />}
-                          {badge.label}
-                        </span>
-                      </div>
-                    )}
-                    
                     {/* 在线状态 */}
                     {streamer.status === 'online' && (
                       <div className="absolute top-3 right-3 z-10">
@@ -186,16 +156,6 @@ export default function Home() {
                     {/* 底部渐变覆盖层 */}
                     <div className="card-overlay">
                       <h3 className="card-title line-clamp-1">{streamer.name}</h3>
-                      {index % 3 === 0 && (
-                        <span className="badge badge-new w-fit">
-                          🔥 New 🔥
-                        </span>
-                      )}
-                      {index % 3 === 1 && (
-                        <span className="badge badge-viral w-fit">
-                          🔥 火爆 🔥
-                        </span>
-                      )}
                     </div>
                   </div>
                 </Link>
