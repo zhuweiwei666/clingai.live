@@ -31,14 +31,27 @@ export const chatService = {
   },
 
   // 文字转语音 (TTS)
-  // 后端期望: POST /api/chat/voice { agentId, text }
+  // 后端期望: POST /api/chat/tts { agentId, text }
   // 后端返回: { success, data: { audioUrl } }
   generateVoice: async (agentId, text) => {
     console.log('🔊 请求语音, agentId:', agentId, 'text:', text.slice(0, 50) + '...');
-    return apiClient.post(API_ENDPOINTS.CHAT.VOICE, {
-      agentId,
-      text,
-    });
+    // 先尝试 TTS 端点，如果失败再尝试 VOICE 端点
+    try {
+      return await apiClient.post(API_ENDPOINTS.CHAT.TTS, {
+        agentId,
+        text,
+      });
+    } catch (error) {
+      // 如果 TTS 失败，尝试 VOICE 端点
+      if (error.response?.status === 404 || error.message?.includes('NOT_FOUND')) {
+        console.log('⚠️ TTS 端点不存在，尝试 VOICE 端点...');
+        return apiClient.post(API_ENDPOINTS.CHAT.VOICE, {
+          agentId,
+          text,
+        });
+      }
+      throw error;
+    }
   },
 
   // 生成视频消息
