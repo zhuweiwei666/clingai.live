@@ -255,6 +255,7 @@ export default function Profile() {
               </div>
             </div>
             <button 
+              onClick={() => navigate('/subscribe')}
               className="w-full py-2.5 rounded-2xl text-white font-medium text-sm transition-all duration-300"
               style={{
                 background: 'rgba(255, 255, 255, 0.15)',

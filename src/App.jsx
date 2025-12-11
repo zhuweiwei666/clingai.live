@@ -10,6 +10,7 @@ import Messages from './pages/Messages';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Wallet from './pages/Wallet';
+import Subscribe from './pages/Subscribe';
 import useUserStore from './store/userStore';
 
 // Google OAuth Client ID
@@ -53,6 +54,7 @@ function App() {
               <Route path="chat/:id" element={<Chat />} />
               <Route path="profile" element={<Profile />} />
               <Route path="wallet" element={<Wallet />} />
+              <Route path="subscribe" element={<Subscribe />} />
             </Route>
           </Routes>
           <Toaster position="top-right" />
