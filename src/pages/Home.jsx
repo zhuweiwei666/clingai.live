@@ -92,16 +92,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* 下拉刷新指示器 */}
-      {isRefreshing && (
-        <div className="fixed top-[60px] left-0 right-0 z-50 flex items-center justify-center py-2 bg-dark-primary/95 backdrop-blur-lg">
-          <div className="flex items-center gap-2 text-text-secondary text-sm">
-            <div className="w-4 h-4 border-2 border-accent-pink border-t-transparent rounded-full animate-spin" />
-            <span>刷新中...</span>
-          </div>
-        </div>
-      )}
-
       {/* 主播卡片网格 */}
       <div
         className="flex-1 overflow-y-auto"
