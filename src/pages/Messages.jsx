@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { MessageCircle, Loader2, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -20,50 +20,23 @@ export default function Messages() {
   const touchEndY = useRef(0);
 
   // 使用缓存Hook加载数据（只在已登录时加载）
-  const { data: conversations = [], loading, refresh } = useCache(
-    CACHE_KEYS.MESSAGES_LIST,
-    async () => {
-      if (!isAuthenticated) {
-        return [];
-      }
-      // 获取所有AI伴侣
-      const response = await agentService.getList();
-      const agents = response.data || [];
-      
-      // 为每个agent检查是否有聊天历史
-      const conversationsWithHistory = await Promise.all(
-        agents.map(async (agent) => {
-          try {
-            const historyResponse = await chatService.getHistory(agent._id);
-            const history = historyResponse.data?.history || [];
-            
-            if (history.length === 0) {
-              // 没有历史记录，检查localStorage
-              const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
-              const chatData = recentChats[agent._id];
-              if (chatData && chatData.lastMessage) {
-                return {
-                  agent,
-                  lastMessage: chatData.lastMessage,
-                  hasHistory: true,
-                };
-              }
-              return null; // 没有对话历史，不显示
-            }
-            
-            // 有历史记录，获取最后一条消息
-            const lastMessage = history[history.length - 1];
-            return {
-              agent,
-              lastMessage: {
-                content: lastMessage.content,
-                role: lastMessage.role,
-                created_at: lastMessage.created_at,
-              },
-              hasHistory: true,
-            };
-          } catch (error) {
-            // 如果API调用失败，检查localStorage
+  const loadConversations = useCallback(async () => {
+    if (!isAuthenticated) {
+      return [];
+    }
+    // 获取所有AI伴侣
+    const response = await agentService.getList();
+    const agents = response.data || [];
+    
+    // 为每个agent检查是否有聊天历史
+    const conversationsWithHistory = await Promise.all(
+      agents.map(async (agent) => {
+        try {
+          const historyResponse = await chatService.getHistory(agent._id);
+          const history = historyResponse.data?.history || [];
+          
+          if (history.length === 0) {
+            // 没有历史记录，检查localStorage
             const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
             const chatData = recentChats[agent._id];
             if (chatData && chatData.lastMessage) {
@@ -75,26 +48,56 @@ export default function Messages() {
             }
             return null; // 没有对话历史，不显示
           }
-        })
-      );
-      
-      // 过滤掉null值（没有对话历史的）
-      const validConversations = conversationsWithHistory.filter(conv => conv !== null);
-      
-      // 按最后消息时间排序
-      validConversations.sort((a, b) => {
-        if (a.lastMessage && b.lastMessage) {
-          return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at);
+          
+          // 有历史记录，获取最后一条消息
+          const lastMessage = history[history.length - 1];
+          return {
+            agent,
+            lastMessage: {
+              content: lastMessage.content,
+              role: lastMessage.role,
+              created_at: lastMessage.created_at,
+            },
+            hasHistory: true,
+          };
+        } catch (error) {
+          // 如果API调用失败，检查localStorage
+          const recentChats = JSON.parse(localStorage.getItem('recentChats') || '{}');
+          const chatData = recentChats[agent._id];
+          if (chatData && chatData.lastMessage) {
+            return {
+              agent,
+              lastMessage: chatData.lastMessage,
+              hasHistory: true,
+            };
+          }
+          return null; // 没有对话历史，不显示
         }
-        return 0;
-      });
-      
-      return validConversations;
-    },
+      })
+    );
+    
+    // 过滤掉null值（没有对话历史的）
+    const validConversations = conversationsWithHistory.filter(conv => conv !== null);
+    
+    // 按最后消息时间排序
+    validConversations.sort((a, b) => {
+      if (a.lastMessage && b.lastMessage) {
+        return new Date(b.lastMessage.created_at) - new Date(a.lastMessage.created_at);
+      }
+      return 0;
+    });
+    
+    return validConversations;
+  }, [isAuthenticated]);
+
+  const { data: conversations = [], loading, refresh } = useCache(
+    CACHE_KEYS.MESSAGES_LIST,
+    loadConversations,
     {
       ttl: 5 * 60 * 1000, // 5分钟缓存
       enableCache: true,
       immediate: isAuthenticated, // 只在已登录时立即加载
+      deps: [isAuthenticated], // 当登录状态变化时重新加载
     }
   );
 
@@ -184,7 +187,14 @@ export default function Messages() {
   };
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen bg-dark-primary flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin text-accent-pink mx-auto mb-4" size={32} />
+          <p className="text-text-secondary">正在跳转到登录页面...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
