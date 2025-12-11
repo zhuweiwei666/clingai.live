@@ -94,13 +94,17 @@ export default function Home() {
   };
 
   return (
-    <div 
-      className="min-h-screen bg-dark-primary relative"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      ref={scrollContainerRef}
-    >
+    <div className="min-h-screen bg-dark-primary flex flex-col">
+      {/* 下拉刷新指示器 */}
+      {isRefreshing && (
+        <div className="fixed top-[60px] left-0 right-0 z-50 flex items-center justify-center py-2 bg-dark-primary/95 backdrop-blur-lg">
+          <div className="flex items-center gap-2 text-text-secondary text-sm">
+            <div className="w-4 h-4 border-2 border-accent-pink border-t-transparent rounded-full animate-spin" />
+            <span>刷新中...</span>
+          </div>
+        </div>
+      )}
+
       {/* 下拉刷新指示器 */}
       {isRefreshing && (
         <div className="fixed top-[60px] left-0 right-0 z-50 flex items-center justify-center py-2 bg-dark-primary/95 backdrop-blur-lg">
@@ -118,8 +122,15 @@ export default function Home() {
       </div>
 
       {/* 主播卡片网格 */}
-      {loading ? (
-        <div className="grid-cards">
+      <div
+        className="flex-1 overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        ref={scrollContainerRef}
+      >
+        {loading ? (
+          <div className="grid-cards">
           {[...Array(12)].map((_, i) => (
             <div key={i} className="card">
               <div className="card-image skeleton" />
@@ -192,7 +203,8 @@ export default function Home() {
             );
           })}
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

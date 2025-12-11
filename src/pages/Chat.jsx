@@ -35,7 +35,6 @@ export default function Chat() {
       navigate('/login', { state: { from: { pathname: `/chat/${id}` } } });
       return;
     }
-    loadAgent();
     loadHistory();
   }, [id, isAuthenticated, navigate]);
 

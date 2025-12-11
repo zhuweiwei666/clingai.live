@@ -154,8 +154,6 @@ export default function Messages() {
     }
   };
 
-  const loadConversations = async (silent = false) => {
-
   const filteredConversations = conversations.filter((conv) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
@@ -186,13 +184,7 @@ export default function Messages() {
   }
 
   return (
-    <div 
-      className="min-h-screen bg-dark-primary"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      ref={scrollContainerRef}
-    >
+    <div className="min-h-screen bg-dark-primary flex flex-col">
       {/* 下拉刷新指示器 */}
       {isRefreshing && (
         <div className="fixed top-[60px] left-0 right-0 z-50 flex items-center justify-center py-2 bg-dark-primary/95 backdrop-blur-lg">
@@ -243,7 +235,13 @@ export default function Messages() {
           )}
         </div>
       ) : (
-        <div className="pb-24">
+        <div 
+          className="pb-24 flex-1 overflow-y-auto"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          ref={scrollContainerRef}
+        >
           {filteredConversations.map((conv, index) => {
             const { agent, lastMessage } = conv;
             const avatarUrl = agent.avatarUrl || agent.avatar;
