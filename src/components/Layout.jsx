@@ -42,7 +42,7 @@ export default function Layout() {
       <header className="glass-dark sticky top-0 z-50 safe-area-top">
         <div className="flex items-center justify-between px-4 py-2">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center shadow-lg animate-pulse-glow">
+            <div className="w-8 h-8 gradient-bg rounded-xl flex items-center justify-center shadow-lg">
               <Home className="text-white" size={18} />
             </div>
             <span className="text-lg font-bold gradient-text">Clingai</span>
@@ -51,7 +51,7 @@ export default function Layout() {
           <div className="flex items-center gap-3">
             {isAuthenticated && user ? (
               <>
-                <div className="flex items-center gap-2 bg-dark-elevated px-2 py-1.5 rounded-full">
+                <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full">
                   <div className="w-6 h-6 gradient-bg rounded-full flex items-center justify-center overflow-hidden">
                     {(user.avatar || user.picture) ? (
                       <img 
@@ -71,7 +71,7 @@ export default function Layout() {
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="p-1.5 text-text-muted hover:text-accent-pink transition-colors"
+                  className="p-1.5 glass-card rounded-xl text-text-muted hover:text-accent-pink transition-all duration-300"
                   title="退出登录"
                 >
                   <LogOut size={18} />

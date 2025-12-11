@@ -173,7 +173,7 @@ export default function Profile() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="gradient-bg rounded-2xl p-5 relative overflow-hidden"
+          className="gradient-bg rounded-3xl p-5 relative overflow-hidden shadow-xl"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
           <div className="relative">
@@ -187,7 +187,7 @@ export default function Profile() {
                 <h3 className="text-2xl font-bold text-white">1,280</h3>
               </div>
             </div>
-            <button className="w-full py-2.5 bg-white/20 rounded-xl text-white font-medium text-sm backdrop-blur-sm">
+            <button className="w-full py-2.5 glass-card bg-white/20 rounded-2xl text-white font-medium text-sm backdrop-blur-sm hover:bg-white/30 transition-all duration-300">
               升级VIP享更多特权
             </button>
           </div>
@@ -200,7 +200,7 @@ export default function Profile() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-dark-card rounded-2xl overflow-hidden"
+          className="glass-card rounded-3xl overflow-hidden"
         >
           {menuItems.map((item, index) => {
             const Icon = item.icon;
@@ -208,10 +208,10 @@ export default function Profile() {
               <button
                 key={index}
                 onClick={() => toast('功能开发中')}
-                className="w-full flex items-center justify-between px-5 py-4 hover:bg-dark-elevated transition-colors border-b border-border last:border-0"
+                className="w-full flex items-center justify-between px-5 py-4 hover:glass-elevated transition-all duration-300 border-b border-border/50 last:border-0"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-dark-elevated rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 glass-card rounded-xl flex items-center justify-center">
                     <Icon size={20} className="text-text-secondary" />
                   </div>
                   <span className="text-text-primary font-medium">{item.label}</span>
@@ -237,7 +237,7 @@ export default function Profile() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-4 bg-dark-card rounded-2xl text-red-500 font-medium"
+          className="w-full flex items-center justify-center gap-2 py-4 glass-card rounded-3xl text-red-500 font-medium hover:glass-elevated transition-all duration-300"
         >
           <LogOut size={20} />
           退出登录

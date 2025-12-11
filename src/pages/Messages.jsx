@@ -214,16 +214,16 @@ export default function Messages() {
       )}
 
       {/* 搜索栏 */}
-      <div className="sticky top-[60px] z-40 bg-dark-primary/95 backdrop-blur-lg border-b border-border/50">
+      <div className="sticky top-[60px] z-40 glass-dark border-b border-border/50">
         <div className="p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" size={18} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="搜索AI伴侣或消息..."
-              className="w-full pl-10 pr-4 py-3 bg-dark-elevated border border-border rounded-xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-start transition-colors"
+              className="w-full pl-12 pr-4 py-3.5 glass-card rounded-2xl text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-start transition-all duration-300"
             />
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function Messages() {
                 <Link
                   to={`/chat/${agent._id}`}
                   state={{ fromMessages: true }}
-                  className="block px-4 py-3 hover:bg-dark-elevated/50 transition-colors border-b border-border/30"
+                  className="block px-4 py-3 glass-card mx-2 my-1.5 rounded-2xl hover:glass-elevated transition-all duration-300 border-b-0"
                 >
                   <div className="flex items-center gap-3">
                     {/* 头像 */}

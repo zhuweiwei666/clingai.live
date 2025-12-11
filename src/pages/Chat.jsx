@@ -440,7 +440,7 @@ export default function Chat() {
                       <div className={`relative px-4 py-3 rounded-2xl shadow-lg ${
                         isUser 
                           ? 'bg-gradient-to-br from-accent-start to-accent-end text-white' // 统一渐变
-                          : 'bg-dark-card text-text-primary border border-border' // 统一卡片样式
+                          : 'glass-card text-text-primary' // 统一玻璃卡片样式
                       }`}>
                         
                         <p className="text-[15px] leading-[21px] whitespace-pre-wrap break-words relative z-10">
@@ -541,7 +541,7 @@ export default function Chat() {
               <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border" style={{ marginBottom: '2px' }}>
               {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
             </div>
-              <div className="bg-dark-card border border-border rounded-2xl rounded-tl-md px-4 py-3 shadow-lg">
+              <div className="glass-card rounded-2xl rounded-tl-md px-4 py-3 shadow-lg">
               <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
                     <div
@@ -564,7 +564,7 @@ export default function Chat() {
               <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border" style={{ marginBottom: '2px' }}>
               {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
             </div>
-              <div className="bg-dark-card border border-border rounded-2xl rounded-tl-md px-4 py-3 text-text-secondary text-sm flex items-center gap-2">
+              <div className="glass-card rounded-2xl rounded-tl-md px-4 py-3 text-text-secondary text-sm flex items-center gap-2">
                 <Loader2 className="animate-spin text-accent-pink" size={14} />
                 生成图片中...
               </div>
@@ -607,7 +607,7 @@ export default function Chat() {
                 } 
               }}
               placeholder="输入消息"
-              className="w-full px-4 py-3 sm:py-2.5 bg-dark-elevated border border-border text-text-primary placeholder-text-muted rounded-2xl text-[15px] sm:text-base focus:outline-none focus:ring-2 focus:ring-accent-start/50 focus:border-accent-start transition-all"
+              className="w-full px-4 py-3 sm:py-2.5 glass-card text-text-primary placeholder-text-muted rounded-2xl text-[15px] sm:text-base focus:outline-none focus:ring-2 focus:ring-accent-start/50 focus:border-accent-start transition-all"
               disabled={sending || generatingImage}
             />
           </div>

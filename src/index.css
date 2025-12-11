@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 /* ========================================
-   Clingai.live - Dark Theme Design System
-   Inspired by modern AI companion apps
+   Clingai.live - iOS Glassmorphism Design System
+   Inspired by Apple's iOS 15+ design language
    ======================================== */
 
 :root {
-  /* Core Colors */
+  /* Core Colors - iOS Dark Mode */
   --bg-primary: #000000;
   --bg-secondary: #0a0a0a;
-  --bg-card: #111111;
-  --bg-elevated: #1a1a1a;
+  --bg-card: rgba(28, 28, 30, 0.8);
+  --bg-elevated: rgba(44, 44, 46, 0.8);
   
   /* Accent Colors - Pink/Coral Gradient */
   --accent-start: #ff6b8a;
@@ -21,15 +21,20 @@
   --accent-coral: #ff6b6b;
   --accent-orange: #ff9f43;
   
-  /* Text Colors */
+  /* Text Colors - iOS Style */
   --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-muted: #666666;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
   
-  /* Border & Overlay */
-  --border-color: #222222;
-  --overlay-dark: rgba(0, 0, 0, 0.7);
-  --overlay-gradient: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+  /* Border & Overlay - Glassmorphism */
+  --border-color: rgba(255, 255, 255, 0.1);
+  --overlay-dark: rgba(0, 0, 0, 0.6);
+  --overlay-gradient: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 /* Reset & Base */
@@ -49,10 +54,47 @@ body {
     'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--bg-primary);
+  background: linear-gradient(135deg, #000000 0%, #1a1a2e 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* ========================================
+   Glassmorphism Utilities
+   ======================================== */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-dark {
+  background: rgba(28, 28, 30, 0.7);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card {
+  background: rgba(44, 44, 46, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.glass-elevated {
+  background: rgba(58, 58, 60, 0.7);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* ========================================
@@ -72,44 +114,51 @@ body {
 
 .gradient-bg-hover {
   background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .gradient-bg-hover:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.15);
   transform: scale(1.02);
+  box-shadow: 0 12px 40px -8px rgba(255, 107, 138, 0.5);
 }
 
 .gradient-border {
   position: relative;
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 20px;
 }
 
 .gradient-border::before {
   content: '';
   position: absolute;
   inset: -1px;
-  border-radius: 17px;
+  border-radius: 21px;
   background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
   z-index: -1;
-  opacity: 0.5;
+  opacity: 0.4;
+  filter: blur(8px);
 }
 
 /* ========================================
-   Card Styles
+   Card Styles - iOS Glassmorphism
    ======================================== */
 
 .card {
-  background: var(--bg-card);
-  border-radius: 16px;
+  background: rgba(44, 44, 46, 0.6);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -12px rgba(255, 107, 138, 0.15);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 16px 48px rgba(255, 107, 138, 0.25);
+  border-color: rgba(255, 107, 138, 0.3);
 }
 
 .card-image {
@@ -123,72 +172,76 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .card:hover .card-image img {
-  transform: scale(1.08);
+  transform: scale(1.1);
 }
 
 .card-overlay {
   position: absolute;
   inset: 0;
-  background: var(--overlay-gradient);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 16px;
+  padding: 20px;
 }
 
 .card-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  letter-spacing: -0.2px;
 }
 
 /* ========================================
-   Badge Styles
+   Badge Styles - iOS Style
    ======================================== */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
+  padding: 6px 12px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .badge-super {
   background: linear-gradient(135deg, var(--accent-pink), var(--accent-coral));
   color: white;
-  box-shadow: 0 4px 12px -2px rgba(255, 77, 125, 0.4);
+  box-shadow: 0 4px 16px -4px rgba(255, 77, 125, 0.5);
 }
 
 .badge-new {
   background: linear-gradient(135deg, #ff6b8a, #ff8e53);
   color: white;
-  box-shadow: 0 4px 12px -2px rgba(255, 107, 138, 0.4);
+  box-shadow: 0 4px 16px -4px rgba(255, 107, 138, 0.5);
 }
 
 .badge-viral {
   background: linear-gradient(135deg, #ff9f43, #ff6b6b);
   color: white;
-  box-shadow: 0 4px 12px -2px rgba(255, 159, 67, 0.4);
+  box-shadow: 0 4px 16px -4px rgba(255, 159, 67, 0.5);
 }
 
 .badge-hot {
   background: linear-gradient(135deg, #f12711, #f5af19);
   color: white;
+  box-shadow: 0 4px 16px -4px rgba(241, 39, 17, 0.5);
 }
 
 /* ========================================
-   Bottom Navigation
+   Bottom Navigation - iOS Glassmorphism
    ======================================== */
 
 .bottom-nav {
@@ -196,13 +249,14 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, var(--bg-primary), rgba(0, 0, 0, 0.95));
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-color);
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: 4px 0;
   padding-bottom: calc(4px + env(safe-area-inset-bottom));
   z-index: 100;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .bottom-nav-item {
@@ -213,8 +267,9 @@ body {
   gap: 2px;
   padding: 4px 12px;
   color: var(--text-muted);
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
+  border-radius: 12px;
 }
 
 .bottom-nav-item.active {
@@ -223,11 +278,13 @@ body {
 
 .bottom-nav-item:hover {
   color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .bottom-nav-item span {
   font-size: 9px;
   font-weight: 500;
+  letter-spacing: -0.2px;
 }
 
 .nav-indicator {
@@ -239,6 +296,7 @@ body {
   height: 3px;
   background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
   border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 8px rgba(255, 107, 138, 0.5);
 }
 
 /* ========================================
@@ -261,13 +319,15 @@ body {
 .tab-item {
   flex-shrink: 0;
   padding: 10px 20px;
-  border-radius: 24px;
+  border-radius: 20px;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  background: rgba(44, 44, 46, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   white-space: nowrap;
 }
 
@@ -275,12 +335,13 @@ body {
   background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
   color: white;
   border-color: transparent;
-  box-shadow: 0 4px 16px -4px rgba(255, 107, 138, 0.5);
+  box-shadow: 0 6px 20px -6px rgba(255, 107, 138, 0.5);
 }
 
 .tab-item:hover:not(.active) {
-  background: var(--bg-card);
+  background: rgba(58, 58, 60, 0.8);
   color: var(--text-primary);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* ========================================
@@ -294,6 +355,7 @@ body {
   padding: 16px;
   font-size: 18px;
   font-weight: 600;
+  letter-spacing: -0.3px;
 }
 
 .section-header .emoji {
@@ -301,17 +363,19 @@ body {
 }
 
 /* ========================================
-   Form Elements
+   Form Elements - iOS Style
    ======================================== */
 
 .input-dark {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: rgba(44, 44, 46, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
   padding: 14px 16px;
   color: var(--text-primary);
   font-size: 16px;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .input-dark::placeholder {
@@ -321,11 +385,12 @@ body {
 .input-dark:focus {
   outline: none;
   border-color: var(--accent-start);
-  box-shadow: 0 0 0 3px rgba(255, 107, 138, 0.1);
+  box-shadow: 0 0 0 4px rgba(255, 107, 138, 0.15);
+  background: rgba(58, 58, 60, 0.8);
 }
 
 /* ========================================
-   Button Styles
+   Button Styles - iOS Style
    ======================================== */
 
 .btn-primary {
@@ -339,19 +404,21 @@ body {
   font-size: 16px;
   font-weight: 600;
   border: none;
-  border-radius: 12px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 8px 24px -8px rgba(255, 107, 138, 0.5);
+  letter-spacing: -0.2px;
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.15);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px -8px rgba(255, 107, 138, 0.5);
+  box-shadow: 0 12px 32px -8px rgba(255, 107, 138, 0.6);
 }
 
 .btn-primary:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
 }
 
 .btn-primary:disabled {
@@ -367,52 +434,70 @@ body {
   justify-content: center;
   gap: 8px;
   padding: 14px 28px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-color);
+  background: rgba(44, 44, 46, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-primary);
   font-size: 16px;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  letter-spacing: -0.2px;
 }
 
 .btn-secondary:hover {
-  background: var(--bg-card);
-  border-color: var(--text-muted);
+  background: rgba(58, 58, 60, 0.8);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+  transform: translateY(0) scale(0.98);
 }
 
 /* ========================================
-   Glass Effect
+   Grid Cards Layout
    ======================================== */
 
-.glass-dark {
-  background: rgba(17, 17, 17, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color);
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 12px;
+}
+
+@media (min-width: 640px) {
+  .grid-cards {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-cards {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
 }
 
 /* ========================================
-   Animations
+   Skeleton Loading
    ======================================== */
 
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(255, 107, 138, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(255, 107, 138, 0.5);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(44, 44, 46, 0.6) 0%,
+    rgba(58, 58, 60, 0.8) 50%,
+    rgba(44, 44, 46, 0.6) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 24px;
 }
 
 @keyframes shimmer {
@@ -424,27 +509,24 @@ body {
   }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+/* ========================================
+   Safe Area Support
+   ======================================== */
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+.safe-area-bottom {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
 }
 
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--bg-elevated) 0%,
-    var(--bg-card) 50%,
-    var(--bg-elevated) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+.chat-input-area.safe-area-bottom {
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
 }
 
 /* ========================================
-   Scrollbar Styling - 优化聊天界面滚动
+   Scrollbar Styling - iOS Style
    ======================================== */
 
 ::-webkit-scrollbar {
@@ -459,91 +541,74 @@ body {
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 10px;
-  transition: background 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* 聊天界面专用滚动条 */
 .chat-scroll::-webkit-scrollbar {
   width: 4px;
 }
 
 .chat-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-}
-
-.chat-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
 }
 
 /* ========================================
-   Safe Area Padding
+   Animations - iOS Style
    ======================================== */
 
-.safe-area-top {
-  padding-top: env(safe-area-inset-top);
+@keyframes messageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.safe-area-bottom {
-  padding-bottom: calc(60px + env(safe-area-inset-bottom));
+.message-slide-in {
+  animation: messageSlideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-
-/* 聊天页面输入框 - 不需要底部导航栏的间距 */
-.chat-input-area.safe-area-bottom {
-  padding-bottom: calc(8px + env(safe-area-inset-bottom));
-}
-
-/* ========================================
-   Mobile Touch Optimization - 移动端触摸优化
-   ======================================== */
 
 .touch-manipulation {
   touch-action: manipulation;
-  -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
-}
-
-/* 移动端按钮最小点击区域 */
-@media (max-width: 640px) {
-  button, a {
-    min-height: 44px;
-    min-width: 44px;
-  }
-}
-
-/* 移动端输入框优化 */
-@media (max-width: 640px) {
-  input, textarea {
-    font-size: 16px; /* 防止iOS自动缩放 */
-  }
 }
 
 /* ========================================
-   Grid Layouts
+   Mobile Optimizations
    ======================================== */
 
-.grid-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 0 12px;
+@media (max-width: 640px) {
+  /* 确保移动端按钮足够大 */
+  button,
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* 输入框字体大小防止iOS缩放 */
+  input,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 @media (min-width: 768px) {
   .grid-cards {
     grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    padding: 0 24px;
   }
 }
 
 @media (min-width: 1024px) {
   .grid-cards {
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
   }
 }
 
@@ -565,219 +630,9 @@ body {
   overflow: hidden;
 }
 
-/* Hide scrollbar but allow scrolling */
-.no-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* ========================================
-   WhatsApp Style Chat - 聊天界面样式
-   ======================================== */
-
-.bg-chat-pattern {
-  background-color: #0b141a;
-  background-size: 100px 100px;
-  opacity: 0.4;
-}
-
-/* WhatsApp打字动画 */
-@keyframes typing {
-  0%, 60%, 100% {
-    transform: translateY(0);
-    opacity: 0.7;
-  }
-  30% {
-    transform: translateY(-10px);
-    opacity: 1;
-  }
-}
-
-/* 消息气泡尾巴样式 */
-.message-tail {
-  position: absolute;
-  width: 8px;
-  height: 13px;
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.message-tail::before {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-}
-
-/* ========================================
-   Chat Message Animations - 消息动画优化
-   ======================================== */
-
-@keyframes messageSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.message-enter {
-  animation: messageSlideIn 0.2s ease-out;
-}
-
-/* ========================================
-   Input Focus Effects - 输入框焦点效果
-   ======================================== */
-
-.chat-input:focus {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(255, 107, 138, 0.2);
-}
-
-.chat-input:focus::placeholder {
-  opacity: 0.6;
-}
-
-/* ========================================
-   Smooth Transitions - 平滑过渡
-   ======================================== */
-
-.smooth-transition {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.smooth-transition-fast {
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ========================================
-   Message Bubble Styles - 消息气泡样式
-   ======================================== */
-
-.message-bubble {
-  position: relative;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.message-bubble::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.message-bubble:hover::before {
-  opacity: 1;
-}
-
-/* ========================================
-   Typing Indicator - 打字指示器
-   ======================================== */
-
-@keyframes typing {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
-
-.typing-cursor {
-  animation: typing 0.8s ease-in-out infinite;
-}
-
-/* ========================================
-   Button Hover Effects - 按钮悬停效果
-   ======================================== */
-
-.btn-smooth {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-origin: center;
-}
-
-.btn-smooth:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.btn-smooth:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* ========================================
-   Glass Morphism - 毛玻璃效果
-   ======================================== */
-
-.glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.glass-strong {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-/* ========================================
-   Loading States - 加载状态优化
-   ======================================== */
-
-@keyframes pulse-soft {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-.loading-pulse {
-  animation: pulse-soft 1.5s ease-in-out infinite;
-}
-
-/* ========================================
-   Smooth Scroll - 平滑滚动
-   ======================================== */
-
-.scroll-smooth {
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ========================================
-   Text Selection - 文本选择优化
-   ======================================== */
-
-::selection {
-  background: rgba(255, 107, 138, 0.3);
-  color: white;
-}
-
-::-moz-selection {
-  background: rgba(255, 107, 138, 0.3);
-  color: white;
 }

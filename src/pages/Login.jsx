@@ -225,7 +225,7 @@ export default function Login() {
               animate={{ scale: 1 }}
               transition={{ type: "spring", duration: 0.6, delay: 0.1 }}
             >
-              <div className="w-20 h-20 gradient-bg rounded-2xl flex items-center justify-center shadow-2xl animate-pulse-glow">
+              <div className="w-20 h-20 gradient-bg rounded-3xl flex items-center justify-center shadow-2xl">
                 <Sparkles className="text-white" size={40} />
               </div>
             </motion.div>
@@ -311,7 +311,7 @@ export default function Login() {
               <div className="w-full border-t border-border"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="px-4 bg-dark-primary text-text-muted text-sm">或</span>
+              <span className="px-4 glass-card rounded-full text-text-muted text-sm">或</span>
             </div>
           </motion.div>
 
