@@ -21,13 +21,11 @@ export default function Chat() {
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const [loadingVoiceId, setLoadingVoiceId] = useState(null);
   const [typingMessage, setTypingMessage] = useState(null);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
   const audioRef = useRef(null);
   const inputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const inputContainerRef = useRef(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -49,53 +47,6 @@ export default function Chat() {
       const handleEnded = () => setPlayingAudioId(null);
       audio.addEventListener('ended', handleEnded);
       return () => audio.removeEventListener('ended', handleEnded);
-    }
-  }, []);
-
-  // 检测键盘显示/隐藏，动态调整底部间距
-  useEffect(() => {
-    const handleResize = () => {
-      // 计算可视区域高度变化，判断键盘是否显示
-      const viewportHeight = window.visualViewport?.height || window.innerHeight;
-      const windowHeight = window.innerHeight;
-      const heightDiff = windowHeight - viewportHeight;
-      
-      // 如果高度差大于150px，认为键盘已显示
-      if (heightDiff > 150) {
-        setKeyboardHeight(heightDiff);
-      } else {
-        setKeyboardHeight(0);
-      }
-    };
-
-    // 使用 visualViewport API（移动端支持更好）
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleResize);
-    } else {
-      window.addEventListener('resize', handleResize);
-    }
-
-    // 输入框聚焦/失焦时也检测
-    const input = inputRef.current;
-    if (input) {
-      const handleFocus = () => {
-        setTimeout(handleResize, 300); // 延迟检测，等待键盘动画
-      };
-      const handleBlur = () => {
-        setTimeout(() => setKeyboardHeight(0), 300);
-      };
-      input.addEventListener('focus', handleFocus);
-      input.addEventListener('blur', handleBlur);
-      
-      return () => {
-        if (window.visualViewport) {
-          window.visualViewport.removeEventListener('resize', handleResize);
-        } else {
-          window.removeEventListener('resize', handleResize);
-        }
-        input.removeEventListener('focus', handleFocus);
-        input.removeEventListener('blur', handleBlur);
-      };
     }
   }, []);
 
@@ -315,7 +266,7 @@ export default function Chat() {
 
   const scrollToBottom = () => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
@@ -365,7 +316,7 @@ export default function Chat() {
           <div className="flex-1 flex items-center gap-2 sm:gap-3 min-w-0">
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full overflow-hidden flex-shrink-0">
               <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
-            </div>
+      </div>
             <div className="flex-1 min-w-0">
               <h2 className="font-medium text-white text-base sm:text-lg truncate">{agent.name}</h2>
               <p className="text-xs text-[#8696a0]">在线</p>
@@ -409,10 +360,10 @@ export default function Chat() {
                 >
                   {!isUser && agent && (
                     <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
-                      <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  
+                  <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+              
                   <div className={`max-w-[75%] sm:max-w-[65%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                     {displayContent && (
                       <div className={`relative px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg shadow-sm ${
@@ -455,8 +406,8 @@ export default function Chat() {
                           className="w-full h-auto cursor-pointer" 
                           onClick={() => window.open(message.imageUrl, '_blank')} 
                         />
-                      </div>
-                    )}
+                  </div>
+                )}
                     
                     {/* 时间戳和状态 - WhatsApp风格 */}
                     <div className={`flex items-center gap-1 mt-0.5 px-1 ${isUser ? 'flex-row-reverse' : ''}`}>
@@ -477,43 +428,43 @@ export default function Chat() {
                         </span>
                       )}
                     </div>
-                    
-                    {/* 语音按钮 - AI消息 */}
+                
+                {/* 语音按钮 - AI消息 */}
                     {!isUser && displayContent && !isTyping && (
-                      <button
-                        onClick={() => {
-                          if (message.audioUrl) {
-                            playAudio(message.id, message.audioUrl);
-                          } else {
-                            requestVoice(message.id, message.content);
-                          }
-                        }}
-                        disabled={loadingVoiceId === message.id}
+                    <button
+                      onClick={() => {
+                        if (message.audioUrl) {
+                          playAudio(message.id, message.audioUrl);
+                        } else {
+                          requestVoice(message.id, message.content);
+                        }
+                      }}
+                      disabled={loadingVoiceId === message.id}
                         className="mt-1 px-3 py-1.5 bg-[#202c33] hover:bg-[#2a3942] rounded-lg text-xs text-[#8696a0] hover:text-white transition-colors disabled:opacity-50 flex items-center gap-2"
-                      >
-                        {loadingVoiceId === message.id ? (
+                    >
+                      {loadingVoiceId === message.id ? (
                           <>⏳ 生成中...</>
-                        ) : playingAudioId === message.id ? (
+                      ) : playingAudioId === message.id ? (
                           <><Square size={12} fill="currentColor" /> 停止</>
-                        ) : (
+                      ) : (
                           <><Play size={12} fill="currentColor" /> 播放语音</>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
+                      )}
+                    </button>
+                )}
+              </div>
+            </motion.div>
               );
             })}
-          </AnimatePresence>
-          
+        </AnimatePresence>
+        
           {/* 发送中指示器 - WhatsApp风格 */}
-          {sending && (
+        {sending && (
             <div className="flex justify-start items-end gap-1">
               <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
-                {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
-              </div>
+              {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
+            </div>
               <div className="bg-[#202c33] rounded-lg rounded-tl-none px-3 py-2 shadow-sm">
-                <div className="flex gap-1">
+              <div className="flex gap-1">
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
@@ -524,17 +475,17 @@ export default function Chat() {
                       }}
                     />
                   ))}
-                </div>
               </div>
             </div>
-          )}
-          
-          {/* 生成图片中 */}
-          {generatingImage && (
+          </div>
+        )}
+        
+        {/* 生成图片中 */}
+        {generatingImage && (
             <div className="flex justify-start items-end gap-1">
               <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
-                {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
-              </div>
+              {agent && <img src={avatarUrl} alt="" className="w-full h-full object-cover" />}
+            </div>
               <div className="bg-[#202c33] rounded-lg rounded-tl-none px-3 py-2 text-[#8696a0] text-xs">
                 生成图片中...
               </div>
@@ -546,13 +497,7 @@ export default function Chat() {
       </div>
 
       {/* 输入框 - WhatsApp风格，移动端优化 */}
-      <div 
-        ref={inputContainerRef}
-        className="bg-[#202c33] px-2 sm:px-4 py-2 sm:py-3 border-t border-[#313d45] sticky bottom-0 z-50 transition-all duration-300"
-        style={{
-          paddingBottom: keyboardHeight > 0 ? `${keyboardHeight}px` : '0.5rem',
-        }}
-      >
+      <div className="bg-[#202c33] px-2 sm:px-4 py-2 sm:py-3 safe-area-bottom border-t border-[#313d45] sticky bottom-0 z-50">
         {imageMode && (
           <div className="px-3 py-1.5 mb-2 text-xs text-[#8696a0] bg-[#2a3942] rounded-lg mx-2">
             📷 图片模式已开启
