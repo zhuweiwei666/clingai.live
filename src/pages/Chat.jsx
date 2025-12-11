@@ -237,9 +237,13 @@ export default function Chat() {
           msg.id === messageId ? { ...msg, audioUrl } : msg
         ));
         playAudio(messageId, audioUrl);
+      } else {
+        toast.error('语音生成失败：未返回音频URL');
       }
     } catch (error) {
       console.error('❌ 语音生成失败:', error);
+      const errorMsg = error.response?.data?.message || error.message || '语音生成失败';
+      toast.error(errorMsg);
     } finally {
       setLoadingVoiceId(null);
     }
