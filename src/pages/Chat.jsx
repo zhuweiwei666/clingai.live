@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 export default function Chat() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useUserStore();
+  const { isAuthenticated, user } = useUserStore();
   const [agent, setAgent] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
@@ -360,10 +360,10 @@ export default function Chat() {
                 >
                   {!isUser && agent && (
                     <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
-                  <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
-                </div>
-              )}
-              
+                      <img src={avatarUrl} alt={agent.name} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  
                   <div className={`max-w-[75%] sm:max-w-[65%] flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
                     {displayContent && (
                       <div className={`relative px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg shadow-sm ${
@@ -450,9 +450,32 @@ export default function Chat() {
                           <><Play size={12} fill="currentColor" /> 播放语音</>
                       )}
                     </button>
-                )}
-              </div>
-            </motion.div>
+                    )}
+                  </div>
+                  
+                  {/* 用户头像 - 显示在消息右侧 */}
+                  {isUser && user && (
+                    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 mb-1">
+                      {user.avatar || user.picture ? (
+                        <img 
+                          src={user.avatar || user.picture} 
+                          alt={user.username || user.name || '我'} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.parentElement.innerHTML = `<span class="text-white text-xs font-semibold flex items-center justify-center w-full h-full bg-[#005c4b]">${(user.username || user.name || '我')?.[0]?.toUpperCase() || 'U'}</span>`;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#005c4b] flex items-center justify-center">
+                          <span className="text-white text-xs font-semibold">
+                            {(user.username || user.name || '我')?.[0]?.toUpperCase() || 'U'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
               );
             })}
         </AnimatePresence>
@@ -497,7 +520,7 @@ export default function Chat() {
       </div>
 
       {/* 输入框 - WhatsApp风格，移动端优化 */}
-      <div className="bg-[#202c33] px-2 sm:px-4 py-2 sm:py-3 safe-area-bottom border-t border-[#313d45] sticky bottom-0 z-50">
+      <div className="bg-[#202c33] px-2 sm:px-4 py-2 sm:py-3 chat-input-area safe-area-bottom border-t border-[#313d45] sticky bottom-0 z-50">
         {imageMode && (
           <div className="px-3 py-1.5 mb-2 text-xs text-[#8696a0] bg-[#2a3942] rounded-lg mx-2">
             📷 图片模式已开启
