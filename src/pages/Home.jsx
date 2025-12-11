@@ -7,6 +7,111 @@ import toast from 'react-hot-toast';
 import { useCache } from '../hooks/useCache';
 import { CACHE_KEYS } from '../utils/cache';
 
+// 带悬停播放视频的卡片组件
+function StreamerCard({ streamer, index, onStreamerClick }) {
+  const [isHovering, setIsHovering] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef(null);
+  
+  const streamerId = streamer._id;
+  const avatarUrl = streamer.avatarUrl || streamer.avatar;
+  // 获取视频URL - 优先使用coverVideoUrl，然后是coverVideoUrls数组，最后是previewVideos
+  const videoUrl = streamer.coverVideoUrl || 
+    (streamer.coverVideoUrls && streamer.coverVideoUrls[0]) ||
+    (streamer.previewVideos && streamer.previewVideos[0]);
+  
+  const hasVideo = videoUrl && !videoError;
+  
+  // 处理鼠标进入
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    if (videoRef.current && hasVideo) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().catch(() => {
+        // 自动播放失败（可能是浏览器策略）
+        setVideoError(true);
+      });
+    }
+  };
+  
+  // 处理鼠标离开
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+  
+  // 处理触摸开始（移动端）
+  const handleTouchStart = () => {
+    if (!isHovering) {
+      handleMouseEnter();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
+    >
+      <Link
+        to={`/chat/${streamerId}`}
+        onClick={(e) => onStreamerClick(streamerId, e)}
+        className="card block group"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+      >
+        <div className="card-image relative overflow-hidden">
+          {/* 静态图片 - 悬浮时隐藏 */}
+          <img
+            src={avatarUrl || '/placeholder-avatar.jpg'}
+            alt={streamer.name}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+              isHovering && hasVideo && videoLoaded ? 'opacity-0' : 'opacity-100'
+            }`}
+            onError={(e) => {
+              e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop';
+            }}
+          />
+          
+          {/* 视频 - 悬浮时显示 */}
+          {hasVideo && (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+                isHovering && videoLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              onLoadedData={() => setVideoLoaded(true)}
+              onError={() => setVideoError(true)}
+            />
+          )}
+          
+          {/* 在线状态 */}
+          {streamer.status === 'online' && (
+            <div className="absolute top-3 right-3 z-10">
+              <span className="w-3 h-3 bg-green-500 rounded-full inline-block animate-pulse" />
+            </div>
+          )}
+          
+          {/* 底部渐变覆盖层 */}
+          <div className="card-overlay">
+            <h3 className="card-title line-clamp-1">{streamer.name}</h3>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
+  );
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserStore();
@@ -111,45 +216,13 @@ export default function Home() {
       ) : (
         <div className="grid-cards">
           {featuredStreamers.map((streamer, index) => {
-            // 使用后端返回的字段名 (_id, avatarUrl, etc.)
-            const streamerId = streamer._id;
-            const avatarUrl = streamer.avatarUrl || streamer.avatar;
-            
             return (
-              <motion.div
-                key={streamerId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-              >
-                <Link
-                  to={`/chat/${streamerId}`}
-                  onClick={(e) => handleStreamerClick(streamerId, e)}
-                  className="card block group"
-                >
-                  <div className="card-image">
-                    <img
-                      src={avatarUrl || '/placeholder-avatar.jpg'}
-                      alt={streamer.name}
-                      onError={(e) => {
-                        e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop';
-                      }}
-                    />
-                    
-                    {/* 在线状态 */}
-                    {streamer.status === 'online' && (
-                      <div className="absolute top-3 right-3 z-10">
-                        <span className="w-3 h-3 bg-green-500 rounded-full inline-block animate-pulse" />
-                      </div>
-                    )}
-                    
-                    {/* 底部渐变覆盖层 */}
-                    <div className="card-overlay">
-                      <h3 className="card-title line-clamp-1">{streamer.name}</h3>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
+              <StreamerCard
+                key={streamer._id}
+                streamer={streamer}
+                index={index}
+                onStreamerClick={handleStreamerClick}
+              />
             );
           })}
         </div>
