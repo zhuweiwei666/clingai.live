@@ -47,46 +47,6 @@ export default function Layout() {
             </div>
             <span className="text-lg font-bold gradient-text">Clingai</span>
           </Link>
-          
-          <div className="flex items-center gap-3">
-            {isAuthenticated && user ? (
-              <>
-                <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full">
-                  <div className="w-6 h-6 gradient-bg rounded-full flex items-center justify-center overflow-hidden">
-                    {(user.avatar || user.picture) ? (
-                      <img 
-                        src={user.avatar || user.picture} 
-                        alt={user.username || user.name} 
-                        className="w-full h-full object-cover" 
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = `<span class="text-white text-xs font-semibold">${(user.username || user.name)?.[0]?.toUpperCase() || 'U'}</span>`;
-                        }}
-                      />
-                    ) : (
-                      <span className="text-white text-xs font-semibold">{(user.username || user.name)?.[0]?.toUpperCase() || 'U'}</span>
-                    )}
-                  </div>
-                  <span className="text-xs text-text-secondary max-w-[80px] truncate">{user.username || user.name}</span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="p-1.5 glass-card rounded-xl text-text-muted hover:text-accent-pink transition-all duration-300"
-                  title="退出登录"
-                >
-                  <LogOut size={18} />
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={() => navigate('/login')}
-                className="btn-primary py-1.5 px-3 text-xs"
-              >
-                <LogIn size={14} />
-                登录
-              </button>
-            )}
-          </div>
         </div>
       </header>
 
