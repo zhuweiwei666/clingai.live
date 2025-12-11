@@ -119,19 +119,38 @@ export default function Home() {
   const scrollContainerRef = useRef(null);
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
+  
+  // 优化：立即从缓存读取数据，避免等待
+  const [localStreamers, setLocalStreamers] = useState(() => {
+    const cached = cacheManager.get(CACHE_KEYS.AGENTS_LIST);
+    return Array.isArray(cached) ? cached : [];
+  });
+  const [isInitialLoad, setIsInitialLoad] = useState(localStreamers.length === 0);
 
-  // 使用缓存Hook加载数据
-  const { data: featuredStreamers = [], loading, refresh } = useCache(
+  // 使用缓存Hook加载数据（后台更新）
+  const { data: featuredStreamersData, loading, refresh } = useCache(
     CACHE_KEYS.AGENTS_LIST,
     async () => {
       const response = await agentService.getList();
       return response.data || [];
     },
     {
-      ttl: 10 * 60 * 1000, // 10分钟缓存
+      ttl: 30 * 60 * 1000, // 30分钟缓存（首页数据变化不频繁）
       enableCache: true,
     }
   );
+
+  // 当API数据加载完成后，更新本地状态
+  useEffect(() => {
+    if (featuredStreamersData && Array.isArray(featuredStreamersData) && featuredStreamersData.length > 0) {
+      setLocalStreamers(featuredStreamersData);
+      setIsInitialLoad(false);
+    }
+  }, [featuredStreamersData]);
+
+  // 优先使用本地缓存数据
+  const featuredStreamers = localStreamers.length > 0 ? localStreamers : (featuredStreamersData || []);
+  const showLoading = isInitialLoad && loading && featuredStreamers.length === 0;
 
   const handleStreamerClick = (streamerId, e) => {
     if (!isAuthenticated) {

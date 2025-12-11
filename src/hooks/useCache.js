@@ -18,8 +18,26 @@ export function useCache(cacheKey, fetchFn, options = {}) {
     immediate = true, // 是否立即加载
   } = options;
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(immediate);
+  // 优化：立即从缓存初始化数据
+  const [data, setData] = useState(() => {
+    if (enableCache && immediate) {
+      const cached = cacheManager.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    // 如果有缓存数据，不显示loading
+    if (enableCache && immediate) {
+      const cached = cacheManager.get(cacheKey);
+      if (cached) {
+        return false; // 有缓存，不显示loading
+      }
+    }
+    return immediate;
+  });
   const [error, setError] = useState(null);
   const abortControllerRef = useRef(null);
 
