@@ -241,19 +241,12 @@ export default function Home() {
             </div>
           ))}
         </div>
-      ) : featuredStreamers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 px-4">
-          <p className="text-text-secondary text-lg mb-2">暂无AI伴侣</p>
-          <button
-            onClick={() => refresh()}
-            className="mt-4 px-6 py-2 gradient-bg rounded-full text-white font-semibold hover:opacity-90 transition-opacity"
-          >
-            刷新
-          </button>
-        </div>
       ) : featuredStreamers.length > 0 ? (
         <div className="grid-cards">
           {featuredStreamers.map((streamer, index) => {
+            if (!streamer || !streamer._id) {
+              return null;
+            }
             return (
               <StreamerCard
                 key={streamer._id}
@@ -265,13 +258,14 @@ export default function Home() {
           })}
         </div>
       ) : (
-        // 兜底：确保总是有内容显示
-        <div className="grid-cards">
-          {[...Array(12)].map((_, i) => (
-            <div key={i} className="card">
-              <div className="card-image skeleton" />
-            </div>
-          ))}
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <p className="text-text-secondary text-lg mb-2">暂无AI伴侣</p>
+          <button
+            onClick={() => refresh()}
+            className="mt-4 px-6 py-2 gradient-bg rounded-full text-white font-semibold hover:opacity-90 transition-opacity"
+          >
+            刷新
+          </button>
         </div>
       )}
       </div>
