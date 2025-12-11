@@ -303,15 +303,15 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0b141a]">
+    <div className="flex flex-col h-screen bg-dark-primary">
       <audio ref={audioRef} className="hidden" />
       
-      {/* WhatsApp风格头部 - 移动端优化 */}
-      <div className="bg-[#202c33] px-2 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 safe-area-top border-b border-[#313d45] sticky top-0 z-50">
+      {/* 统一风格头部 - 移动端优化 */}
+      <div className="glass-dark px-2 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 safe-area-top border-b border-border sticky top-0 z-50">
         {/* 返回按钮 - 移动端优化，更大更明显 */}
         <button 
           onClick={() => navigate('/messages')} 
-          className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary active:bg-dark-elevated rounded-lg transition-all touch-manipulation"
+          className="p-2.5 sm:p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-muted hover:text-text-primary active:bg-dark-elevated rounded-xl transition-all touch-manipulation"
           aria-label="返回"
         >
           <ArrowLeft size={26} className="sm:w-6 sm:h-6" />
