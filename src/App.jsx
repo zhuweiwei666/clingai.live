@@ -11,6 +11,9 @@ import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Wallet from './pages/Wallet';
 import Subscribe from './pages/Subscribe';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import Refund from './pages/Refund';
 import useUserStore from './store/userStore';
 
 // Google OAuth Client ID
@@ -40,6 +43,9 @@ function App() {
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
               <Route path="streamers" element={<StreamerList />} />
+              <Route path="terms" element={<Terms />} />
+              <Route path="privacy" element={<Privacy />} />
+              <Route path="refund" element={<Refund />} />
             </Route>
             {/* 需要登录的路由 */}
             <Route
