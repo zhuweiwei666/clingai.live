@@ -3,38 +3,67 @@
 @tailwind utilities;
 
 /* ========================================
-   Clingai.live - iOS Glassmorphism Design System
-   Inspired by Apple's iOS 15+ design language
+   ClingAI - OnlyCrush Clone Design System
+   1:1 Clone of h5.onlycrush.app
    ======================================== */
 
+/* Custom Font - Livvic */
+@font-face {
+  font-family: 'Livvic';
+  src: url('/fonts/Livvic-Regular-DOdV7_LL.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Livvic';
+  src: url('/fonts/Livvic-SemiBold-B90YyHAQ.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Livvic';
+  src: url('/fonts/Livvic-Bold-BdXWYL94.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Notable';
+  src: url('/fonts/Notable-Regular-C2CdEFe7.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
 :root {
-  /* Core Colors - iOS Dark Mode */
-  --bg-primary: #000000;
-  --bg-secondary: #0a0a0a;
-  --bg-card: rgba(28, 28, 30, 0.8);
-  --bg-elevated: rgba(44, 44, 46, 0.8);
+  /* OnlyCrush exact colors */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-card: #1a1a1a;
+  --bg-elevated: #222222;
+  --bg-button: #2a2a2a;
   
-  /* Accent Colors - Pink/Coral Gradient */
-  --accent-start: #ff6b8a;
-  --accent-end: #ff8e53;
-  --accent-pink: #ff4d7d;
-  --accent-coral: #ff6b6b;
-  --accent-orange: #ff9f43;
+  /* Purple gradient (tabs) */
+  --purple-start: #8b5cf6;
+  --purple-end: #a855f7;
   
-  /* Text Colors - iOS Style */
+  /* Pink gradient (accent) */
+  --pink-start: #ec4899;
+  --pink-end: #f43f5e;
+  
+  /* Red gradient (Super badge) */
+  --red-start: #ef4444;
+  --red-end: #f97316;
+  
+  /* Text colors */
   --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
   
-  /* Border & Overlay - Glassmorphism */
-  --border-color: rgba(255, 255, 255, 0.1);
-  --overlay-dark: rgba(0, 0, 0, 0.6);
-  --overlay-gradient: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
-  
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  /* Border */
+  --border-color: #333333;
+  --border-light: #404040;
 }
 
 /* Reset & Base */
@@ -50,198 +79,60 @@ html {
 }
 
 body {
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
-    'Helvetica Neue', Arial, sans-serif;
+  font-family: 'Livvic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #000000 0%, #1a1a2e 100%);
-  background-attachment: fixed;
+  background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
 }
 
 /* ========================================
-   Glassmorphism Utilities
+   Top Navigation Tabs - OnlyCrush Style
    ======================================== */
 
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-
-.glass-dark {
-  background: rgba(28, 28, 30, 0.7);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.glass-card {
-  background: rgba(44, 44, 46, 0.6);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.glass-elevated {
-  background: rgba(58, 58, 60, 0.7);
-  backdrop-filter: blur(25px) saturate(180%);
-  -webkit-backdrop-filter: blur(25px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-}
-
-/* ========================================
-   Gradient Utilities
-   ======================================== */
-
-.gradient-text {
-  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-bg {
-  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-}
-
-.gradient-bg-hover {
-  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.gradient-bg-hover:hover {
-  filter: brightness(1.15);
-  transform: scale(1.02);
-  box-shadow: 0 12px 40px -8px rgba(255, 107, 138, 0.5);
-}
-
-.gradient-border {
-  position: relative;
-  background: var(--bg-card);
-  border-radius: 20px;
-}
-
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: 21px;
-  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
-  z-index: -1;
-  opacity: 0.4;
-  filter: blur(8px);
-}
-
-/* ========================================
-   Card Styles - iOS Glassmorphism
-   ======================================== */
-
-.card {
-  background: rgba(44, 44, 46, 0.6);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.card:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 16px 48px rgba(255, 107, 138, 0.25);
-  border-color: rgba(255, 107, 138, 0.3);
-}
-
-.card-image {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  overflow: hidden;
-}
-
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.card:hover .card-image img {
-  transform: scale(1.1);
-}
-
-.card-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+.top-tabs {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 20px;
+  gap: 8px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: var(--bg-primary);
 }
 
-.card-title {
-  font-size: 15px;
+.top-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.top-tab {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.top-tab:hover {
+  background: var(--bg-elevated);
   color: var(--text-primary);
-  margin-bottom: 8px;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-  letter-spacing: -0.2px;
+}
+
+.top-tab.active {
+  background: linear-gradient(135deg, var(--purple-start), var(--purple-end));
+  color: white;
+  border-color: transparent;
 }
 
 /* ========================================
-   Badge Styles - iOS Style
-   ======================================== */
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.badge-super {
-  background: linear-gradient(135deg, var(--accent-pink), var(--accent-coral));
-  color: white;
-  box-shadow: 0 4px 16px -4px rgba(255, 77, 125, 0.5);
-}
-
-.badge-new {
-  background: linear-gradient(135deg, #ff6b8a, #ff8e53);
-  color: white;
-  box-shadow: 0 4px 16px -4px rgba(255, 107, 138, 0.5);
-}
-
-.badge-viral {
-  background: linear-gradient(135deg, #ff9f43, #ff6b6b);
-  color: white;
-  box-shadow: 0 4px 16px -4px rgba(255, 159, 67, 0.5);
-}
-
-.badge-hot {
-  background: linear-gradient(135deg, #f12711, #f5af19);
-  color: white;
-  box-shadow: 0 4px 16px -4px rgba(241, 39, 17, 0.5);
-}
-
-/* ========================================
-   Bottom Navigation - iOS Glassmorphism
+   Bottom Navigation - OnlyCrush Style
    ======================================== */
 
 .bottom-nav {
@@ -249,103 +140,72 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(28, 28, 30, 0.8);
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4px 0;
-  padding-bottom: calc(4px + env(safe-area-inset-bottom));
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-color);
+  padding: 8px 0;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
   z-index: 100;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
 }
 
-.bottom-nav-item {
+.bottom-nav-inner {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.nav-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 4px 12px;
+  gap: 4px;
+  padding: 8px;
   color: var(--text-muted);
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  position: relative;
-  border-radius: 12px;
+  text-decoration: none;
+  transition: color 0.2s;
 }
 
-.bottom-nav-item.active {
-  color: var(--accent-start);
-}
-
-.bottom-nav-item:hover {
+.nav-item.active {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
 }
 
-.bottom-nav-item span {
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: -0.2px;
-}
-
-.nav-indicator {
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  transform: translateX(-50%);
+.nav-item-icon {
   width: 24px;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent-start), var(--accent-end));
-  border-radius: 0 0 4px 4px;
-  box-shadow: 0 2px 8px rgba(255, 107, 138, 0.5);
+  height: 24px;
 }
 
-/* ========================================
-   Top Navigation Tabs
-   ======================================== */
+.nav-item-center {
+  position: relative;
+}
 
-.tab-nav {
+.nav-item-center-button {
+  position: relative;
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
 }
 
-.tab-nav::-webkit-scrollbar {
-  display: none;
-}
-
-.tab-item {
-  flex-shrink: 0;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: rgba(44, 44, 46, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  white-space: nowrap;
-}
-
-.tab-item.active {
-  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+.super-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, var(--pink-start), var(--red-start));
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
   color: white;
-  border-color: transparent;
-  box-shadow: 0 6px 20px -6px rgba(255, 107, 138, 0.5);
-}
-
-.tab-item:hover:not(.active) {
-  background: rgba(58, 58, 60, 0.8);
-  color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* ========================================
-   Section Headers
+   Section Header - OnlyCrush Style
    ======================================== */
 
 .section-header {
@@ -354,43 +214,335 @@ body {
   gap: 8px;
   padding: 16px;
   font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.3px;
+  font-weight: 700;
 }
 
-.section-header .emoji {
-  font-size: 24px;
+.section-header .fire-emoji {
+  font-size: 20px;
+}
+
+.section-header .gradient-text {
+  background: linear-gradient(90deg, #f97316, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ========================================
-   Form Elements - iOS Style
+   Video/Image Cards - OnlyCrush Style
    ======================================== */
 
-.input-dark {
-  background: rgba(44, 44, 46, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 0 12px 100px;
+}
+
+@media (min-width: 640px) {
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 0 16px 100px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cards-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    padding: 0 20px 100px;
+  }
+}
+
+.video-card {
+  position: relative;
   border-radius: 16px;
-  padding: 14px 16px;
-  color: var(--text-primary);
-  font-size: 16px;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: hidden;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.input-dark::placeholder {
-  color: var(--text-muted);
+.video-card:hover {
+  transform: scale(1.02);
 }
 
-.input-dark:focus {
-  outline: none;
-  border-color: var(--accent-start);
-  box-shadow: 0 0 0 4px rgba(255, 107, 138, 0.15);
-  background: rgba(58, 58, 60, 0.8);
+.video-card-media {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+}
+
+.video-card-media img,
+.video-card-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.3) 40%, transparent 70%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 12px;
+}
+
+/* Card Icons */
+.card-icon-left {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0.8;
+}
+
+.card-icon-right {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  opacity: 0.8;
+}
+
+/* Card Badges */
+.card-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-super {
+  padding: 4px 10px;
+  background: linear-gradient(135deg, var(--pink-start), var(--red-start));
+  border-radius: 0 16px 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+
+.badge-new {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  border-radius: 0 16px 0 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+
+.badge-new::before,
+.badge-new::after {
+  content: '🔥';
+  font-size: 10px;
+}
+
+/* Card Title */
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  line-height: 1.3;
+  margin-top: auto;
 }
 
 /* ========================================
-   Button Styles - iOS Style
+   Upload Button - OnlyCrush Style
+   ======================================== */
+
+.upload-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-button:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
+}
+
+.upload-button-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border-radius: 12px;
+}
+
+.upload-button-text {
+  flex: 1;
+}
+
+.upload-button-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.upload-button-plus {
+  font-size: 24px;
+  color: var(--text-primary);
+}
+
+/* ========================================
+   Function Tabs (Image/Video Face Swap)
+   ======================================== */
+
+.function-tabs {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+}
+
+.function-tab {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.function-tab:hover {
+  background: var(--bg-elevated);
+}
+
+.function-tab.active {
+  background: linear-gradient(135deg, var(--purple-start), var(--purple-end));
+  color: white;
+  border-color: transparent;
+}
+
+/* ========================================
+   Profile / My Page - OnlyCrush Style
+   ======================================== */
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.profile-logo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.profile-logo-text {
+  font-family: 'Notable', sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 2px;
+}
+
+.profile-logo-hot {
+  color: white;
+}
+
+.profile-logo-ai {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, var(--purple-start), var(--purple-end));
+  border-radius: 20px;
+  color: white;
+}
+
+.profile-user-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--text-primary);
+}
+
+.profile-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+}
+
+.profile-3d-logo {
+  width: 200px;
+  height: 200px;
+  margin-bottom: 32px;
+  /* 3D effect placeholder */
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-3d-text {
+  font-family: 'Notable', sans-serif;
+  font-size: 36px;
+  color: var(--text-muted);
+  text-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+}
+
+.profile-message {
+  font-size: 18px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.login-button {
+  padding: 14px 48px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.login-button:hover {
+  background: var(--bg-elevated);
+}
+
+/* ========================================
+   Buttons - OnlyCrush Style
    ======================================== */
 
 .btn-primary {
@@ -399,33 +551,25 @@ body {
   justify-content: center;
   gap: 8px;
   padding: 14px 28px;
-  background: linear-gradient(135deg, var(--accent-start), var(--accent-end));
+  background: linear-gradient(135deg, var(--purple-start), var(--purple-end));
   color: white;
   font-size: 16px;
   font-weight: 600;
   border: none;
-  border-radius: 16px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  box-shadow: 0 8px 24px -8px rgba(255, 107, 138, 0.5);
-  letter-spacing: -0.2px;
+  transition: all 0.2s;
 }
 
 .btn-primary:hover {
-  filter: brightness(1.15);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px -8px rgba(255, 107, 138, 0.6);
-}
-
-.btn-primary:active {
-  transform: translateY(0) scale(0.98);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
-  filter: none;
 }
 
 .btn-secondary {
@@ -434,104 +578,72 @@ body {
   justify-content: center;
   gap: 8px;
   padding: 14px 28px;
-  background: rgba(44, 44, 46, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   color: var(--text-primary);
   font-size: 16px;
   font-weight: 600;
-  border-radius: 16px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  letter-spacing: -0.2px;
+  transition: all 0.2s;
 }
 
 .btn-secondary:hover {
-  background: rgba(58, 58, 60, 0.8);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.btn-secondary:active {
-  transform: translateY(0) scale(0.98);
+  background: var(--bg-elevated);
 }
 
 /* ========================================
-   Grid Cards Layout
+   Form Elements
    ======================================== */
 
-.grid-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 12px;
+.input-dark {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-family: inherit;
+  transition: all 0.2s;
 }
 
-@media (min-width: 640px) {
-  .grid-cards {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    padding: 16px;
-  }
+.input-dark::placeholder {
+  color: var(--text-muted);
 }
 
-@media (min-width: 1024px) {
-  .grid-cards {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    padding: 20px;
-  }
+.input-dark:focus {
+  outline: none;
+  border-color: var(--purple-start);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 
 /* ========================================
-   Skeleton Loading
+   Safe Area & Utilities
    ======================================== */
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(44, 44, 46, 0.6) 0%,
-    rgba(58, 58, 60, 0.8) 50%,
-    rgba(44, 44, 46, 0.6) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 24px;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* ========================================
-   Safe Area Support
-   ======================================== */
-
-.safe-area-top {
-  padding-top: env(safe-area-inset-top);
-}
 
 .safe-area-bottom {
-  padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
 }
 
-.chat-input-area.safe-area-bottom {
-  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+.gradient-text-orange {
+  background: linear-gradient(90deg, #f97316, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* ========================================
-   Scrollbar Styling - iOS Style
-   ======================================== */
+.gradient-text-purple {
+  background: linear-gradient(90deg, var(--purple-start), var(--purple-end));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -539,100 +651,28 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--border-color);
+  border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.chat-scroll::-webkit-scrollbar {
-  width: 4px;
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
 }
 
-.chat-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* ========================================
-   Animations - iOS Style
-   ======================================== */
-
-@keyframes messageSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-}
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.message-slide-in {
-  animation: messageSlideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.touch-manipulation {
-  touch-action: manipulation;
-}
-
-/* ========================================
-   Mobile Optimizations
-   ======================================== */
-
+/* Mobile touch optimization */
 @media (max-width: 640px) {
-  /* 确保移动端按钮足够大 */
-  button,
-  .btn-primary,
-  .btn-secondary {
+  button, .btn-primary, .btn-secondary {
     min-height: 44px;
     min-width: 44px;
   }
   
-  /* 输入框字体大小防止iOS缩放 */
-  input,
-  textarea {
+  input, textarea {
     font-size: 16px !important;
   }
-}
-
-@media (min-width: 768px) {
-  .grid-cards {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .grid-cards {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-/* ========================================
-   Utility Classes
-   ======================================== */
-
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }

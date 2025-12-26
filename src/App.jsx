@@ -36,31 +36,33 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            {/* Public routes with layout */}
+            {/* Main routes with layout */}
             <Route path="/" element={<Layout />}>
+              {/* Public routes */}
               <Route index element={<Home />} />
               <Route path="ai-image" element={<AIImage />} />
+              <Route path="ai-video" element={<Home />} />
               <Route path="face-swap" element={<FaceSwap />} />
               <Route path="dress-up" element={<DressUp />} />
               <Route path="hd" element={<HD />} />
               <Route path="remove" element={<Remove />} />
+              <Route path="chat-edit" element={<FaceSwap />} />
+              <Route path="watermark" element={<Remove />} />
               <Route path="pricing" element={<Pricing />} />
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="refund" element={<Refund />} />
-            </Route>
-
-            {/* Protected routes with layout */}
-            <Route
-              path="/"
-              element={
-                <PrivateRoute>
-                  <Layout />
-                </PrivateRoute>
-              }
-            >
-              <Route path="create" element={<Create />} />
+              
+              {/* Profile - handles auth internally */}
               <Route path="profile" element={<Profile />} />
+              
+              {/* Protected routes */}
+              <Route path="create" element={
+                <PrivateRoute><Create /></PrivateRoute>
+              } />
+              <Route path="my-works" element={
+                <PrivateRoute><Create /></PrivateRoute>
+              } />
             </Route>
 
             {/* Catch all - redirect to home */}
@@ -70,11 +72,10 @@ function App() {
             position="top-center"
             toastOptions={{
               style: {
-                background: 'rgba(28, 28, 30, 0.9)',
+                background: '#1a1a1a',
                 color: '#fff',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '16px',
+                border: '1px solid #333',
+                borderRadius: '12px',
               },
             }}
           />
