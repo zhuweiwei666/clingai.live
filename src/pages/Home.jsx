@@ -76,7 +76,7 @@ function VideoCard({ template, index }) {
       )}
       
       {/* 底部：图标 + 标题 */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-20">
+      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-20 bg-red-500/50">
         <div className="text-white">
           <VideoIcon />
         </div>
