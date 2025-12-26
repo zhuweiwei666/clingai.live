@@ -1,32 +1,46 @@
-// API配置
-// 使用相对路径，通过 Nginx 反向代理访问后端 API
-export const API_BASE_URL = '';
+// API Configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-// API端点 - 根据后端实际接口文档配置
 export const API_ENDPOINTS = {
-  // 用户管理
+  // Auth
+  AUTH: {
+    LOGIN: `${API_BASE_URL}/auth/login`,
+    REGISTER: `${API_BASE_URL}/auth/register`,
+    GOOGLE: `${API_BASE_URL}/auth/google`,
+    ME: `${API_BASE_URL}/auth/me`,
+  },
+  // User
   USER: {
-    LOGIN: '/api/users/login',
-    REGISTER: '/api/users/register',
-    GOOGLE_LOGIN: '/api/users/google-login',
+    PROFILE: `${API_BASE_URL}/user/profile`,
+    WORKS: `${API_BASE_URL}/user/works`,
+    COINS: `${API_BASE_URL}/user/coins`,
   },
-  // AI角色 (Agents)
-  AGENT: {
-    LIST: '/api/agents',
-    DETAIL: '/api/agents', // GET /api/agents/:id
+  // Video
+  VIDEO: {
+    GENERATE: `${API_BASE_URL}/video/generate`,
+    FACE_SWAP: `${API_BASE_URL}/video/face-swap`,
+    STATUS: (taskId) => `${API_BASE_URL}/video/status/${taskId}`,
+    HISTORY: `${API_BASE_URL}/video/history`,
   },
-  // 聊天
-  CHAT: {
-    SEND: '/api/chat', // POST with { agentId, prompt }
-    HISTORY: '/api/chat/history', // GET /api/chat/history/:agentId
-    IMAGE: '/api/chat/image', // POST with { agentId } - 生成图片
-    VOICE: '/api/chat/voice', // POST with { agentId, text } - 生成语音
-    TTS: '/api/chat/tts', // POST with { agentId, text } - TTS
-    VIDEO: '/api/chat/video', // POST with { agentId } - 生成视频
+  // Image
+  IMAGE: {
+    GENERATE: `${API_BASE_URL}/image/generate`,
+    FACE_SWAP: `${API_BASE_URL}/image/face-swap`,
+    DRESS_UP: `${API_BASE_URL}/image/dress-up`,
+    HD_UPSCALE: `${API_BASE_URL}/image/hd-upscale`,
+    REMOVE: `${API_BASE_URL}/image/remove`,
+    STATUS: (taskId) => `${API_BASE_URL}/image/status/${taskId}`,
+    HISTORY: `${API_BASE_URL}/image/history`,
   },
-  // 钱包
-  WALLET: {
-    BALANCE: '/api/wallet/balance',
-    TRANSACTIONS: '/api/wallet/transactions',
+  // Templates
+  TEMPLATES: {
+    LIST: `${API_BASE_URL}/templates`,
+    TRENDING: `${API_BASE_URL}/templates/trending`,
+    NEW: `${API_BASE_URL}/templates/new`,
+    CATEGORY: (category) => `${API_BASE_URL}/templates/category/${category}`,
+    DETAIL: (id) => `${API_BASE_URL}/templates/${id}`,
+    CATEGORIES: `${API_BASE_URL}/templates/meta/categories`,
   },
 };
+
+export default API_ENDPOINTS;

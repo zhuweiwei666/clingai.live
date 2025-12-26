@@ -5,25 +5,21 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import StreamerList from './pages/StreamerList';
-import Messages from './pages/Messages';
-import Chat from './pages/Chat';
+import Create from './pages/Create';
 import Profile from './pages/Profile';
-import Wallet from './pages/Wallet';
-import Subscribe from './pages/Subscribe';
+import AIImage from './pages/AIImage';
+import FaceSwap from './pages/FaceSwap';
+import DressUp from './pages/DressUp';
+import HD from './pages/HD';
+import Remove from './pages/Remove';
+import Pricing from './pages/Pricing';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Refund from './pages/Refund';
 import useUserStore from './store/userStore';
 
 // Google OAuth Client ID
-// 直接使用 Client ID，确保 Google 登录功能可用
-// 使用字符串拼接避免被压缩工具优化掉
-const GOOGLE_CLIENT_ID = '1031646438202-' + 'g9kg86khnp6tdh13b8e75f5p6r95jutg' + '.apps.googleusercontent.com';
-
-// 调试：确认 Client ID - 强制输出
-console.log('✅✅✅ Google Client ID 已配置:', GOOGLE_CLIENT_ID);
-console.log('✅✅✅ Client ID 长度:', GOOGLE_CLIENT_ID.length);
+const GOOGLE_CLIENT_ID = '1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useUserStore();
@@ -31,23 +27,30 @@ function PrivateRoute({ children }) {
 }
 
 function App() {
-  // 使用配置的 Client ID
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router>
         <div className="App">
           <Routes>
+            {/* Auth routes - no layout */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            {/* 公开路由 - 不需要登录 */}
+            
+            {/* Public routes with layout */}
             <Route path="/" element={<Layout />}>
               <Route index element={<Home />} />
-              <Route path="streamers" element={<StreamerList />} />
+              <Route path="ai-image" element={<AIImage />} />
+              <Route path="face-swap" element={<FaceSwap />} />
+              <Route path="dress-up" element={<DressUp />} />
+              <Route path="hd" element={<HD />} />
+              <Route path="remove" element={<Remove />} />
+              <Route path="pricing" element={<Pricing />} />
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="refund" element={<Refund />} />
             </Route>
-            {/* 需要登录的路由 */}
+
+            {/* Protected routes with layout */}
             <Route
               path="/"
               element={
@@ -56,14 +59,25 @@ function App() {
                 </PrivateRoute>
               }
             >
-              <Route path="messages" element={<Messages />} />
-              <Route path="chat/:id" element={<Chat />} />
+              <Route path="create" element={<Create />} />
               <Route path="profile" element={<Profile />} />
-              <Route path="wallet" element={<Wallet />} />
-              <Route path="subscribe" element={<Subscribe />} />
             </Route>
+
+            {/* Catch all - redirect to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <Toaster position="top-right" />
+          <Toaster 
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: 'rgba(28, 28, 30, 0.9)',
+                color: '#fff',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+              },
+            }}
+          />
         </div>
       </Router>
     </GoogleOAuthProvider>
@@ -71,4 +85,3 @@ function App() {
 }
 
 export default App;
-

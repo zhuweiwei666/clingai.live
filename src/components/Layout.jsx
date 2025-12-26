@@ -1,87 +1,97 @@
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageCircle, User } from 'lucide-react';
-import useUserStore from '../store/userStore';
-import toast from 'react-hot-toast';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Home, User, Sparkles, Image, Video, Wand2, Shirt, Eraser } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+// Top navigation tabs (feature categories)
+const featureTabs = [
+  { path: '/', label: 'AI Video', icon: Video, isActive: (path) => path === '/' },
+  { path: '/ai-image', label: 'AI Image', icon: Image },
+  { path: '/face-swap', label: 'Face Swap', icon: Wand2 },
+  { path: '/dress-up', label: 'Dress Up', icon: Shirt },
+  { path: '/hd', label: 'HD', icon: Sparkles },
+  { path: '/remove', label: 'Remove', icon: Eraser },
+];
+
+// Bottom navigation
+const bottomNav = [
+  { path: '/', label: 'Home', icon: Home },
+  { path: '/create', label: 'Create', icon: Sparkles, special: true },
+  { path: '/profile', label: 'Profile', icon: User },
+];
 
 export default function Layout() {
-  const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useUserStore();
+  const currentPath = location.pathname;
 
-  const handleNavClick = (path, requiresAuth) => {
-    if (requiresAuth && !isAuthenticated) {
-      toast.error('请先登录');
-      navigate('/login', { state: { from: { pathname: path } } });
-      return;
-    }
-    navigate(path);
-  };
-
-  const navItems = [
-    { icon: Home, label: '首页', path: '/', requiresAuth: false },
-    { icon: MessageCircle, label: '消息', path: '/messages', requiresAuth: true },
-    { icon: User, label: '个人中心', path: '/profile', requiresAuth: true },
-  ];
-
-  const isActive = (path) => {
-    if (path === '/') {
-      return location.pathname === '/';
-    }
-    return location.pathname.startsWith(path);
-  };
+  // Check if current page should show top tabs
+  const showTopTabs = ['/', '/ai-image', '/face-swap', '/dress-up', '/hd', '/remove'].includes(currentPath);
 
   return (
     <div className="min-h-screen bg-dark-primary flex flex-col">
-      {/* 顶部导航栏 */}
-      <header className="glass-dark sticky top-0 z-50 safe-area-top">
-        <div className="flex items-center justify-between px-4 py-2">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 gradient-bg rounded-xl flex items-center justify-center shadow-lg">
-              <Home className="text-white" size={18} />
-            </div>
-            <span className="text-lg font-bold gradient-text">Clingai</span>
-          </Link>
-        </div>
-      </header>
+      {/* Top Navigation Tabs */}
+      {showTopTabs && (
+        <header className="sticky top-0 z-50 glass-dark">
+          <div className="tab-nav">
+            {featureTabs.map((tab) => {
+              const isActive = tab.isActive ? tab.isActive(currentPath) : currentPath === tab.path;
+              return (
+                <NavLink
+                  key={tab.path}
+                  to={tab.path}
+                  className={`tab-item ${isActive ? 'active' : ''}`}
+                >
+                  <tab.icon className="w-4 h-4 mr-1.5 inline-block" />
+                  {tab.label}
+                </NavLink>
+              );
+            })}
+          </div>
+        </header>
+      )}
 
-      {/* 主要内容区域 */}
+      {/* Main Content */}
       <main className="flex-1 safe-area-bottom">
         <Outlet />
       </main>
 
-      {/* 底部导航栏 */}
+      {/* Bottom Navigation */}
       <nav className="bottom-nav">
-        <div className="flex items-center justify-around">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.path);
+        <div className="flex justify-around items-center max-w-lg mx-auto">
+          {bottomNav.map((item) => {
+            const isActive = currentPath === item.path;
             
-            const handleClick = (e) => {
-              e.preventDefault();
-              if (item.requiresAuth && !isAuthenticated) {
-                handleNavClick(item.path, true);
-              } else {
-                navigate(item.path);
-              }
-            };
-            
+            if (item.special) {
+              // Special create button
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className="relative -mt-6"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="w-14 h-14 rounded-full gradient-bg flex items-center justify-center shadow-lg"
+                    style={{
+                      boxShadow: '0 4px 20px rgba(255, 107, 138, 0.5)'
+                    }}
+                  >
+                    <item.icon className="w-6 h-6 text-white" />
+                  </motion.div>
+                </NavLink>
+              );
+            }
+
             return (
-              <button
+              <NavLink
                 key={item.path}
-                onClick={handleClick}
-                className={`bottom-nav-item ${active ? 'active' : ''}`}
+                to={item.path}
+                className={`bottom-nav-item ${isActive ? 'active' : ''}`}
               >
-                {active && <div className="nav-indicator" />}
-                <div className="relative">
-                  <Icon size={20} strokeWidth={active ? 2.5 : 1.5} />
-                  {item.badge && (
-                    <span className="absolute -top-1 -right-3 bg-gradient-accent text-[8px] text-white font-bold px-1.5 py-0.5 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-                <span className={active ? 'font-semibold' : ''}>{item.label}</span>
-              </button>
+                {isActive && <div className="nav-indicator" />}
+                <item.icon className={`w-5 h-5 ${isActive ? 'text-accent-start' : ''}`} />
+                <span>{item.label}</span>
+              </NavLink>
             );
           })}
         </div>

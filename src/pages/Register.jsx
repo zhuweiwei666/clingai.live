@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { userService } from '../services/userService';
+import authService from '../services/authService';
 import useUserStore from '../store/userStore';
 import toast from 'react-hot-toast';
 
@@ -21,31 +21,36 @@ export default function Register() {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      toast.error('两次输入的密码不一致');
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await userService.register({
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-      });
+      const response = await authService.register(
+        formData.email, 
+        formData.password, 
+        formData.username
+      );
       
-      const { user, token } = response.data || {};
+      const { user, token } = response;
       
       if (token) {
         setToken(token);
-        setUser(user || { username: formData.username });
-        toast.success('注册成功！');
+        setUser(user);
+        toast.success('Registration successful!');
         navigate('/');
       } else {
-        toast.error('注册失败，请稍后重试');
+        toast.error('Registration failed, please try again');
       }
     } catch (error) {
-      toast.error(error.message || '注册失败，请稍后重试');
+      toast.error(error.response?.data?.error || 'Registration failed, please try again');
     } finally {
       setLoading(false);
     }
@@ -53,7 +58,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-dark-primary flex flex-col">
-      {/* 返回按钮 */}
+      {/* Back button */}
       <div className="p-4">
         <button
           onClick={() => navigate(-1)}
@@ -88,7 +93,7 @@ export default function Register() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              创建账户
+              Create Account
             </motion.h1>
             <motion.p 
               className="text-text-secondary"
@@ -96,11 +101,11 @@ export default function Register() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
-              加入 Clingai，开启AI之旅
+              Join ClingAI and start creating
             </motion.p>
           </div>
 
-          {/* 表单 */}
+          {/* Form */}
           <motion.form 
             onSubmit={handleSubmit} 
             className="space-y-4"
@@ -110,56 +115,57 @@ export default function Register() {
           >
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
-                用户名
+                Username
               </label>
               <input
                 type="text"
                 value={formData.username}
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 className="input-dark w-full"
-                placeholder="请输入用户名"
+                placeholder="Choose a username"
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
-                邮箱
+                Email
               </label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="input-dark w-full"
-                placeholder="请输入邮箱"
+                placeholder="Enter your email"
                 required
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
-                密码
+                Password
               </label>
               <input
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 className="input-dark w-full"
-                placeholder="请输入密码"
+                placeholder="Create a password"
                 required
+                minLength={6}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-text-secondary mb-2">
-                确认密码
+                Confirm Password
               </label>
               <input
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 className="input-dark w-full"
-                placeholder="请再次输入密码"
+                placeholder="Confirm your password"
                 required
               />
             </div>
@@ -175,13 +181,13 @@ export default function Register() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  注册中...
+                  Creating account...
                 </span>
-              ) : '注册'}
+              ) : 'Sign Up'}
             </button>
           </motion.form>
 
-          {/* 登录链接 */}
+          {/* Login link */}
           <motion.div 
             className="mt-8 text-center"
             initial={{ opacity: 0 }}
@@ -189,9 +195,9 @@ export default function Register() {
             transition={{ delay: 0.5 }}
           >
             <p className="text-text-secondary">
-              已有账户？{' '}
+              Already have an account?{' '}
               <Link to="/login" className="text-accent-start hover:text-accent-end font-semibold transition-colors">
-                立即登录
+                Sign in now
               </Link>
             </p>
           </motion.div>

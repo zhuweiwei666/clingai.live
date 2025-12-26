@@ -1,12 +1,15 @@
 {
   "name": "clingai-live",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "Clingai.live - AI女友网站",
+  "description": "ClingAI - AI Video & Image Generator",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "server": "cd server && npm run dev",
+    "server:start": "cd server && npm start",
+    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {

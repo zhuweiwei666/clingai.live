@@ -1,41 +1,23 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useState, useRef, useEffect } from 'react';
-import { agentService } from '../services/agentService';
-import useUserStore from '../store/userStore';
-import toast from 'react-hot-toast';
-import { useCache } from '../hooks/useCache';
-import { CACHE_KEYS, cacheManager } from '../utils/cache';
+import { Play, Flame, Sparkles } from 'lucide-react';
+import templateService from '../services/templateService';
 
-// 带悬停播放视频的卡片组件
-function StreamerCard({ streamer, index, onStreamerClick }) {
-  const [isHovering, setIsHovering] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
-  const [videoError, setVideoError] = useState(false);
+// Video Card Component with hover play
+function VideoCard({ template, index }) {
+  const navigate = useNavigate();
   const videoRef = useRef(null);
-  
-  const streamerId = streamer._id;
-  const avatarUrl = streamer.avatarUrl || streamer.avatar;
-  // 获取视频URL - 优先使用coverVideoUrl，然后是coverVideoUrls数组，最后是previewVideos
-  const videoUrl = streamer.coverVideoUrl || 
-    (streamer.coverVideoUrls && streamer.coverVideoUrls[0]) ||
-    (streamer.previewVideos && streamer.previewVideos[0]);
-  
-  const hasVideo = videoUrl && !videoError;
-  
-  // 处理鼠标进入
+  const [isHovering, setIsHovering] = useState(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+
   const handleMouseEnter = () => {
     setIsHovering(true);
-    if (videoRef.current && hasVideo) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {
-        // 自动播放失败（可能是浏览器策略）
-        setVideoError(true);
-      });
+    if (videoRef.current && template.videoUrl) {
+      videoRef.current.play().catch(() => {});
     }
   };
-  
-  // 处理鼠标离开
+
   const handleMouseLeave = () => {
     setIsHovering(false);
     if (videoRef.current) {
@@ -43,231 +25,206 @@ function StreamerCard({ streamer, index, onStreamerClick }) {
       videoRef.current.currentTime = 0;
     }
   };
-  
-  // 处理触摸开始（移动端）
-  const handleTouchStart = () => {
-    if (!isHovering) {
-      handleMouseEnter();
+
+  const handleClick = () => {
+    navigate(`/create?template=${template.id}`);
+  };
+
+  // Get tag badge
+  const renderBadge = () => {
+    if (template.tags.includes('super')) {
+      return <span className="badge badge-super">Super</span>;
     }
+    if (template.tags.includes('new')) {
+      return <span className="badge badge-new">🔥 New</span>;
+    }
+    if (template.tags.includes('hot')) {
+      return <span className="badge badge-hot">Hot</span>;
+    }
+    if (template.tags.includes('viral')) {
+      return <span className="badge badge-viral">Viral</span>;
+    }
+    return null;
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
+      transition={{ delay: index * 0.05 }}
+      className="card cursor-pointer"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
-      <Link
-        to={`/chat/${streamerId}`}
-        onClick={(e) => onStreamerClick(streamerId, e)}
-        className="card block group"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={handleTouchStart}
-      >
-        <div className="card-image relative overflow-hidden">
-          {/* 静态图片 - 悬浮时隐藏 */}
-          <img
-            src={avatarUrl || '/placeholder-avatar.jpg'}
-            alt={streamer.name}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-              isHovering && hasVideo && videoLoaded ? 'opacity-0' : 'opacity-100'
-            }`}
-            onError={(e) => {
-              e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop';
-            }}
+      <div className="card-image">
+        {/* Thumbnail Image */}
+        <img
+          src={template.thumbnail}
+          alt={template.title}
+          className={`transition-opacity duration-300 ${isHovering && isVideoLoaded ? 'opacity-0' : 'opacity-100'}`}
+          loading="lazy"
+        />
+        
+        {/* Video (shows on hover) */}
+        {template.videoUrl && (
+          <video
+            ref={videoRef}
+            src={template.videoUrl}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovering && isVideoLoaded ? 'opacity-100' : 'opacity-0'}`}
+            muted
+            loop
+            playsInline
+            onLoadedData={() => setIsVideoLoaded(true)}
           />
-          
-          {/* 视频 - 悬浮时显示 */}
-          {hasVideo && (
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-                isHovering && videoLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              onLoadedData={() => setVideoLoaded(true)}
-              onError={() => setVideoError(true)}
-            />
-          )}
-          
-          {/* 在线状态 */}
-          {streamer.status === 'online' && (
-            <div className="absolute top-3 right-3 z-10">
-              <span className="w-3 h-3 bg-green-500 rounded-full inline-block animate-pulse" />
+        )}
+
+        {/* Overlay */}
+        <div className="card-overlay">
+          {/* Badge */}
+          <div className="absolute top-3 right-3">
+            {renderBadge()}
+          </div>
+
+          {/* Video indicator */}
+          {template.videoUrl && (
+            <div className="absolute top-3 left-3">
+              <div className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                <Play className="w-4 h-4 text-white fill-white" />
+              </div>
             </div>
           )}
-          
-          {/* 底部渐变覆盖层 */}
-          <div className="card-overlay">
-            <h3 className="card-title line-clamp-1">{streamer.name}</h3>
-          </div>
+
+          {/* Title */}
+          <h3 className="card-title line-clamp-2">{template.title}</h3>
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }
 
-export default function Home() {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useUserStore();
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const scrollContainerRef = useRef(null);
-  const touchStartY = useRef(0);
-  const touchEndY = useRef(0);
-  
-  // 优化：立即从缓存读取数据，避免等待
-  const [localStreamers, setLocalStreamers] = useState(() => {
-    try {
-      const cached = cacheManager.get(CACHE_KEYS.AGENTS_LIST);
-      return Array.isArray(cached) ? cached : [];
-    } catch (error) {
-      console.error('读取缓存失败:', error);
-      return [];
-    }
-  });
-  const [isInitialLoad, setIsInitialLoad] = useState(localStreamers.length === 0);
-
-  // 使用缓存Hook加载数据（后台更新）
-  const { data: featuredStreamersData, loading, refresh } = useCache(
-    CACHE_KEYS.AGENTS_LIST,
-    async () => {
-      const response = await agentService.getList();
-      return response.data || [];
-    },
-    {
-      ttl: 30 * 60 * 1000, // 30分钟缓存（首页数据变化不频繁）
-      enableCache: true,
-    }
+// Skeleton Loading
+function SkeletonCard() {
+  return (
+    <div className="skeleton aspect-[3/4] rounded-3xl" />
   );
+}
 
-  // 当API数据加载完成后，更新本地状态
+export default function Home() {
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('trending');
+
   useEffect(() => {
-    if (featuredStreamersData && Array.isArray(featuredStreamersData) && featuredStreamersData.length > 0) {
-      setLocalStreamers(featuredStreamersData);
-      setIsInitialLoad(false);
-    } else if (featuredStreamersData && Array.isArray(featuredStreamersData) && featuredStreamersData.length === 0) {
-      // 即使API返回空数组，也更新状态，避免一直loading
-      setIsInitialLoad(false);
-    }
-  }, [featuredStreamersData]);
+    loadTemplates();
+  }, []);
 
-  // 优先使用本地缓存数据
-  const featuredStreamers = localStreamers.length > 0 ? localStreamers : (featuredStreamersData || []);
-  const showLoading = isInitialLoad && loading && featuredStreamers.length === 0;
-  
-
-  const handleStreamerClick = (streamerId, e) => {
-    if (!isAuthenticated) {
-      e.preventDefault();
-      toast.error('请先登录后再开始聊天');
-      navigate('/login', { state: { from: { pathname: `/chat/${streamerId}` } } });
-    }
-  };
-
-  // 下拉刷新处理
-  const handleTouchStart = (e) => {
-    touchStartY.current = e.touches[0].clientY;
-  };
-
-  const handleTouchMove = (e) => {
-    touchEndY.current = e.touches[0].clientY;
-    const scrollTop = scrollContainerRef.current?.scrollTop || 0;
-    
-    // 只有在顶部且向下滑动时才显示刷新提示
-    if (scrollTop === 0 && touchEndY.current > touchStartY.current) {
-      const pullDistance = touchEndY.current - touchStartY.current;
-      if (pullDistance > 50 && !isRefreshing) {
-        // 可以显示刷新提示
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    const scrollTop = scrollContainerRef.current?.scrollTop || 0;
-    const pullDistance = touchEndY.current - touchStartY.current;
-    
-    // 在顶部且下拉超过80px时触发刷新
-    if (scrollTop === 0 && pullDistance > 80 && !isRefreshing) {
-      handleRefresh();
-    }
-    
-    touchStartY.current = 0;
-    touchEndY.current = 0;
-  };
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
+  const loadTemplates = async () => {
     try {
-      await refresh();
-      toast.success('刷新成功');
+      setLoading(true);
+      // For now, use sample data since backend might not be running
+      const sampleTemplates = [
+        {
+          id: '1',
+          title: 'Rub Her Body',
+          thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop',
+          videoUrl: null,
+          category: 'photo_to_video',
+          tags: ['super'],
+          views: 12500,
+        },
+        {
+          id: '2',
+          title: 'Dance Motion',
+          thumbnail: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=600&fit=crop',
+          videoUrl: null,
+          category: 'photo_to_video',
+          tags: ['new', 'hot'],
+          views: 8300,
+        },
+        {
+          id: '3',
+          title: 'Sexy Pose',
+          thumbnail: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=600&fit=crop',
+          videoUrl: null,
+          category: 'photo_to_video',
+          tags: ['viral'],
+          views: 15600,
+        },
+        {
+          id: '4',
+          title: 'Beach Vibes',
+          thumbnail: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop',
+          videoUrl: null,
+          category: 'photo_to_video',
+          tags: ['new'],
+          views: 9800,
+        },
+        {
+          id: '5',
+          title: 'Mirror Selfie',
+          thumbnail: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop',
+          videoUrl: null,
+          category: 'photo_to_video',
+          tags: ['super'],
+          views: 11200,
+        },
+        {
+          id: '6',
+          title: 'Bedroom Scene',
+          thumbnail: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=600&fit=crop',
+          videoUrl: null,
+          category: 'photo_to_video',
+          tags: ['hot'],
+          views: 7500,
+        },
+      ];
+      setTemplates(sampleTemplates);
     } catch (error) {
-      toast.error('刷新失败');
+      console.error('Failed to load templates:', error);
     } finally {
-      setTimeout(() => setIsRefreshing(false), 500);
+      setLoading(false);
     }
   };
-
 
   return (
-    <div className="min-h-screen bg-dark-primary flex flex-col">
-      {/* 下拉刷新指示器 */}
-      {isRefreshing && (
-        <div className="fixed top-[60px] left-0 right-0 z-50 flex items-center justify-center py-2 bg-dark-primary/95 backdrop-blur-lg">
-          <div className="flex items-center gap-2 text-text-secondary text-sm">
-            <div className="w-4 h-4 border-2 border-accent-pink border-t-transparent rounded-full animate-spin" />
-            <span>刷新中...</span>
+    <div className="min-h-screen">
+      {/* Section Header */}
+      <div className="section-header">
+        <Flame className="w-6 h-6 text-orange-500" />
+        <span className="gradient-text font-bold">Trending: Photo to Video</span>
       </div>
-      </div>
-      )}
 
-      {/* 主播卡片网格 */}
-      <div
-        className="flex-1 overflow-y-auto"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        ref={scrollContainerRef}
-      >
-      {showLoading ? (
-        <div className="grid-cards">
-          {[...Array(12)].map((_, i) => (
-            <div key={i} className="card">
-              <div className="card-image skeleton" />
-            </div>
-          ))}
-        </div>
-      ) : featuredStreamers.length > 0 ? (
-        <div className="grid-cards">
-          {featuredStreamers.map((streamer, index) => {
-            if (!streamer || !streamer._id) {
-              return null;
-            }
-            return (
-              <StreamerCard
-                key={streamer._id}
-                streamer={streamer}
-                index={index}
-                onStreamerClick={handleStreamerClick}
-              />
-            );
-          })}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 px-4">
-          <p className="text-text-secondary text-lg mb-2">暂无AI伴侣</p>
-          <button
-            onClick={() => refresh()}
-            className="mt-4 px-6 py-2 gradient-bg rounded-full text-white font-semibold hover:opacity-90 transition-opacity"
-          >
-            刷新
-          </button>
-        </div>
-      )}
+      {/* Templates Grid */}
+      <div className="grid-cards">
+        {loading ? (
+          // Skeleton loading
+          Array.from({ length: 6 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))
+        ) : (
+          templates.map((template, index) => (
+            <VideoCard key={template.id} template={template} index={index} />
+          ))
+        )}
+      </div>
+
+      {/* More sections can be added here */}
+      <div className="section-header mt-6">
+        <Sparkles className="w-6 h-6 text-purple-500" />
+        <span className="gradient-text font-bold">New Releases</span>
+      </div>
+
+      <div className="grid-cards">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonCard key={i} />
+          ))
+        ) : (
+          templates.filter(t => t.tags.includes('new')).map((template, index) => (
+            <VideoCard key={template.id} template={template} index={index} />
+          ))
+        )}
       </div>
     </div>
   );

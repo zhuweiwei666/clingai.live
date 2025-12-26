@@ -50,7 +50,7 @@ export default function Terms() {
           <section>
             <h2 className="text-xl font-semibold text-white mb-3">5. Content and Usage</h2>
             <p>
-              ClingAI provides AI-generated responses for entertainment and communication. You agree not to use the Service to generate harmful, illegal, or abusive content.
+              ClingAI provides AI-powered image and video generation services. You agree not to use the Service to generate harmful, illegal, abusive, or non-consensual content. All generated content must comply with applicable laws and ethical guidelines.
             </p>
           </section>
 
