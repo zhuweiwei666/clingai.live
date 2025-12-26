@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Order from '../models/Order.js';
 import { getSetting } from '../models/Settings.js';
 import { incrementStats } from '../models/DailyStats.js';
+import paymentService from '../services/paymentService.js';
 
 const router = Router();
 
@@ -32,7 +33,7 @@ router.get('/plans', async (req, res) => {
 // 创建订单
 router.post('/create', verifyToken, async (req, res) => {
   try {
-    const { type, packageId, planId, paymentMethod } = req.body;
+    const { type, packageId, planId, paymentMethod = 'paypal' } = req.body;
 
     let orderData = {
       userId: req.user.id,
@@ -68,14 +69,28 @@ router.post('/create', verifyToken, async (req, res) => {
     const order = new Order(orderData);
     await order.save();
 
-    // TODO: 调用支付服务创建支付链接
-    // const paymentUrl = await paymentService.createPayment(order);
+    // 创建支付链接
+    let paymentResult;
+    if (paymentMethod === 'paypal') {
+      paymentResult = await paymentService.createPayPalOrder(order);
+      if (paymentResult.id) {
+        order.paymentId = paymentResult.id;
+        await order.save();
+      }
+    } else if (paymentMethod === 'stripe') {
+      paymentResult = await paymentService.createStripePayment(order);
+      if (paymentResult.sessionId) {
+        order.paymentId = paymentResult.sessionId;
+        await order.save();
+      }
+    }
 
     res.json({
       success: true,
       orderId: order.orderId,
       amount: order.amount,
-      // paymentUrl,
+      paymentUrl: paymentResult?.approveUrl || paymentResult?.url,
+      paymentId: paymentResult?.id || paymentResult?.sessionId,
     });
   } catch (error) {
     console.error('Create order error:', error);
@@ -83,23 +98,26 @@ router.post('/create', verifyToken, async (req, res) => {
   }
 });
 
-// 支付回调（Webhook）
-router.post('/callback/:provider', async (req, res) => {
+// PayPal 支付完成回调
+router.post('/paypal/capture', verifyToken, async (req, res) => {
   try {
-    const { provider } = req.params;
-    // TODO: 验证签名
-    // TODO: 解析支付结果
+    const { orderId, paypalOrderId } = req.body;
 
-    const { orderId, paymentId, status } = req.body; // 模拟
-
-    const order = await Order.findOne({ orderId });
+    const order = await Order.findOne({ orderId, userId: req.user.id });
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    if (status === 'success' && order.status !== 'paid') {
+    if (order.status === 'paid') {
+      return res.json({ success: true, message: 'Already paid' });
+    }
+
+    // 捕获 PayPal 支付
+    const captureResult = await paymentService.capturePayPalOrder(paypalOrderId);
+    
+    if (captureResult.success) {
       order.status = 'paid';
-      order.paymentId = paymentId;
+      order.paymentId = captureResult.captureId || paypalOrderId;
       order.paidAt = new Date();
       await order.save();
 
@@ -116,12 +134,107 @@ router.post('/callback/:provider', async (req, res) => {
       // 统计
       await incrementStats('totalOrders');
       await incrementStats('totalRevenue', order.amount);
+
+      res.json({
+        success: true,
+        coins: user.coins,
+        plan: user.plan,
+      });
+    } else {
+      res.status(400).json({ error: captureResult.error || 'Payment failed' });
+    }
+  } catch (error) {
+    console.error('PayPal capture error:', error);
+    res.status(500).json({ error: 'Payment capture failed' });
+  }
+});
+
+// Stripe Webhook
+router.post('/stripe/webhook', async (req, res) => {
+  try {
+    const signature = req.headers['stripe-signature'];
+    const result = paymentService.verifyStripeWebhook(req.rawBody, signature);
+    
+    if (!result.valid) {
+      return res.status(400).json({ error: 'Invalid signature' });
     }
 
-    res.json({ success: true });
+    const event = result.event;
+    
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const orderId = session.client_reference_id;
+
+      const order = await Order.findOne({ orderId });
+      if (order && order.status !== 'paid') {
+        order.status = 'paid';
+        order.paymentId = session.payment_intent;
+        order.paidAt = new Date();
+        await order.save();
+
+        // 发放金币/订阅
+        const user = await User.findById(order.userId);
+        if (order.type === 'coins') {
+          await user.addCoins(order.coins + order.bonusCoins);
+        } else if (order.type === 'subscription') {
+          user.plan = order.plan;
+          user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          await user.save();
+        }
+
+        await incrementStats('totalOrders');
+        await incrementStats('totalRevenue', order.amount);
+      }
+    }
+
+    res.json({ received: true });
   } catch (error) {
-    console.error('Payment callback error:', error);
-    res.status(500).json({ error: 'Callback failed' });
+    console.error('Stripe webhook error:', error);
+    res.status(500).json({ error: 'Webhook failed' });
+  }
+});
+
+// PayPal Webhook
+router.post('/paypal/webhook', async (req, res) => {
+  try {
+    const webhookEvent = req.body;
+    const verified = await paymentService.verifyPayPalWebhook(webhookEvent, req.headers);
+    
+    if (!verified.valid) {
+      console.warn('[Payment] Invalid PayPal webhook');
+      // 返回 200 避免 PayPal 重试
+      return res.json({ received: true });
+    }
+
+    const eventType = webhookEvent.event_type;
+    
+    if (eventType === 'CHECKOUT.ORDER.APPROVED' || eventType === 'PAYMENT.CAPTURE.COMPLETED') {
+      const resourceId = webhookEvent.resource.id;
+      const order = await Order.findOne({ paymentId: resourceId });
+      
+      if (order && order.status !== 'paid') {
+        order.status = 'paid';
+        order.paidAt = new Date();
+        await order.save();
+
+        const user = await User.findById(order.userId);
+        if (order.type === 'coins') {
+          await user.addCoins(order.coins + order.bonusCoins);
+        } else if (order.type === 'subscription') {
+          user.plan = order.plan;
+          user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          await user.save();
+        }
+
+        await incrementStats('totalOrders');
+        await incrementStats('totalRevenue', order.amount);
+      }
+    }
+
+    res.json({ received: true });
+  } catch (error) {
+    console.error('PayPal webhook error:', error);
+    res.json({ received: true });
   }
 });
 
@@ -141,6 +254,16 @@ router.get('/:orderId', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Get order error:', error);
     res.status(500).json({ error: 'Failed to get order' });
+  }
+});
+
+// 获取支付状态
+router.get('/payment/status', async (req, res) => {
+  try {
+    const status = paymentService.getPaymentStatus();
+    res.json({ success: true, ...status });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get status' });
   }
 });
 
