@@ -14,8 +14,13 @@ export const authService = {
   },
 
   // Google OAuth login
-  googleLogin: async (credential, clientId) => {
-    const response = await apiClient.post('/auth/google', { credential, clientId });
+  // Accept either a payload object (recommended) or legacy (credential, clientId)
+  googleLogin: async (payloadOrCredential, clientId) => {
+    const payload =
+      typeof payloadOrCredential === 'string'
+        ? { credential: payloadOrCredential, clientId }
+        : payloadOrCredential;
+    const response = await apiClient.post('/auth/google', payload);
     return response.data;
   },
 

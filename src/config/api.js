@@ -1,5 +1,7 @@
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+// Production should use same-origin `/api` (proxied by nginx).
+// Dev can override via VITE_API_URL or vite proxy.
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const API_ENDPOINTS = {
   // Auth

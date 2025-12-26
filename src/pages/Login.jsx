@@ -63,16 +63,13 @@ export default function Login() {
         
         const googleUserInfo = await googleResponse.json();
 
-        // Create a JWT-like credential for the backend
-        const credential = btoa(JSON.stringify({
-          sub: googleUserInfo.sub,
+        // Send user info to our backend (same contract as server/routes/auth.js)
+        const response = await authService.googleLogin({
+          googleId: googleUserInfo.sub,
           email: googleUserInfo.email,
           name: googleUserInfo.name,
           picture: googleUserInfo.picture,
-        }));
-        
-        // Send to our backend
-        const response = await authService.googleLogin(`header.${credential}.signature`);
+        });
         const { user, token } = response;
         
         if (token) {
