@@ -76,14 +76,14 @@ function VideoCard({ template, index }) {
       )}
       
       {/* 底部：图标 + 标题 */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-20 bg-red-500/50">
-        <div className="text-white">
+      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-20">
+        <div className="text-white/90">
           <VideoIcon />
         </div>
-        <div className="flex-1 text-center text-xs font-bold text-white uppercase tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,1)' }}>
+        <div className="flex-1 text-center text-[11px] font-bold text-white uppercase tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>
           {template.title}
         </div>
-        <div className="text-white">
+        <div className="text-white/90">
           <SaveIcon />
         </div>
       </div>
