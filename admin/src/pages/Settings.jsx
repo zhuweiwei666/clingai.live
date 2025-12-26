@@ -3,6 +3,16 @@ import { Card, Form, InputNumber, Button, Space, Switch, Input, Table, message, 
 import { SaveOutlined, PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { settingsApi } from '../services/api';
 
+const featureNames = {
+  photo2video: '图生视频',
+  faceswap: '换脸',
+  faceswap_video: '视频换脸',
+  dressup: '换装',
+  hd: '高清放大',
+  remove: '去背景',
+  aiimage: 'AI绘图',
+};
+
 export default function Settings() {
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState({});
@@ -25,7 +35,7 @@ export default function Settings() {
       setMaintenance(res.settings.maintenance || false);
       setAnnouncement(res.settings.announcement || '');
     } catch (error) {
-      message.error('Failed to load settings');
+      message.error('加载设置失败');
     } finally {
       setLoading(false);
     }
@@ -34,18 +44,18 @@ export default function Settings() {
   const saveCoinPackages = async () => {
     try {
       await settingsApi.updateCoinPackages(coinPackages);
-      message.success('Coin packages saved');
+      message.success('金币套餐已保存');
     } catch (error) {
-      message.error('Failed to save');
+      message.error('保存失败');
     }
   };
 
   const saveFeatureCosts = async () => {
     try {
       await settingsApi.updateFeatureCosts(featureCosts);
-      message.success('Feature costs saved');
+      message.success('功能消耗已保存');
     } catch (error) {
-      message.error('Failed to save');
+      message.error('保存失败');
     }
   };
 
@@ -53,18 +63,18 @@ export default function Settings() {
     try {
       await settingsApi.setMaintenance(!maintenance);
       setMaintenance(!maintenance);
-      message.success(`Maintenance mode ${!maintenance ? 'enabled' : 'disabled'}`);
+      message.success(`维护模式已${!maintenance ? '开启' : '关闭'}`);
     } catch (error) {
-      message.error('Failed to update');
+      message.error('更新失败');
     }
   };
 
   const saveAnnouncement = async () => {
     try {
       await settingsApi.setAnnouncement(announcement);
-      message.success('Announcement saved');
+      message.success('公告已保存');
     } catch (error) {
-      message.error('Failed to save');
+      message.error('保存失败');
     }
   };
 
@@ -99,7 +109,7 @@ export default function Settings() {
       ),
     },
     {
-      title: 'Coins',
+      title: '金币数量',
       dataIndex: 'coins',
       key: 'coins',
       render: (v, _, i) => (
@@ -111,7 +121,7 @@ export default function Settings() {
       ),
     },
     {
-      title: 'Price ($)',
+      title: '价格 ($)',
       dataIndex: 'price',
       key: 'price',
       render: (v, _, i) => (
@@ -124,7 +134,7 @@ export default function Settings() {
       ),
     },
     {
-      title: 'Bonus',
+      title: '赠送',
       dataIndex: 'bonus',
       key: 'bonus',
       render: (v, _, i) => (
@@ -136,10 +146,10 @@ export default function Settings() {
       ),
     },
     {
-      title: 'Action',
+      title: '操作',
       key: 'action',
       render: (_, __, i) => (
-        <Popconfirm title="Delete this package?" onConfirm={() => removeCoinPackage(i)}>
+        <Popconfirm title="确定删除这个套餐吗？" onConfirm={() => removeCoinPackage(i)} okText="确定" cancelText="取消">
           <Button icon={<DeleteOutlined />} danger size="small" />
         </Popconfirm>
       ),
@@ -149,12 +159,12 @@ export default function Settings() {
   const tabItems = [
     {
       key: 'packages',
-      label: 'Coin Packages',
+      label: '金币套餐',
       children: (
         <Card>
           <Space style={{ marginBottom: 16 }}>
-            <Button icon={<PlusOutlined />} onClick={addCoinPackage}>Add Package</Button>
-            <Button type="primary" icon={<SaveOutlined />} onClick={saveCoinPackages}>Save</Button>
+            <Button icon={<PlusOutlined />} onClick={addCoinPackage}>添加套餐</Button>
+            <Button type="primary" icon={<SaveOutlined />} onClick={saveCoinPackages}>保存</Button>
           </Space>
           <Table
             dataSource={coinPackages}
@@ -168,44 +178,44 @@ export default function Settings() {
     },
     {
       key: 'costs',
-      label: 'Feature Costs',
+      label: '功能消耗',
       children: (
         <Card>
           <Form layout="vertical">
             {Object.entries(featureCosts).map(([key, value]) => (
-              <Form.Item key={key} label={key} style={{ display: 'inline-block', marginRight: 16 }}>
+              <Form.Item key={key} label={featureNames[key] || key} style={{ display: 'inline-block', marginRight: 16 }}>
                 <InputNumber
                   value={value}
                   onChange={(v) => setFeatureCosts({ ...featureCosts, [key]: v })}
                   min={1}
-                  addonAfter="coins"
+                  addonAfter="金币"
                 />
               </Form.Item>
             ))}
           </Form>
           <Button type="primary" icon={<SaveOutlined />} onClick={saveFeatureCosts}>
-            Save Feature Costs
+            保存功能消耗
           </Button>
         </Card>
       ),
     },
     {
       key: 'system',
-      label: 'System',
+      label: '系统设置',
       children: (
         <Space direction="vertical" style={{ width: '100%' }}>
-          <Card title="Maintenance Mode">
+          <Card title="维护模式">
             <Space>
               <Switch checked={maintenance} onChange={toggleMaintenance} />
-              <span>{maintenance ? 'Enabled - Site is in maintenance mode' : 'Disabled'}</span>
+              <span>{maintenance ? '已开启 - 网站处于维护状态' : '已关闭'}</span>
             </Space>
           </Card>
-          <Card title="Announcement">
+          <Card title="系统公告">
             <Input.TextArea
               value={announcement}
               onChange={(e) => setAnnouncement(e.target.value)}
               rows={4}
-              placeholder="Enter announcement text (leave empty to hide)"
+              placeholder="输入公告内容（留空则不显示）"
             />
             <Button 
               type="primary" 
@@ -213,7 +223,7 @@ export default function Settings() {
               onClick={saveAnnouncement}
               style={{ marginTop: 16 }}
             >
-              Save Announcement
+              保存公告
             </Button>
           </Card>
         </Space>
@@ -223,7 +233,7 @@ export default function Settings() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Settings</h2>
+      <h2 style={{ marginBottom: 24 }}>系统设置</h2>
       <Tabs items={tabItems} />
     </div>
   );

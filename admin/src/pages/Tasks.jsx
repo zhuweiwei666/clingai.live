@@ -1,8 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Table, Select, Button, Tag, Space, Card, Row, Col, Statistic, message, Modal, Progress } from 'antd';
-import { ReloadOutlined, ClearOutlined } from '@ant-design/icons';
+import { ReloadOutlined } from '@ant-design/icons';
 import { tasksApi } from '../services/api';
 import dayjs from 'dayjs';
+
+const typeMap = {
+  photo2video: '图生视频',
+  faceswap: '换脸',
+  faceswap_video: '视频换脸',
+  dressup: '换装',
+  hd: '高清放大',
+  remove: '去背景',
+  aiimage: 'AI绘图',
+};
+
+const statusMap = {
+  pending: { text: '等待中', color: 'orange' },
+  processing: { text: '处理中', color: 'blue' },
+  completed: { text: '已完成', color: 'green' },
+  failed: { text: '失败', color: 'red' },
+};
 
 export default function Tasks() {
   const [loading, setLoading] = useState(false);
@@ -24,7 +41,7 @@ export default function Tasks() {
       setPagination(tasksRes.pagination);
       setQueue(queueRes.queue);
     } catch (error) {
-      message.error('Failed to load tasks');
+      message.error('加载任务失败');
     } finally {
       setLoading(false);
     }
@@ -32,104 +49,105 @@ export default function Tasks() {
 
   useEffect(() => {
     loadTasks();
-    const interval = setInterval(loadTasks, 10000); // Auto refresh every 10s
+    const interval = setInterval(loadTasks, 10000);
     return () => clearInterval(interval);
   }, [statusFilter]);
 
   const handleRetry = async (task) => {
     try {
       await tasksApi.retry(task._id);
-      message.success('Task requeued');
+      message.success('任务已重新加入队列');
       loadTasks(pagination.page);
     } catch (error) {
-      message.error(error.error || 'Retry failed');
+      message.error(error.error || '重试失败');
     }
   };
 
   const handleCancel = async (task) => {
     Modal.confirm({
-      title: 'Cancel Task',
-      content: 'Are you sure you want to cancel this task?',
+      title: '取消任务',
+      content: '确定要取消这个任务吗？',
+      okText: '确定',
+      cancelText: '取消',
       onOk: async () => {
         await tasksApi.cancel(task._id);
-        message.success('Task cancelled');
+        message.success('任务已取消');
         loadTasks(pagination.page);
       },
     });
   };
 
   const handleCleanQueue = (type) => {
+    const typeText = type === 'completed' ? '已完成' : '失败';
     Modal.confirm({
-      title: `Clean ${type} jobs`,
-      content: `Are you sure you want to clean all ${type} jobs from the queue?`,
+      title: `清理${typeText}任务`,
+      content: `确定要清理队列中所有${typeText}的任务吗？`,
+      okText: '确定',
+      cancelText: '取消',
       onOk: async () => {
         await tasksApi.cleanQueue(type);
-        message.success(`Cleaned ${type} jobs`);
+        message.success(`已清理${typeText}任务`);
         loadTasks();
       },
     });
   };
 
-  const statusColors = {
-    pending: 'orange',
-    processing: 'blue',
-    completed: 'green',
-    failed: 'red',
-  };
-
   const columns = [
     {
-      title: 'User',
+      title: '用户',
       dataIndex: 'userId',
       key: 'user',
       render: (v) => v?.email || '-',
     },
     {
-      title: 'Type',
+      title: '类型',
       dataIndex: 'type',
       key: 'type',
-      render: (v) => <Tag color="purple">{v}</Tag>,
+      render: (v) => <Tag color="purple">{typeMap[v] || v}</Tag>,
     },
     {
-      title: 'Status',
+      title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (v) => <Tag color={statusColors[v]}>{v}</Tag>,
+      render: (v) => {
+        const s = statusMap[v] || { text: v, color: 'default' };
+        return <Tag color={s.color}>{s.text}</Tag>;
+      },
     },
     {
-      title: 'Progress',
+      title: '进度',
       dataIndex: 'progress',
       key: 'progress',
       render: (v, r) => r.status === 'processing' ? <Progress percent={v} size="small" /> : '-',
     },
     {
-      title: 'Cost',
+      title: '消耗',
       dataIndex: 'costCoins',
       key: 'costCoins',
-      render: (v) => <Tag color="gold">{v}</Tag>,
+      render: (v) => <Tag color="gold">{v} 🪙</Tag>,
     },
     {
-      title: 'Time',
+      title: '耗时',
       dataIndex: 'processingTime',
       key: 'processingTime',
-      render: (v) => v ? `${(v / 1000).toFixed(1)}s` : '-',
+      render: (v) => v ? `${(v / 1000).toFixed(1)}秒` : '-',
     },
     {
-      title: 'Created',
+      title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (v) => dayjs(v).format('MM-DD HH:mm'),
     },
     {
-      title: 'Actions',
+      title: '操作',
       key: 'actions',
       render: (_, record) => (
         <Space>
           {record.status === 'failed' && (
-            <Button size="small" onClick={() => handleRetry(record)}>Retry</Button>
+            <Button size="small" onClick={() => handleRetry(record)}>重试</Button>
           )}
           {['pending', 'processing'].includes(record.status) && (
-            <Button size="small" danger onClick={() => handleCancel(record)}>Cancel</Button>
+            <Button size="small" danger onClick={() => handleCancel(record)}>取消</Button>
           )}
         </Space>
       ),
@@ -138,73 +156,73 @@ export default function Tasks() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Tasks</h2>
+      <h2 style={{ marginBottom: 24 }}>任务监控</h2>
 
-      {/* Queue Status */}
+      {/* 队列状态 */}
       {queue && (
-        <Card title="Queue Status" style={{ marginBottom: 24 }}>
+        <Card title="队列状态" style={{ marginBottom: 24 }}>
           <Row gutter={16}>
             <Col span={4}>
-              <Statistic title="Waiting" value={queue.waiting} valueStyle={{ color: '#f97316' }} />
+              <Statistic title="等待中" value={queue.waiting} valueStyle={{ color: '#f97316' }} />
             </Col>
             <Col span={4}>
-              <Statistic title="Active" value={queue.active} valueStyle={{ color: '#3b82f6' }} />
+              <Statistic title="处理中" value={queue.active} valueStyle={{ color: '#3b82f6' }} />
             </Col>
             <Col span={4}>
-              <Statistic title="Completed" value={queue.completed} valueStyle={{ color: '#10b981' }} />
+              <Statistic title="已完成" value={queue.completed} valueStyle={{ color: '#10b981' }} />
             </Col>
             <Col span={4}>
-              <Statistic title="Failed" value={queue.failed} valueStyle={{ color: '#ef4444' }} />
+              <Statistic title="失败" value={queue.failed} valueStyle={{ color: '#ef4444' }} />
             </Col>
             <Col span={8}>
               <Space>
-                <Button size="small" onClick={() => handleCleanQueue('completed')}>Clean Completed</Button>
-                <Button size="small" danger onClick={() => handleCleanQueue('failed')}>Clean Failed</Button>
+                <Button size="small" onClick={() => handleCleanQueue('completed')}>清理已完成</Button>
+                <Button size="small" danger onClick={() => handleCleanQueue('failed')}>清理失败</Button>
               </Space>
             </Col>
           </Row>
         </Card>
       )}
 
-      {/* Task Stats */}
+      {/* 任务统计 */}
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={6}>
           <Card size="small">
-            <Statistic title="Pending" value={statusCounts.pending || 0} />
+            <Statistic title="等待中" value={statusCounts.pending || 0} />
           </Card>
         </Col>
         <Col span={6}>
           <Card size="small">
-            <Statistic title="Processing" value={statusCounts.processing || 0} />
+            <Statistic title="处理中" value={statusCounts.processing || 0} />
           </Card>
         </Col>
         <Col span={6}>
           <Card size="small">
-            <Statistic title="Completed" value={statusCounts.completed || 0} />
+            <Statistic title="已完成" value={statusCounts.completed || 0} />
           </Card>
         </Col>
         <Col span={6}>
           <Card size="small">
-            <Statistic title="Failed" value={statusCounts.failed || 0} />
+            <Statistic title="失败" value={statusCounts.failed || 0} />
           </Card>
         </Col>
       </Row>
 
       <Space style={{ marginBottom: 16 }}>
         <Select
-          placeholder="Status"
+          placeholder="任务状态"
           value={statusFilter}
           onChange={setStatusFilter}
           style={{ width: 120 }}
           allowClear
         >
-          <Select.Option value="pending">Pending</Select.Option>
-          <Select.Option value="processing">Processing</Select.Option>
-          <Select.Option value="completed">Completed</Select.Option>
-          <Select.Option value="failed">Failed</Select.Option>
+          <Select.Option value="pending">等待中</Select.Option>
+          <Select.Option value="processing">处理中</Select.Option>
+          <Select.Option value="completed">已完成</Select.Option>
+          <Select.Option value="failed">失败</Select.Option>
         </Select>
         <Button icon={<ReloadOutlined />} onClick={() => loadTasks()}>
-          Refresh
+          刷新
         </Button>
       </Space>
 
@@ -217,6 +235,7 @@ export default function Tasks() {
           current: pagination.page,
           pageSize: pagination.limit,
           total: pagination.total,
+          showTotal: (total) => `共 ${total} 个任务`,
           onChange: loadTasks,
         }}
       />

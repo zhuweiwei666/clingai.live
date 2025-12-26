@@ -17,12 +17,12 @@ import { useAuthStore } from '../store/authStore';
 const { Header, Sider, Content } = AntLayout;
 
 const menuItems = [
-  { key: '/', icon: <DashboardOutlined />, label: 'Dashboard' },
-  { key: '/users', icon: <UserOutlined />, label: 'Users' },
-  { key: '/templates', icon: <AppstoreOutlined />, label: 'Templates' },
-  { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Orders' },
-  { key: '/tasks', icon: <ThunderboltOutlined />, label: 'Tasks' },
-  { key: '/settings', icon: <SettingOutlined />, label: 'Settings' },
+  { key: '/', icon: <DashboardOutlined />, label: '仪表盘' },
+  { key: '/users', icon: <UserOutlined />, label: '用户管理' },
+  { key: '/templates', icon: <AppstoreOutlined />, label: '模板管理' },
+  { key: '/orders', icon: <ShoppingCartOutlined />, label: '订单管理' },
+  { key: '/tasks', icon: <ThunderboltOutlined />, label: '任务监控' },
+  { key: '/settings', icon: <SettingOutlined />, label: '系统设置' },
 ];
 
 export default function Layout() {
@@ -42,7 +42,7 @@ export default function Layout() {
 
   const userMenu = {
     items: [
-      { key: 'logout', icon: <LogoutOutlined />, label: 'Logout', onClick: handleLogout },
+      { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: handleLogout },
     ],
   };
 
@@ -50,7 +50,7 @@ export default function Layout() {
     <AntLayout style={{ minHeight: '100vh' }}>
       <Sider trigger={null} collapsible collapsed={collapsed} theme="dark">
         <div className="logo">
-          {collapsed ? 'CA' : 'ClingAI Admin'}
+          {collapsed ? 'HA' : 'Hot AI 运营后台'}
         </div>
         <Menu
           theme="dark"
@@ -77,7 +77,7 @@ export default function Layout() {
           <Dropdown menu={userMenu} placement="bottomRight">
             <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Avatar icon={<UserOutlined />} />
-              <span style={{ color: '#fff' }}>{user?.email || 'Admin'}</span>
+              <span style={{ color: '#fff' }}>{user?.email || '管理员'}</span>
             </div>
           </Dropdown>
         </Header>

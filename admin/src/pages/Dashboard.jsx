@@ -11,6 +11,16 @@ import { dashboardApi } from '../services/api';
 
 const COLORS = ['#8b5cf6', '#ec4899', '#f97316', '#10b981', '#3b82f6', '#f59e0b'];
 
+const TYPE_NAMES = {
+  'photo2video': '图生视频',
+  'faceswap': '换脸',
+  'faceswap_video': '视频换脸',
+  'dressup': '换装',
+  'hd': '高清放大',
+  'remove': '去背景',
+  'aiimage': 'AI绘图',
+};
+
 export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [overview, setOverview] = useState(null);
@@ -48,14 +58,14 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Dashboard</h2>
+      <h2 style={{ marginBottom: 24 }}>仪表盘</h2>
 
-      {/* Stats Cards */}
+      {/* 核心指标 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
-              title="Total Users"
+              title="总用户数"
               value={overview?.total?.users || 0}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#8b5cf6' }}
@@ -65,7 +75,7 @@ export default function Dashboard() {
         <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
-              title="Total Revenue"
+              title="总收入"
               value={overview?.total?.revenue || 0}
               prefix={<DollarOutlined />}
               precision={2}
@@ -76,7 +86,7 @@ export default function Dashboard() {
         <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
-              title="Today Tasks"
+              title="今日任务"
               value={overview?.today?.tasks || 0}
               prefix={<ThunderboltOutlined />}
               valueStyle={{ color: '#f97316' }}
@@ -86,7 +96,7 @@ export default function Dashboard() {
         <Col xs={12} sm={6}>
           <Card className="stat-card">
             <Statistic
-              title="New Users (Today)"
+              title="今日新增用户"
               value={overview?.today?.newUsers || 0}
               prefix={<RiseOutlined />}
               valueStyle={{ color: '#ec4899' }}
@@ -95,52 +105,52 @@ export default function Dashboard() {
         </Col>
       </Row>
 
-      {/* Weekly Stats */}
+      {/* 周期统计 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={12} sm={6}>
           <Card size="small">
-            <Statistic title="Weekly Users" value={overview?.weekly?.newUsers || 0} />
+            <Statistic title="本周新增用户" value={overview?.weekly?.newUsers || 0} />
           </Card>
         </Col>
         <Col xs={12} sm={6}>
           <Card size="small">
-            <Statistic title="Weekly Revenue" value={overview?.weekly?.revenue || 0} prefix="$" precision={2} />
+            <Statistic title="本周收入" value={overview?.weekly?.revenue || 0} prefix="$" precision={2} />
           </Card>
         </Col>
         <Col xs={12} sm={6}>
           <Card size="small">
-            <Statistic title="Pending Tasks" value={overview?.tasks?.pending || 0} />
+            <Statistic title="等待处理" value={overview?.tasks?.pending || 0} />
           </Card>
         </Col>
         <Col xs={12} sm={6}>
           <Card size="small">
-            <Statistic title="Processing" value={overview?.tasks?.processing || 0} />
+            <Statistic title="正在处理" value={overview?.tasks?.processing || 0} />
           </Card>
         </Col>
       </Row>
 
-      {/* Charts */}
+      {/* 图表 */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          <Card title="Daily Trends (Last 7 Days)">
+          <Card title="7日趋势">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={trends}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                 <XAxis dataKey="date" stroke="#888" />
                 <YAxis stroke="#888" />
                 <Tooltip contentStyle={{ background: '#1a1a1a', border: '1px solid #333' }} />
-                <Line type="monotone" dataKey="newUsers" stroke="#8b5cf6" name="New Users" />
-                <Line type="monotone" dataKey="totalTasks" stroke="#f97316" name="Tasks" />
+                <Line type="monotone" dataKey="newUsers" stroke="#8b5cf6" name="新增用户" />
+                <Line type="monotone" dataKey="totalTasks" stroke="#f97316" name="任务数" />
               </LineChart>
             </ResponsiveContainer>
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="Feature Usage (Last 30 Days)">
+          <Card title="功能使用分布 (30天)">
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={usage.map(u => ({ name: u._id, value: u.count }))}
+                  data={usage.map(u => ({ name: TYPE_NAMES[u._id] || u._id, value: u.count }))}
                   dataKey="value"
                   nameKey="name"
                   cx="50%"
@@ -159,24 +169,24 @@ export default function Dashboard() {
         </Col>
       </Row>
 
-      {/* Queue Status */}
+      {/* 队列状态 */}
       {overview?.queue && (
-        <Card title="Queue Status" style={{ marginTop: 16 }}>
+        <Card title="队列状态" style={{ marginTop: 16 }}>
           <Row gutter={16}>
             <Col span={4}>
-              <Statistic title="Waiting" value={overview.queue.waiting} />
+              <Statistic title="等待中" value={overview.queue.waiting} />
             </Col>
             <Col span={4}>
-              <Statistic title="Active" value={overview.queue.active} />
+              <Statistic title="处理中" value={overview.queue.active} />
             </Col>
             <Col span={4}>
-              <Statistic title="Completed" value={overview.queue.completed} />
+              <Statistic title="已完成" value={overview.queue.completed} />
             </Col>
             <Col span={4}>
-              <Statistic title="Failed" value={overview.queue.failed} />
+              <Statistic title="失败" value={overview.queue.failed} />
             </Col>
             <Col span={4}>
-              <Statistic title="Delayed" value={overview.queue.delayed} />
+              <Statistic title="延迟" value={overview.queue.delayed} />
             </Col>
           </Row>
         </Card>

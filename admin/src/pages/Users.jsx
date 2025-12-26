@@ -4,6 +4,13 @@ import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { usersApi } from '../services/api';
 import dayjs from 'dayjs';
 
+const planMap = {
+  free: '免费版',
+  basic: '基础版',
+  pro: '专业版',
+  unlimited: '无限版',
+};
+
 export default function Users() {
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
@@ -19,7 +26,7 @@ export default function Users() {
       setUsers(res.users);
       setPagination(res.pagination);
     } catch (error) {
-      message.error('Failed to load users');
+      message.error('加载用户失败');
     } finally {
       setLoading(false);
     }
@@ -32,57 +39,57 @@ export default function Users() {
   const handleBan = async (user) => {
     try {
       await usersApi.toggleBan(user._id);
-      message.success(user.isBanned ? 'User unbanned' : 'User banned');
+      message.success(user.isBanned ? '已解封用户' : '已封禁用户');
       loadUsers(pagination.page);
     } catch (error) {
-      message.error('Operation failed');
+      message.error('操作失败');
     }
   };
 
   const handleModifyCoins = async () => {
     try {
-      await usersApi.modifyCoins(coinModal.user._id, coinModal.amount, 'Admin adjustment');
-      message.success('Coins updated');
+      await usersApi.modifyCoins(coinModal.user._id, coinModal.amount, '管理员调整');
+      message.success('金币已更新');
       setCoinModal({ visible: false, user: null, amount: 0 });
       loadUsers(pagination.page);
     } catch (error) {
-      message.error(error.error || 'Failed to update coins');
+      message.error(error.error || '更新金币失败');
     }
   };
 
   const columns = [
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Username', dataIndex: 'username', key: 'username' },
+    { title: '邮箱', dataIndex: 'email', key: 'email' },
+    { title: '用户名', dataIndex: 'username', key: 'username' },
     {
-      title: 'Coins',
+      title: '金币',
       dataIndex: 'coins',
       key: 'coins',
-      render: (v) => <Tag color="gold">{v}</Tag>,
+      render: (v) => <Tag color="gold">{v} 🪙</Tag>,
     },
     {
-      title: 'Plan',
+      title: '会员等级',
       dataIndex: 'plan',
       key: 'plan',
       render: (v) => (
-        <Tag color={v === 'free' ? 'default' : 'purple'}>{v}</Tag>
+        <Tag color={v === 'free' ? 'default' : 'purple'}>{planMap[v] || v}</Tag>
       ),
     },
     {
-      title: 'Status',
+      title: '状态',
       dataIndex: 'isBanned',
       key: 'status',
       render: (v) => (
-        <Tag color={v ? 'red' : 'green'}>{v ? 'Banned' : 'Active'}</Tag>
+        <Tag color={v ? 'red' : 'green'}>{v ? '已封禁' : '正常'}</Tag>
       ),
     },
     {
-      title: 'Created',
+      title: '注册时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (v) => dayjs(v).format('YYYY-MM-DD'),
     },
     {
-      title: 'Actions',
+      title: '操作',
       key: 'actions',
       render: (_, record) => (
         <Space>
@@ -90,14 +97,14 @@ export default function Users() {
             size="small"
             onClick={() => setCoinModal({ visible: true, user: record, amount: 0 })}
           >
-            Coins
+            调整金币
           </Button>
           <Button
             size="small"
             danger={!record.isBanned}
             onClick={() => handleBan(record)}
           >
-            {record.isBanned ? 'Unban' : 'Ban'}
+            {record.isBanned ? '解封' : '封禁'}
           </Button>
         </Space>
       ),
@@ -106,30 +113,30 @@ export default function Users() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Users</h2>
+      <h2 style={{ marginBottom: 24 }}>用户管理</h2>
 
       <Space style={{ marginBottom: 16 }}>
         <Input
-          placeholder="Search email/username"
+          placeholder="搜索邮箱/用户名"
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ width: 250 }}
         />
         <Select
-          placeholder="Plan"
+          placeholder="会员等级"
           value={planFilter}
           onChange={setPlanFilter}
           style={{ width: 120 }}
           allowClear
         >
-          <Select.Option value="free">Free</Select.Option>
-          <Select.Option value="basic">Basic</Select.Option>
-          <Select.Option value="pro">Pro</Select.Option>
-          <Select.Option value="unlimited">Unlimited</Select.Option>
+          <Select.Option value="free">免费版</Select.Option>
+          <Select.Option value="basic">基础版</Select.Option>
+          <Select.Option value="pro">专业版</Select.Option>
+          <Select.Option value="unlimited">无限版</Select.Option>
         </Select>
         <Button icon={<ReloadOutlined />} onClick={() => loadUsers()}>
-          Refresh
+          刷新
         </Button>
       </Space>
 
@@ -142,22 +149,25 @@ export default function Users() {
           current: pagination.page,
           pageSize: pagination.limit,
           total: pagination.total,
+          showTotal: (total) => `共 ${total} 个用户`,
           onChange: loadUsers,
         }}
       />
 
       <Modal
-        title={`Modify Coins - ${coinModal.user?.email}`}
+        title={`调整金币 - ${coinModal.user?.email}`}
         open={coinModal.visible}
         onOk={handleModifyCoins}
         onCancel={() => setCoinModal({ visible: false, user: null, amount: 0 })}
+        okText="确定"
+        cancelText="取消"
       >
-        <p>Current coins: <strong>{coinModal.user?.coins}</strong></p>
+        <p>当前金币: <strong>{coinModal.user?.coins}</strong></p>
         <InputNumber
           value={coinModal.amount}
           onChange={(v) => setCoinModal({ ...coinModal, amount: v })}
           style={{ width: '100%' }}
-          placeholder="Enter positive to add, negative to deduct"
+          placeholder="正数增加，负数扣除"
         />
       </Modal>
     </div>
