@@ -1,92 +1,69 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Sample templates
-const faceSwapTemplates = [
-  {
-    id: '1',
-    thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop',
-    badge: null,
-  },
-  {
-    id: '2',
-    thumbnail: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=600&fit=crop',
-    badge: 'super',
-  },
-  {
-    id: '3',
-    thumbnail: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=600&fit=crop',
-    badge: null,
-  },
-  {
-    id: '4',
-    thumbnail: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop',
-    badge: 'new',
-  },
-  {
-    id: '5',
-    thumbnail: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop',
-    badge: null,
-  },
-  {
-    id: '6',
-    thumbnail: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=600&fit=crop',
-    badge: 'super',
-  },
-];
-
-// Face swap icon
-const FaceSwapIcon = () => (
-  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+// 图标
+const FaceIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="8" cy="8" r="4" />
     <circle cx="16" cy="8" r="4" />
     <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
   </svg>
 );
 
-// Template Card
+const VideoIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <rect x="2" y="3" width="8" height="18" rx="2" />
+    <rect x="14" y="3" width="8" height="18" rx="2" />
+  </svg>
+);
+
+const SaveIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <rect x="5" y="3" width="14" height="18" rx="2" />
+    <line x1="9" y1="11" x2="15" y2="11" />
+    <line x1="12" y1="8" x2="12" y2="14" />
+  </svg>
+);
+
+// 示例模板
+const templates = [
+  { id: '1', thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop', badge: null },
+  { id: '2', thumbnail: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=600&fit=crop', badge: 'super' },
+  { id: '3', thumbnail: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=600&fit=crop', badge: null },
+  { id: '4', thumbnail: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop', badge: 'new' },
+  { id: '5', thumbnail: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop', badge: null },
+  { id: '6', thumbnail: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=600&fit=crop', badge: 'super' },
+];
+
 function TemplateCard({ template, index, onSelect }) {
+  const [loaded, setLoaded] = useState(false);
+
   return (
     <div
       className="video-card fade-in"
-      style={{ animationDelay: `${index * 0.05}s` }}
+      style={{ animationDelay: `${index * 0.04}s` }}
       onClick={() => onSelect(template)}
     >
       <div className="video-card-media">
         <img
           src={template.thumbnail}
-          alt={`Template ${template.id}`}
+          alt=""
           loading="lazy"
+          onLoad={() => setLoaded(true)}
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}
         />
-        
-        <div className="video-card-overlay">
-          {/* Badge */}
-          {template.badge === 'super' && (
-            <div className="card-badge">
-              <span className="badge-super">Super</span>
-            </div>
-          )}
+        <div className="video-card-overlay" />
+        <div className="video-card-content">
+          {template.badge === 'super' && <span className="badge-super">Super</span>}
           {template.badge === 'new' && (
-            <div className="card-badge">
-              <span className="badge-new">New</span>
+            <div className="badge-new">
+              <span className="fire">🔥</span>
+              <span>New</span>
+              <span className="fire">🔥</span>
             </div>
           )}
-
-          {/* Left icon - Video */}
-          <div className="card-icon-left">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="2" y="4" width="8" height="16" rx="1" />
-              <rect x="14" y="4" width="8" height="16" rx="1" />
-            </svg>
-          </div>
-
-          {/* Right icon */}
-          <div className="card-icon-right">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="4" y="2" width="16" height="20" rx="2" />
-              <path d="M9 12h6M12 9v6" />
-            </svg>
-          </div>
+          <div className="card-icon-left"><VideoIcon /></div>
+          <div className="card-icon-right"><SaveIcon /></div>
         </div>
       </div>
     </div>
@@ -97,7 +74,6 @@ export default function FaceSwap() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState('image');
-  const [sourceImage, setSourceImage] = useState(null);
   const [sourcePreview, setSourcePreview] = useState(null);
 
   const tabs = [
@@ -109,25 +85,18 @@ export default function FaceSwap() {
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    setSourceImage(file);
     const reader = new FileReader();
     reader.onload = (e) => setSourcePreview(e.target.result);
     reader.readAsDataURL(file);
   };
 
   const handleTemplateSelect = (template) => {
-    if (sourceImage) {
-      navigate(`/create?type=face_swap&target=${template.id}`);
-    } else {
-      // Open file picker first
-      fileInputRef.current?.click();
-    }
+    navigate(`/create?type=face_swap&target=${template.id}`);
   };
 
   return (
     <div className="min-h-screen">
-      {/* Function Tabs */}
+      {/* 功能 Tab */}
       <div className="function-tabs">
         {tabs.map((tab) => (
           <button
@@ -140,7 +109,7 @@ export default function FaceSwap() {
         ))}
       </div>
 
-      {/* Upload Button */}
+      {/* 上传按钮 */}
       <div
         className="upload-button"
         onClick={() => fileInputRef.current?.click()}
@@ -157,26 +126,24 @@ export default function FaceSwap() {
           {sourcePreview ? (
             <img 
               src={sourcePreview} 
-              alt="Source" 
+              alt="" 
               className="w-full h-full object-cover rounded-xl"
             />
           ) : (
-            <FaceSwapIcon />
+            <FaceIcon />
           )}
         </div>
         
         <div className="upload-button-text">
-          <div className="upload-button-title">
-            {sourcePreview ? 'Change Photo' : 'Custom Image Face Swap'}
-          </div>
+          Custom Image Face Swap
         </div>
         
         <div className="upload-button-plus">+</div>
       </div>
 
-      {/* Templates Grid */}
+      {/* 模板网格 */}
       <div className="cards-grid">
-        {faceSwapTemplates.map((template, index) => (
+        {templates.map((template, index) => (
           <TemplateCard
             key={template.id}
             template={template}

@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /* ========================================
-   ClingAI - OnlyCrush Clone Design System
-   1:1 Clone of h5.onlycrush.app
+   ClingAI - OnlyCrush 1:1 Clone
+   精确复刻 h5.onlycrush.app
    ======================================== */
 
 /* Custom Font - Livvic */
@@ -37,36 +37,34 @@
 }
 
 :root {
-  /* OnlyCrush exact colors */
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #111111;
-  --bg-card: #1a1a1a;
-  --bg-elevated: #222222;
-  --bg-button: #2a2a2a;
+  /* OnlyCrush 精确配色 */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-card: #141414;
+  --bg-elevated: #1a1a1a;
   
-  /* Purple gradient (tabs) */
+  /* 紫色渐变 */
   --purple-start: #8b5cf6;
   --purple-end: #a855f7;
   
-  /* Pink gradient (accent) */
+  /* 粉红渐变 */
   --pink-start: #ec4899;
   --pink-end: #f43f5e;
   
-  /* Red gradient (Super badge) */
-  --red-start: #ef4444;
-  --red-end: #f97316;
+  /* 橙红渐变 */
+  --orange-start: #f97316;
+  --orange-end: #fbbf24;
   
-  /* Text colors */
+  /* 文字颜色 */
   --text-primary: #ffffff;
-  --text-secondary: #a3a3a3;
-  --text-muted: #737373;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
   
-  /* Border */
-  --border-color: #333333;
-  --border-light: #404040;
+  /* 边框 */
+  --border-color: #262626;
 }
 
-/* Reset & Base */
+/* Reset */
 * {
   margin: 0;
   padding: 0;
@@ -89,13 +87,15 @@ body {
 }
 
 /* ========================================
-   Top Navigation Tabs - OnlyCrush Style
+   顶部导航 Tab - OnlyCrush 精确样式
+   无背景无边框，活跃状态有红点指示器
    ======================================== */
 
 .top-tabs {
   display: flex;
-  gap: 8px;
-  padding: 12px 16px;
+  align-items: center;
+  gap: 0;
+  padding: 8px 0;
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -107,32 +107,43 @@ body {
 }
 
 .top-tab {
+  position: relative;
   flex-shrink: 0;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 500;
   color: var(--text-secondary);
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: color 0.2s;
   white-space: nowrap;
+  text-decoration: none;
 }
 
 .top-tab:hover {
-  background: var(--bg-elevated);
   color: var(--text-primary);
 }
 
 .top-tab.active {
-  background: linear-gradient(135deg, var(--purple-start), var(--purple-end));
-  color: white;
-  border-color: transparent;
+  color: var(--text-primary);
+}
+
+/* 活跃状态的红点指示器 */
+.top-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
 }
 
 /* ========================================
-   Bottom Navigation - OnlyCrush Style
+   底部导航 - OnlyCrush 精确样式
    ======================================== */
 
 .bottom-nav {
@@ -140,12 +151,12 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(10, 10, 10, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-color);
-  padding: 8px 0;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 6px 0;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom));
   z-index: 100;
 }
 
@@ -153,8 +164,9 @@ body {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  max-width: 500px;
+  max-width: 400px;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
 .nav-item {
@@ -163,20 +175,19 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 8px;
-  color: var(--text-muted);
+  padding: 10px 20px;
+  color: rgba(255, 255, 255, 0.5);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .nav-item.active {
-  color: var(--text-primary);
+  color: #ffffff;
 }
 
-.nav-item-icon {
-  width: 24px;
-  height: 24px;
+.nav-item svg {
+  width: 26px;
+  height: 26px;
 }
 
 .nav-item-center {
@@ -188,40 +199,47 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-item-center-button svg {
+  width: 30px;
+  height: 30px;
 }
 
 .super-badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  padding: 2px 6px;
-  background: linear-gradient(135deg, var(--pink-start), var(--red-start));
-  border-radius: 6px;
-  font-size: 10px;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #ec4899, #ef4444);
+  border-radius: 8px;
+  font-size: 9px;
   font-weight: 700;
   color: white;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 /* ========================================
-   Section Header - OnlyCrush Style
+   Section Header - 火焰标题
    ======================================== */
 
 .section-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px;
-  font-size: 18px;
-  font-weight: 700;
+  gap: 10px;
+  padding: 20px 16px 16px;
 }
 
 .section-header .fire-emoji {
-  font-size: 20px;
+  font-size: 22px;
 }
 
-.section-header .gradient-text {
+.section-header .title-text {
+  font-size: 20px;
+  font-weight: 700;
   background: linear-gradient(90deg, #f97316, #fbbf24);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -229,14 +247,14 @@ body {
 }
 
 /* ========================================
-   Video/Image Cards - OnlyCrush Style
+   视频卡片 - OnlyCrush 精确样式
    ======================================== */
 
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 0 12px 100px;
+  gap: 14px;
+  padding: 0 14px 100px;
 }
 
 @media (min-width: 640px) {
@@ -250,22 +268,26 @@ body {
 @media (min-width: 1024px) {
   .cards-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: 18px;
     padding: 0 20px 100px;
   }
 }
 
 .video-card {
   position: relative;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
   background: var(--bg-card);
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.3s ease;
 }
 
 .video-card:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
+}
+
+.video-card:active {
+  transform: scale(0.98);
 }
 
 .video-card-media {
@@ -273,6 +295,7 @@ body {
   width: 100%;
   aspect-ratio: 3 / 4;
   overflow: hidden;
+  background: #1a1a1a;
 }
 
 .video-card-media img,
@@ -280,154 +303,132 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.5s ease;
 }
 
+.video-card:hover .video-card-media img {
+  transform: scale(1.05);
+}
+
+/* 卡片渐变遮罩 */
 .video-card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.3) 40%, transparent 70%);
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.5) 25%,
+    rgba(0, 0, 0, 0.15) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* 卡片内容容器 */
+.video-card-content {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 12px;
+  padding: 14px;
 }
 
-/* Card Icons */
+/* 卡片标题 - 全大写居中 */
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  letter-spacing: 1px;
+  line-height: 1.4;
+}
+
+/* 左下角图标 - 视频图标 */
 .card-icon-left {
   position: absolute;
-  bottom: 12px;
-  left: 12px;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  opacity: 0.8;
+  bottom: 14px;
+  left: 14px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
+.card-icon-left svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* 右下角图标 - 保存图标 */
 .card-icon-right {
   position: absolute;
-  bottom: 12px;
-  right: 12px;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  opacity: 0.8;
+  bottom: 14px;
+  right: 14px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* Card Badges */
-.card-badge {
+.card-icon-right svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Super 标签 */
+.badge-super {
   position: absolute;
   top: 0;
   right: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.badge-super {
-  padding: 4px 10px;
-  background: linear-gradient(135deg, var(--pink-start), var(--red-start));
-  border-radius: 0 16px 0 12px;
-  font-size: 11px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #ec4899, #ef4444);
+  border-radius: 0 20px 0 14px;
+  font-size: 10px;
   font-weight: 700;
   color: white;
+  letter-spacing: 0.5px;
 }
 
+/* New 标签 - 带🔥 */
 .badge-new {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
   background: linear-gradient(135deg, #f97316, #ef4444);
-  border-radius: 0 16px 0 12px;
+  border-radius: 12px;
   font-size: 11px;
   font-weight: 700;
   color: white;
 }
 
-.badge-new::before,
-.badge-new::after {
-  content: '🔥';
+.badge-new .fire {
   font-size: 10px;
 }
 
-/* Card Title */
-.card-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  line-height: 1.3;
-  margin-top: auto;
-}
-
 /* ========================================
-   Upload Button - OnlyCrush Style
-   ======================================== */
-
-.upload-button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 16px;
-  padding: 16px 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.upload-button:hover {
-  background: var(--bg-elevated);
-  border-color: var(--border-light);
-}
-
-.upload-button-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-elevated);
-  border-radius: 12px;
-}
-
-.upload-button-text {
-  flex: 1;
-}
-
-.upload-button-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.upload-button-plus {
-  font-size: 24px;
-  color: var(--text-primary);
-}
-
-/* ========================================
-   Function Tabs (Image/Video Face Swap)
+   功能 Tab (Face Swap 页面)
    ======================================== */
 
 .function-tabs {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   padding: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.function-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .function-tab {
   flex: 1;
-  padding: 14px 16px;
-  border-radius: 14px;
-  font-size: 14px;
+  min-width: 120px;
+  padding: 14px 20px;
+  border-radius: 16px;
+  font-size: 13px;
   font-weight: 600;
   text-align: center;
   color: var(--text-secondary);
@@ -435,20 +436,72 @@ body {
   border: 1px solid var(--border-color);
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .function-tab:hover {
   background: var(--bg-elevated);
+  color: var(--text-primary);
 }
 
 .function-tab.active {
   background: linear-gradient(135deg, var(--purple-start), var(--purple-end));
   color: white;
   border-color: transparent;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
 }
 
 /* ========================================
-   Profile / My Page - OnlyCrush Style
+   上传按钮
+   ======================================== */
+
+.upload-button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 16px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.upload-button:hover {
+  background: var(--bg-elevated);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.upload-button-icon {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.upload-button-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.upload-button-text {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.upload-button-plus {
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--text-primary);
+}
+
+/* ========================================
+   Profile 页面
    ======================================== */
 
 .profile-header {
@@ -461,34 +514,31 @@ body {
 .profile-logo {
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.profile-logo-text {
-  font-family: 'Notable', sans-serif;
-  font-size: 24px;
-  font-weight: 400;
-  letter-spacing: 2px;
+  gap: 6px;
 }
 
 .profile-logo-hot {
+  font-family: 'Notable', sans-serif;
+  font-size: 26px;
+  font-weight: 400;
   color: white;
+  letter-spacing: 3px;
 }
 
 .profile-logo-ai {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, var(--purple-start), var(--purple-end));
-  border-radius: 20px;
+  font-family: 'Notable', sans-serif;
+  font-size: 20px;
+  padding: 4px 14px;
+  background: linear-gradient(135deg, #8b5cf6, #a855f7);
+  border-radius: 22px;
   color: white;
+  letter-spacing: 2px;
 }
 
 .profile-user-icon {
-  width: 32px;
-  height: 32px;
-  color: var(--text-primary);
+  width: 28px;
+  height: 28px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .profile-content {
@@ -496,41 +546,54 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  min-height: 55vh;
   padding: 40px 20px;
 }
 
 .profile-3d-logo {
-  width: 200px;
-  height: 200px;
+  position: relative;
+  width: 180px;
+  height: 180px;
   margin-bottom: 32px;
-  /* 3D effect placeholder */
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+.profile-3d-logo::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 3s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
 .profile-3d-text {
   font-family: 'Notable', sans-serif;
-  font-size: 36px;
-  color: var(--text-muted);
-  text-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+  font-size: 32px;
+  color: rgba(255, 255, 255, 0.25);
+  text-shadow: 0 0 60px rgba(139, 92, 246, 0.5);
+  letter-spacing: 3px;
 }
 
 .profile-message {
-  font-size: 18px;
+  font-size: 17px;
   color: var(--text-secondary);
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .login-button {
-  padding: 14px 48px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  padding: 14px 50px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 30px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
   cursor: pointer;
@@ -538,11 +601,11 @@ body {
 }
 
 .login-button:hover {
-  background: var(--bg-elevated);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* ========================================
-   Buttons - OnlyCrush Style
+   通用按钮
    ======================================== */
 
 .btn-primary {
@@ -553,7 +616,7 @@ body {
   padding: 14px 28px;
   background: linear-gradient(135deg, var(--purple-start), var(--purple-end));
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   border: none;
   border-radius: 14px;
@@ -581,7 +644,7 @@ body {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   color: var(--text-primary);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   border-radius: 14px;
   cursor: pointer;
@@ -593,7 +656,7 @@ body {
 }
 
 /* ========================================
-   Form Elements
+   表单元素
    ======================================== */
 
 .input-dark {
@@ -601,7 +664,7 @@ body {
   padding: 14px 16px;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 14px;
   color: var(--text-primary);
   font-size: 16px;
   font-family: inherit;
@@ -615,11 +678,11 @@ body {
 .input-dark:focus {
   outline: none;
   border-color: var(--purple-start);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
 /* ========================================
-   Safe Area & Utilities
+   工具类
    ======================================== */
 
 .safe-area-bottom {
@@ -633,39 +696,23 @@ body {
   background-clip: text;
 }
 
-.gradient-text-purple {
-  background: linear-gradient(90deg, var(--purple-start), var(--purple-end));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Scrollbar */
+/* 滚动条 */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 0;
+  height: 0;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 4px;
-}
-
-/* Animation */
+/* 动画 */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 .fade-in {
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.25s ease-out;
 }
 
-/* Mobile touch optimization */
+/* 移动端优化 */
 @media (max-width: 640px) {
   button, .btn-primary, .btn-secondary {
     min-height: 44px;

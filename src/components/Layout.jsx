@@ -1,40 +1,43 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { useState } from 'react';
 
-// SVG Icons (matching OnlyCrush exactly)
-const HomeIcon = ({ active }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="3" y="3" width="7" height="9" rx="1" />
-    <rect x="14" y="3" width="7" height="5" rx="1" />
-    <rect x="14" y="12" width="7" height="9" rx="1" />
-    <rect x="3" y="16" width="7" height="5" rx="1" />
+// 底部导航图标 - 精确复刻 OnlyCrush
+
+// 首页图标 - 4格布局
+const HomeIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="9" rx="1.5" />
+    <rect x="14" y="3" width="7" height="5" rx="1.5" />
+    <rect x="14" y="12" width="7" height="9" rx="1.5" />
+    <rect x="3" y="16" width="7" height="5" rx="1.5" />
   </svg>
 );
 
-const CreateIcon = ({ active }) => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <circle cx="7" cy="7" r="3" />
-    <circle cx="17" cy="7" r="3" />
-    <path d="M7 10v4a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-4" />
-    <rect x="9" y="14" width="6" height="6" rx="1" />
+// 中间图标 - 眼镜图标
+const GlassesIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="6" cy="12" r="4" />
+    <circle cx="18" cy="12" r="4" />
+    <path d="M10 12h4" />
+    <path d="M2 12h0" />
+    <path d="M22 12h0" />
   </svg>
 );
 
-const ProfileIcon = ({ active }) => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="5" y="4" width="14" height="16" rx="2" />
-    <path d="M9 10h6M9 14h4" />
-    <circle cx="16" cy="16" r="4" fill="currentColor" stroke="none" />
-    <path d="M14.5 16h3M16 14.5v3" stroke="white" strokeWidth="1.5" />
+// 保存图标
+const SaveIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="5" y="3" width="14" height="18" rx="2" />
+    <line x1="9" y1="11" x2="15" y2="11" />
+    <line x1="12" y1="8" x2="12" y2="14" />
   </svg>
 );
 
-// Top navigation tabs
+// 顶部导航 Tab 配置
 const topTabs = [
-  { path: '/', label: 'Remove' },
+  { path: '/remove', label: 'Remove' },
   { path: '/chat-edit', label: 'Chat Edit' },
   { path: '/ai-image', label: 'AI Image' },
-  { path: '/ai-video', label: 'AI Video', highlight: true },
+  { path: '/', label: 'AI Video', isMain: true },
   { path: '/hd', label: 'HD' },
   { path: '/watermark', label: 'MaterMark' },
 ];
@@ -43,19 +46,20 @@ export default function Layout() {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  // Pages that show top tabs
+  // 显示顶部 Tab 的页面
   const showTopTabs = ['/', '/ai-image', '/ai-video', '/face-swap', '/dress-up', '/hd', '/remove', '/chat-edit', '/watermark'].includes(currentPath);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
-      {/* Top Navigation Tabs */}
+    <div className="min-h-screen bg-black flex flex-col">
+      {/* 顶部导航 Tab */}
       {showTopTabs && (
-        <header className="sticky top-0 z-50 bg-[#0a0a0a]">
-          <div className="top-tabs">
+        <header className="sticky top-0 z-50 bg-black">
+          <nav className="top-tabs">
             {topTabs.map((tab) => {
-              const isActive = tab.highlight 
-                ? currentPath === '/' || currentPath === tab.path
+              const isActive = tab.isMain 
+                ? (currentPath === '/' || currentPath === '/ai-video')
                 : currentPath === tab.path;
+              
               return (
                 <NavLink
                   key={tab.path}
@@ -66,43 +70,43 @@ export default function Layout() {
                 </NavLink>
               );
             })}
-          </div>
+          </nav>
         </header>
       )}
 
-      {/* Main Content */}
+      {/* 主内容区 */}
       <main className="flex-1 safe-area-bottom">
         <Outlet />
       </main>
 
-      {/* Bottom Navigation - OnlyCrush Style */}
+      {/* 底部导航 */}
       <nav className="bottom-nav">
         <div className="bottom-nav-inner">
-          {/* Home */}
+          {/* 首页 */}
           <NavLink 
             to="/" 
             className={`nav-item ${currentPath === '/' ? 'active' : ''}`}
           >
-            <HomeIcon active={currentPath === '/'} />
+            <HomeIcon />
           </NavLink>
 
-          {/* Create (Center) */}
+          {/* 中间 - 眼镜图标 + Super 标签 */}
           <NavLink 
             to="/face-swap" 
             className="nav-item nav-item-center"
           >
             <div className="nav-item-center-button">
               <span className="super-badge">Super</span>
-              <CreateIcon />
+              <GlassesIcon />
             </div>
           </NavLink>
 
-          {/* Profile */}
+          {/* 保存/我的 */}
           <NavLink 
             to="/profile" 
             className={`nav-item ${currentPath === '/profile' ? 'active' : ''}`}
           >
-            <ProfileIcon active={currentPath === '/profile'} />
+            <SaveIcon />
           </NavLink>
         </div>
       </nav>
