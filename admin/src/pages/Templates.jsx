@@ -4,12 +4,12 @@ import { PlusOutlined, ReloadOutlined, DownOutlined } from '@ant-design/icons';
 import { templatesApi } from '../services/api';
 
 const categories = [
-  { value: 'photo2video', label: 'Photo to Video' },
-  { value: 'faceswap', label: 'Face Swap' },
-  { value: 'dressup', label: 'Dress Up' },
-  { value: 'hd', label: 'HD Upscale' },
-  { value: 'remove', label: 'Remove' },
-  { value: 'aiimage', label: 'AI Image' },
+  { value: 'photo2video', label: '图生视频' },
+  { value: 'faceswap', label: '换脸' },
+  { value: 'dressup', label: '换装' },
+  { value: 'hd', label: '高清放大' },
+  { value: 'remove', label: '去背景' },
+  { value: 'aiimage', label: 'AI绘图' },
 ];
 
 export default function Templates() {
@@ -28,7 +28,7 @@ export default function Templates() {
       setTemplates(res.templates);
       setPagination(res.pagination);
     } catch (error) {
-      message.error('Failed to load templates');
+      message.error('加载模板失败');
     } finally {
       setLoading(false);
     }
@@ -42,26 +42,28 @@ export default function Templates() {
     try {
       if (modal.editing) {
         await templatesApi.update(modal.editing._id, values);
-        message.success('Template updated');
+        message.success('模板已更新');
       } else {
         await templatesApi.create(values);
-        message.success('Template created');
+        message.success('模板已创建');
       }
       setModal({ visible: false, editing: null });
       form.resetFields();
       loadTemplates(pagination.page);
     } catch (error) {
-      message.error('Operation failed');
+      message.error('操作失败');
     }
   };
 
   const handleDelete = async (id) => {
     Modal.confirm({
-      title: 'Delete Template',
-      content: 'Are you sure you want to delete this template?',
+      title: '删除模板',
+      content: '确定要删除这个模板吗？',
+      okText: '确定',
+      cancelText: '取消',
       onOk: async () => {
         await templatesApi.delete(id);
-        message.success('Template deleted');
+        message.success('模板已删除');
         loadTemplates(pagination.page);
       },
     });
@@ -69,16 +71,16 @@ export default function Templates() {
 
   const handleBatchAction = async (action, value) => {
     if (selectedRowKeys.length === 0) {
-      message.warning('Please select templates first');
+      message.warning('请先选择模板');
       return;
     }
     try {
       await templatesApi.batch(selectedRowKeys, action, value);
-      message.success(`Updated ${selectedRowKeys.length} templates`);
+      message.success(`已更新 ${selectedRowKeys.length} 个模板`);
       setSelectedRowKeys([]);
       loadTemplates(pagination.page);
     } catch (error) {
-      message.error('Batch operation failed');
+      message.error('批量操作失败');
     }
   };
 
@@ -92,92 +94,92 @@ export default function Templates() {
   };
 
   const batchMenuItems = [
-    { key: 'enable', label: 'Enable Selected', onClick: () => handleBatchAction('enabled', true) },
-    { key: 'disable', label: 'Disable Selected', onClick: () => handleBatchAction('enabled', false) },
+    { key: 'enable', label: '启用选中', onClick: () => handleBatchAction('enabled', true) },
+    { key: 'disable', label: '禁用选中', onClick: () => handleBatchAction('enabled', false) },
     { type: 'divider' },
-    { key: 'super-on', label: 'Mark as Super', onClick: () => handleBatchAction('isSuper', true) },
-    { key: 'super-off', label: 'Remove Super', onClick: () => handleBatchAction('isSuper', false) },
+    { key: 'super-on', label: '设为Super', onClick: () => handleBatchAction('isSuper', true) },
+    { key: 'super-off', label: '取消Super', onClick: () => handleBatchAction('isSuper', false) },
     { type: 'divider' },
-    { key: 'new-on', label: 'Mark as New', onClick: () => handleBatchAction('isNew', true) },
-    { key: 'new-off', label: 'Remove New', onClick: () => handleBatchAction('isNew', false) },
+    { key: 'new-on', label: '设为New', onClick: () => handleBatchAction('isNew', true) },
+    { key: 'new-off', label: '取消New', onClick: () => handleBatchAction('isNew', false) },
     { type: 'divider' },
-    { key: 'hot-on', label: 'Mark as Hot', onClick: () => handleBatchAction('isHot', true) },
-    { key: 'hot-off', label: 'Remove Hot', onClick: () => handleBatchAction('isHot', false) },
-    { type: 'divider' },
-    { key: 'trending-on', label: 'Mark as Trending', onClick: () => handleBatchAction('isTrending', true) },
-    { key: 'trending-off', label: 'Remove Trending', onClick: () => handleBatchAction('isTrending', false) },
+    { key: 'hot-on', label: '设为Hot', onClick: () => handleBatchAction('isHot', true) },
+    { key: 'hot-off', label: '取消Hot', onClick: () => handleBatchAction('isHot', false) },
   ];
 
   const columns = [
     {
-      title: 'Thumbnail',
+      title: '缩略图',
       dataIndex: 'thumbnail',
       key: 'thumbnail',
       width: 80,
       render: (v) => <Image src={v} width={60} height={80} style={{ objectFit: 'cover', borderRadius: 4 }} />,
     },
     { 
-      title: 'Name', 
+      title: '名称', 
       dataIndex: 'name', 
       key: 'name',
       width: 180,
     },
     {
-      title: 'Category',
+      title: '分类',
       dataIndex: 'category',
       key: 'category',
-      width: 120,
-      render: (v) => <Tag color="blue">{v}</Tag>,
+      width: 100,
+      render: (v) => {
+        const cat = categories.find(c => c.value === v);
+        return <Tag color="blue">{cat?.label || v}</Tag>;
+      },
     },
     {
-      title: 'Cost',
+      title: '消耗',
       dataIndex: 'costCoins',
       key: 'costCoins',
       width: 80,
       render: (v) => <Tag color="gold">{v} 🪙</Tag>,
     },
     {
-      title: 'Sort',
+      title: '排序',
       dataIndex: 'sortOrder',
       key: 'sortOrder',
       width: 60,
       sorter: (a, b) => b.sortOrder - a.sortOrder,
     },
     {
-      title: 'Tags',
+      title: '标签',
       key: 'tags',
-      width: 200,
+      width: 180,
       render: (_, r) => (
         <Space wrap>
           {r.isSuper && <Tag color="purple">Super</Tag>}
           {r.isNew && <Tag color="green">New</Tag>}
           {r.isHot && <Tag color="red">Hot</Tag>}
-          {r.isTrending && <Tag color="orange">Trending</Tag>}
+          {r.isTrending && <Tag color="orange">热门</Tag>}
         </Space>
       ),
     },
     {
-      title: 'Status',
+      title: '状态',
       dataIndex: 'enabled',
       key: 'enabled',
-      width: 90,
-      render: (v) => <Tag color={v ? 'green' : 'default'}>{v ? 'Enabled' : 'Disabled'}</Tag>,
+      width: 80,
+      render: (v) => <Tag color={v ? 'green' : 'default'}>{v ? '启用' : '禁用'}</Tag>,
     },
     { 
-      title: 'Usage', 
+      title: '使用次数', 
       dataIndex: 'usageCount', 
       key: 'usageCount',
-      width: 70,
+      width: 80,
       sorter: (a, b) => b.usageCount - a.usageCount,
     },
     {
-      title: 'Actions',
+      title: '操作',
       key: 'actions',
       width: 140,
       render: (_, record) => (
         <Space>
-          <Button size="small" onClick={() => openModal(record)}>Edit</Button>
-          <Button size="small" danger onClick={() => handleDelete(record._id)}>Delete</Button>
+          <Button size="small" onClick={() => openModal(record)}>编辑</Button>
+          <Button size="small" danger onClick={() => handleDelete(record._id)}>删除</Button>
         </Space>
       ),
     },
@@ -190,24 +192,24 @@ export default function Templates() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Templates</h2>
+      <h2 style={{ marginBottom: 24 }}>模板管理</h2>
 
       <Space style={{ marginBottom: 16 }}>
         <Select
-          placeholder="Category"
+          placeholder="选择分类"
           value={categoryFilter}
           onChange={setCategoryFilter}
           style={{ width: 150 }}
           allowClear
           options={categories}
         />
-        <Button icon={<ReloadOutlined />} onClick={() => loadTemplates()}>Refresh</Button>
+        <Button icon={<ReloadOutlined />} onClick={() => loadTemplates()}>刷新</Button>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => openModal()}>
-          Add Template
+          添加模板
         </Button>
         <Dropdown menu={{ items: batchMenuItems }} disabled={selectedRowKeys.length === 0}>
           <Button>
-            Batch Actions ({selectedRowKeys.length}) <DownOutlined />
+            批量操作 ({selectedRowKeys.length}) <DownOutlined />
           </Button>
         </Dropdown>
       </Space>
@@ -224,49 +226,51 @@ export default function Templates() {
           pageSize: pagination.limit,
           total: pagination.total,
           showSizeChanger: false,
-          showTotal: (total) => `Total ${total} templates`,
+          showTotal: (total) => `共 ${total} 个模板`,
           onChange: loadTemplates,
         }}
       />
 
       <Modal
-        title={modal.editing ? 'Edit Template' : 'Add Template'}
+        title={modal.editing ? '编辑模板' : '添加模板'}
         open={modal.visible}
         onCancel={() => { setModal({ visible: false, editing: null }); form.resetFields(); }}
         onOk={() => form.submit()}
+        okText="保存"
+        cancelText="取消"
         width={600}
       >
         <Form form={form} layout="vertical" onFinish={handleSave}>
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-            <Input placeholder="Template name" />
+          <Form.Item name="name" label="名称" rules={[{ required: true, message: '请输入名称' }]}>
+            <Input placeholder="模板名称" />
           </Form.Item>
-          <Form.Item name="category" label="Category" rules={[{ required: true }]}>
-            <Select options={categories} placeholder="Select category" />
+          <Form.Item name="category" label="分类" rules={[{ required: true, message: '请选择分类' }]}>
+            <Select options={categories} placeholder="选择分类" />
           </Form.Item>
-          <Form.Item name="thumbnail" label="Thumbnail URL" rules={[{ required: true }]}>
+          <Form.Item name="thumbnail" label="缩略图URL" rules={[{ required: true, message: '请输入缩略图URL' }]}>
             <Input placeholder="https://..." />
           </Form.Item>
-          <Form.Item name="previewVideo" label="Preview Video URL">
-            <Input placeholder="https://... (optional)" />
+          <Form.Item name="previewVideo" label="预览视频URL">
+            <Input placeholder="https://... (可选)" />
           </Form.Item>
           <Space style={{ width: '100%' }}>
-            <Form.Item name="costCoins" label="Cost (coins)" initialValue={5} style={{ width: 150 }}>
+            <Form.Item name="costCoins" label="消耗金币" initialValue={5} style={{ width: 150 }}>
               <InputNumber min={1} style={{ width: '100%' }} />
             </Form.Item>
-            <Form.Item name="sortOrder" label="Sort Order" initialValue={0} style={{ width: 150 }}>
+            <Form.Item name="sortOrder" label="排序值" initialValue={0} style={{ width: 150 }}>
               <InputNumber style={{ width: '100%' }} />
             </Form.Item>
           </Space>
-          <Form.Item label="Tags" style={{ marginBottom: 8 }}>
+          <Form.Item label="标签" style={{ marginBottom: 8 }}>
             <Space>
               <Form.Item name="isSuper" valuePropName="checked" noStyle><Switch checkedChildren="Super" unCheckedChildren="Super" /></Form.Item>
               <Form.Item name="isNew" valuePropName="checked" noStyle><Switch checkedChildren="New" unCheckedChildren="New" /></Form.Item>
               <Form.Item name="isHot" valuePropName="checked" noStyle><Switch checkedChildren="Hot" unCheckedChildren="Hot" /></Form.Item>
-              <Form.Item name="isTrending" valuePropName="checked" noStyle><Switch checkedChildren="Trending" unCheckedChildren="Trending" /></Form.Item>
+              <Form.Item name="isTrending" valuePropName="checked" noStyle><Switch checkedChildren="热门" unCheckedChildren="热门" /></Form.Item>
             </Space>
           </Form.Item>
           <Form.Item name="enabled" valuePropName="checked" initialValue={true}>
-            <Switch checkedChildren="Enabled" unCheckedChildren="Disabled" />
+            <Switch checkedChildren="启用" unCheckedChildren="禁用" />
           </Form.Item>
         </Form>
       </Modal>

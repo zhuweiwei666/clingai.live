@@ -15,14 +15,14 @@ export default function Login() {
     try {
       const res = await authApi.login(values.email, values.password);
       if (res.user && !res.user.isAdmin) {
-        message.error('Admin access required');
+        message.error('需要管理员权限');
         return;
       }
       setAuth(res.token, res.user);
-      message.success('Login successful');
+      message.success('登录成功');
       navigate('/');
     } catch (error) {
-      message.error(error.error || 'Login failed');
+      message.error(error.error || '登录失败');
     } finally {
       setLoading(false);
     }
@@ -40,26 +40,26 @@ export default function Login() {
         style={{ width: 400, background: '#1a1a1a', border: '1px solid #333' }}
         title={
           <div style={{ textAlign: 'center', color: '#8b5cf6', fontSize: 24 }}>
-            ClingAI Admin
+            Hot AI 运营后台
           </div>
         }
       >
         <Form onFinish={handleSubmit} layout="vertical" size="large">
           <Form.Item
             name="email"
-            rules={[{ required: true, message: 'Please input your email' }]}
+            rules={[{ required: true, message: '请输入邮箱' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Email" />
+            <Input prefix={<UserOutlined />} placeholder="邮箱" />
           </Form.Item>
           <Form.Item
             name="password"
-            rules={[{ required: true, message: 'Please input your password' }]}
+            rules={[{ required: true, message: '请输入密码' }]}
           >
-            <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+            <Input.Password prefix={<LockOutlined />} placeholder="密码" />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} block>
-              Login
+              登录
             </Button>
           </Form.Item>
         </Form>

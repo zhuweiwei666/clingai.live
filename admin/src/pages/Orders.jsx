@@ -19,7 +19,7 @@ export default function Orders() {
       setStats(res.stats);
       setPagination(res.pagination);
     } catch (error) {
-      message.error('Failed to load orders');
+      message.error('加载订单失败');
     } finally {
       setLoading(false);
     }
@@ -31,74 +31,85 @@ export default function Orders() {
 
   const handleRefund = (order) => {
     Modal.confirm({
-      title: 'Refund Order',
-      content: `Are you sure you want to refund order ${order.orderId}?`,
+      title: '退款确认',
+      content: `确定要退款订单 ${order.orderId} 吗？`,
+      okText: '确定退款',
+      cancelText: '取消',
+      okButtonProps: { danger: true },
       onOk: async () => {
         try {
           await ordersApi.refund(order._id);
-          message.success('Order refunded');
+          message.success('退款成功');
           loadOrders(pagination.page);
         } catch (error) {
-          message.error(error.error || 'Refund failed');
+          message.error(error.error || '退款失败');
         }
       },
     });
   };
 
-  const statusColors = {
-    pending: 'orange',
-    paid: 'green',
-    failed: 'red',
-    refunded: 'purple',
-    cancelled: 'default',
+  const statusMap = {
+    pending: { text: '待支付', color: 'orange' },
+    paid: { text: '已支付', color: 'green' },
+    failed: { text: '失败', color: 'red' },
+    refunded: { text: '已退款', color: 'purple' },
+    cancelled: { text: '已取消', color: 'default' },
+  };
+
+  const typeMap = {
+    coins: '金币充值',
+    subscription: '订阅',
   };
 
   const columns = [
-    { title: 'Order ID', dataIndex: 'orderId', key: 'orderId' },
+    { title: '订单号', dataIndex: 'orderId', key: 'orderId' },
     {
-      title: 'User',
+      title: '用户',
       dataIndex: 'userId',
       key: 'user',
       render: (v) => v?.email || '-',
     },
     {
-      title: 'Type',
+      title: '类型',
       dataIndex: 'type',
       key: 'type',
-      render: (v) => <Tag>{v}</Tag>,
+      render: (v) => <Tag>{typeMap[v] || v}</Tag>,
     },
     {
-      title: 'Amount',
+      title: '金额',
       dataIndex: 'amount',
       key: 'amount',
-      render: (v, r) => `$${v} ${r.currency}`,
+      render: (v, r) => `$${v} ${r.currency || 'USD'}`,
     },
     {
-      title: 'Coins',
+      title: '金币',
       dataIndex: 'coins',
       key: 'coins',
       render: (v, r) => v ? `${v}${r.bonusCoins ? ` (+${r.bonusCoins})` : ''}` : '-',
     },
     {
-      title: 'Status',
+      title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (v) => <Tag color={statusColors[v]}>{v}</Tag>,
+      render: (v) => {
+        const s = statusMap[v] || { text: v, color: 'default' };
+        return <Tag color={s.color}>{s.text}</Tag>;
+      },
     },
     {
-      title: 'Created',
+      title: '创建时间',
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (v) => dayjs(v).format('YYYY-MM-DD HH:mm'),
     },
     {
-      title: 'Actions',
+      title: '操作',
       key: 'actions',
       render: (_, record) => (
         <Space>
           {record.status === 'paid' && (
             <Button size="small" danger onClick={() => handleRefund(record)}>
-              Refund
+              退款
             </Button>
           )}
         </Space>
@@ -108,13 +119,13 @@ export default function Orders() {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Orders</h2>
+      <h2 style={{ marginBottom: 24 }}>订单管理</h2>
 
       <Row gutter={16} style={{ marginBottom: 24 }}>
         <Col span={8}>
           <Card>
             <Statistic
-              title="Total Revenue"
+              title="总收入"
               value={stats.totalRevenue}
               prefix="$"
               precision={2}
@@ -125,7 +136,7 @@ export default function Orders() {
         <Col span={8}>
           <Card>
             <Statistic
-              title="Total Orders"
+              title="总订单数"
               value={stats.totalOrders}
               valueStyle={{ color: '#8b5cf6' }}
             />
@@ -135,19 +146,19 @@ export default function Orders() {
 
       <Space style={{ marginBottom: 16 }}>
         <Select
-          placeholder="Status"
+          placeholder="订单状态"
           value={statusFilter}
           onChange={setStatusFilter}
           style={{ width: 120 }}
           allowClear
         >
-          <Select.Option value="pending">Pending</Select.Option>
-          <Select.Option value="paid">Paid</Select.Option>
-          <Select.Option value="failed">Failed</Select.Option>
-          <Select.Option value="refunded">Refunded</Select.Option>
+          <Select.Option value="pending">待支付</Select.Option>
+          <Select.Option value="paid">已支付</Select.Option>
+          <Select.Option value="failed">失败</Select.Option>
+          <Select.Option value="refunded">已退款</Select.Option>
         </Select>
         <Button icon={<ReloadOutlined />} onClick={() => loadOrders()}>
-          Refresh
+          刷新
         </Button>
       </Space>
 
@@ -160,6 +171,7 @@ export default function Orders() {
           current: pagination.page,
           pageSize: pagination.limit,
           total: pagination.total,
+          showTotal: (total) => `共 ${total} 条订单`,
           onChange: loadOrders,
         }}
       />
