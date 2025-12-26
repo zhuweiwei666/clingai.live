@@ -37,7 +37,7 @@ function VideoCard({ template, index }) {
 
   return (
     <div
-      className="relative aspect-[3/4] rounded-[20px] overflow-hidden bg-[#141414] cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-[0.98]"
+      className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-[#141414] cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
       style={{ animationDelay: `${index * 0.05}s` }}
       onClick={() => navigate(`/create?template=${template.id}`)}
     >
