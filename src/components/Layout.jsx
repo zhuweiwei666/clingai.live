@@ -82,7 +82,7 @@ const SaveIcon = () => (
 const featureTabs = [
   { path: '/remove', label: 'Remove', icon: RemoveIcon, badge: '19' },
   { path: '/chat-edit', label: 'Chat Edit', icon: ChatEditIcon, badge: '19' },
-  { path: '/ai-image', label: 'AI Image', icon: AIImageIcon, badge: '19' },
+  { path: '/ai-image', label: 'AI Image', icon: AIImageIcon, badge: '19', superBadge: true },
   { path: '/', label: 'AI Video', icon: AIVideoIcon, isMain: true, superBadge: true },
   { path: '/hd', label: 'HD', icon: HDIcon },
   { path: '/watermark', label: 'MaterMark', icon: WatermarkIcon },
