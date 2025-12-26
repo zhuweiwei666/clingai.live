@@ -336,14 +336,19 @@ body {
 
 /* 卡片标题 - 全大写居中 */
 .card-title {
-  font-size: 12px;
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  font-size: 11px;
   font-weight: 700;
   color: white;
   text-transform: uppercase;
   text-align: center;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-  letter-spacing: 1px;
-  line-height: 1.4;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+  letter-spacing: 1.5px;
+  line-height: 1.3;
 }
 
 /* 左下角图标 - 视频图标 */

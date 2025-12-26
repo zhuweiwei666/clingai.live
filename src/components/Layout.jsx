@@ -46,8 +46,8 @@ export default function Layout() {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  // 显示顶部 Tab 的页面
-  const showTopTabs = ['/', '/ai-image', '/ai-video', '/face-swap', '/dress-up', '/hd', '/remove', '/chat-edit', '/watermark'].includes(currentPath);
+  // 显示顶部 Tab 的页面（Profile 页面不显示）
+  const showTopTabs = ['/', '/ai-image', '/ai-video', '/hd', '/remove', '/chat-edit', '/watermark'].includes(currentPath);
 
   return (
     <div className="min-h-screen bg-black flex flex-col">

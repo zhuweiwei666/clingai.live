@@ -18,16 +18,16 @@ const SaveIcon = () => (
   </svg>
 );
 
-// 示例模板数据
+// 示例模板数据 - 使用更真实的人像图片
 const templates = [
-  { id: '1', title: 'RUB HER BODY', thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop', badge: null },
-  { id: '2', title: 'PLAYING WITH EGGPLANT', thumbnail: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=600&fit=crop', badge: 'super' },
-  { id: '3', title: 'DANCE MOTION', thumbnail: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=600&fit=crop', badge: 'new' },
-  { id: '4', title: 'BEDROOM SCENE', thumbnail: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop', badge: null },
-  { id: '5', title: 'MIRROR SELFIE', thumbnail: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop', badge: 'super' },
-  { id: '6', title: 'POOL PARTY', thumbnail: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=600&fit=crop', badge: null },
-  { id: '7', title: 'BEACH VIBES', thumbnail: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&h=600&fit=crop', badge: 'new' },
-  { id: '8', title: 'WORKOUT SESSION', thumbnail: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=400&h=600&fit=crop', badge: 'super' },
+  { id: '1', title: 'RUB HER BODY', thumbnail: 'https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: null },
+  { id: '2', title: 'PLAYING WITH EGGPLANT', thumbnail: 'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'super' },
+  { id: '3', title: 'DANCE MOTION', thumbnail: 'https://images.pexels.com/photos/1386604/pexels-photo-1386604.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'new' },
+  { id: '4', title: 'BEDROOM SCENE', thumbnail: 'https://images.pexels.com/photos/1689731/pexels-photo-1689731.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: null },
+  { id: '5', title: 'MIRROR SELFIE', thumbnail: 'https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'super' },
+  { id: '6', title: 'POOL PARTY', thumbnail: 'https://images.pexels.com/photos/1520760/pexels-photo-1520760.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: null },
+  { id: '7', title: 'BEACH VIBES', thumbnail: 'https://images.pexels.com/photos/1642228/pexels-photo-1642228.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'new' },
+  { id: '8', title: 'WORKOUT SESSION', thumbnail: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'super' },
 ];
 
 // 视频卡片组件
