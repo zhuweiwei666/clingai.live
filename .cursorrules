@@ -1,0 +1,47 @@
+# ClingAI 项目开发规范与架构准则
+
+## 1. 项目愿景与架构概述
+ClingAI 是一个集成了多种 AI 生成能力（图生视频、换脸、高清放大等）的商业化平台。
+- **C端前端 (src)**: 面向最终用户，追求极致的 UI/UX，采用深色系暗黑风格。
+- **管理后台 (admin)**: 面向运营人员，采用 Ant Design 实现高效的数据管理与监控。
+- **后端服务 (server)**: 核心业务逻辑，包括异步任务队列、支付集成与 AI API 对接。
+
+## 2. 技术栈标准
+- **前端**: React 18, Vite, Zustand (状态管理), TailwindCSS (样式), Axios (请求).
+- **管理后台**: React 18, Ant Design 5, Zustand, Recharts (图表).
+- **后端**: Node.js, Express, MongoDB + Mongoose, Redis + Bull (任务队列).
+- **部署**: PM2 (进程管理), Nginx (反向代理/静态资源服务器).
+
+## 3. 核心目录规范
+### 3.1 后端 (server/)
+- `models/`: 每个数据库模型一个文件，首字母大写 (如 `User.js`, `Task.js`).
+- `routes/`: 按业务模块划分 (如 `auth.js`, `generate.js`). 所有的 API 必须有 `/api` 前缀.
+- `services/`: 复杂的第三方逻辑 (AI API, 支付) 封装在 service 中.
+- `middleware/`: 权限校验 (`auth.js`), 日志记录等.
+- `workers/`: Bull 队列的消费者逻辑.
+
+### 3.2 管理后台 (admin/src/)
+- `pages/`: 独立的功能页面 (Dashboard, Users, etc.).
+- `services/api.js`: 统一的 API 请求封装, 必须携带 token.
+- `components/Layout.jsx`: 整体侧边栏与导航布局.
+
+## 4. 代码质量与可维护性
+- **禁止“屎山”**: 函数保持简短，单一职责。超过 100 行的路由处理逻辑必须拆分到 services.
+- **异步处理**: 统一使用 `async/await`。所有异步调用必须包裹在 `try/catch` 中.
+- **响应格式**: 后端响应必须保持一致: `{ success: true, data: ... }` 或 `{ success: false, error: "msg" }`.
+- **环境变量**: 严禁将 API Key、密码、密钥硬编码在代码中，必须通过 `process.env` 获取.
+
+## 5. 业务逻辑准则
+- **金币系统**: 所有的 AI 生成任务必须校验金币余额，并支持管理员后台手动调整.
+- **任务队列**: AI 生成过程必须是异步的 (Bull Queue), 前端通过轮询或状态推送获取结果.
+- **管理员权限**: 涉及用户数据修改、系统设置、批量操作的 API 必须经过 `isAdmin` 校验.
+
+## 6. 部署与维护
+- **自动部署**: 修改代码推送到 `main` 分支后，服务器通过钩子或手动运行 `deploy.sh` 同步.
+- **数据库备份**: 定期导出 MongoDB 数据.
+- **日志监控**: 使用 `pm2 logs` 实时监控后端错误.
+
+## 7. 给后续 AI (Gemini/Cursor) 的指示
+- 在修改代码前，先阅读 `server/index.js` 了解路由挂载位置.
+- 在添加新 AI 功能时，参照 `server/services/aiService.js` 的 Mock/API 结构.
+- 保持管理后台为中文界面，保持 C 端前端为英文界面（除非用户明确要求）.
