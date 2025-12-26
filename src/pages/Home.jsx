@@ -53,9 +53,9 @@ function VideoCard({ template, index }) {
       
       {/* 渐变遮罩 */}
       <div 
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none z-10"
         style={{
-          background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 25%, rgba(0,0,0,0.15) 50%, transparent 70%)'
+          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.3) 40%, transparent 60%)'
         }}
       />
       
@@ -76,14 +76,14 @@ function VideoCard({ template, index }) {
       )}
       
       {/* 底部：图标 + 标题 */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-10">
-        <div className="text-white/90">
+      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-20">
+        <div className="text-white">
           <VideoIcon />
         </div>
-        <div className="flex-1 text-center text-[10px] font-bold text-white uppercase tracking-wider" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}>
+        <div className="flex-1 text-center text-xs font-bold text-white uppercase tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,1)' }}>
           {template.title}
         </div>
-        <div className="text-white/90">
+        <div className="text-white">
           <SaveIcon />
         </div>
       </div>
