@@ -316,19 +316,19 @@ body {
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(0, 0, 0, 0.85) 0%,
-    rgba(0, 0, 0, 0.5) 25%,
-    rgba(0, 0, 0, 0.15) 50%,
-    transparent 70%
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.6) 20%,
+    rgba(0, 0, 0, 0.2) 40%,
+    transparent 60%
   );
-  pointer-events: none;
+  z-index: 1;
 }
 
 /* 卡片内容容器 */
 .video-card-content {
   position: absolute;
   inset: 0;
-  pointer-events: none;
+  z-index: 2;
 }
 
 /* 卡片底部区域 */
@@ -337,10 +337,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 14px;
 }
 
 /* 标题和图标行 */
@@ -348,42 +345,46 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 /* 左下角图标 - 视频图标 */
 .card-icon-left {
-  color: rgba(255, 255, 255, 0.9);
+  color: white;
+  opacity: 0.9;
   flex-shrink: 0;
 }
 
 .card-icon-left svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 /* 右下角图标 - 保存图标 */
 .card-icon-right {
-  color: rgba(255, 255, 255, 0.9);
+  color: white;
+  opacity: 0.9;
   flex-shrink: 0;
 }
 
 .card-icon-right svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 /* 卡片标题 - 全大写居中 */
 .card-title {
   flex: 1;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   color: white;
   text-transform: uppercase;
   text-align: center;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
   letter-spacing: 1px;
   line-height: 1.3;
-  padding: 0 8px;
 }
 
 /* Super 标签 */
