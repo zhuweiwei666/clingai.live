@@ -41,8 +41,8 @@ function VideoCard({ template, index }) {
       style={{ animationDelay: `${index * 0.05}s` }}
       onClick={() => navigate(`/create?template=${template.id}`)}
     >
+      {/* 图片容器 */}
       <div className="video-card-media">
-        {/* 图片 */}
         <img
           src={template.thumbnail}
           alt={template.title}
@@ -50,38 +50,33 @@ function VideoCard({ template, index }) {
           onLoad={() => setImageLoaded(true)}
           style={{ opacity: imageLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
         />
-        
-        {/* 渐变遮罩 */}
-        <div className="video-card-overlay" />
-        
-        {/* 内容层 */}
-        <div className="video-card-content">
-          {/* Super 标签 */}
-          {template.badge === 'super' && (
-            <span className="badge-super">Super</span>
-          )}
-          
-          {/* New 标签 */}
-          {template.badge === 'new' && (
-            <div className="badge-new">
-              <span className="fire">🔥</span>
-              <span>New</span>
-              <span className="fire">🔥</span>
-            </div>
-          )}
-          
-          {/* 底部区域 */}
-          <div className="card-bottom">
-            <div className="card-bottom-row">
-              <div className="card-icon-left">
-                <VideoIcon />
-              </div>
-              <div className="card-title">{template.title}</div>
-              <div className="card-icon-right">
-                <SaveIcon />
-              </div>
-            </div>
-          </div>
+      </div>
+      
+      {/* 渐变遮罩 */}
+      <div className="video-card-overlay" />
+      
+      {/* Super 标签 */}
+      {template.badge === 'super' && (
+        <span className="badge-super">Super</span>
+      )}
+      
+      {/* New 标签 */}
+      {template.badge === 'new' && (
+        <div className="badge-new">
+          <span className="fire">🔥</span>
+          <span>New</span>
+          <span className="fire">🔥</span>
+        </div>
+      )}
+      
+      {/* 底部：图标 + 标题 */}
+      <div className="card-bottom">
+        <div className="card-icon-left">
+          <VideoIcon />
+        </div>
+        <div className="card-title">{template.title}</div>
+        <div className="card-icon-right">
+          <SaveIcon />
         </div>
       </div>
     </div>
