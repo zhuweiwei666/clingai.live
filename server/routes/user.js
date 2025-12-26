@@ -1,82 +1,142 @@
-import express from 'express';
-import { users, works } from '../config/database.js';
+import { Router } from 'express';
+import User from '../models/User.js';
+import Work from '../models/Work.js';
+import Order from '../models/Order.js';
 import { verifyToken } from '../middleware/auth.js';
 
-const router = express.Router();
+const router = Router();
 
-// Get user profile
-router.get('/profile', verifyToken, (req, res) => {
-  const user = users.get(req.user.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+// 获取当前用户信息
+router.get('/profile', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+        coins: user.coins,
+        plan: user.plan,
+        planExpireAt: user.planExpireAt,
+        stats: user.stats,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Get profile error:', error);
+    res.status(500).json({ error: 'Failed to get profile' });
   }
-
-  res.json({
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    avatar: user.avatar,
-    coins: user.coins,
-    subscription: user.subscription,
-    createdAt: user.createdAt
-  });
 });
 
-// Update user profile
-router.put('/profile', verifyToken, (req, res) => {
-  const user = users.get(req.user.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+// 更新用户资料
+router.put('/profile', verifyToken, async (req, res) => {
+  try {
+    const { username, avatar } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (username) user.username = username;
+    if (avatar) user.avatar = avatar;
+    await user.save();
+
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+      },
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: 'Failed to update profile' });
   }
-
-  const { username, avatar } = req.body;
-  
-  if (username) user.username = username;
-  if (avatar) user.avatar = avatar;
-  
-  users.set(user.id, user);
-
-  res.json({
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    avatar: user.avatar,
-    coins: user.coins,
-    subscription: user.subscription
-  });
 });
 
-// Get user's works (generated videos/images)
-router.get('/works', verifyToken, (req, res) => {
-  const userWorks = Array.from(works.values())
-    .filter(w => w.userId === req.user.id)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-  res.json(userWorks);
+// 获取金币余额
+router.get('/coins', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('coins plan planExpireAt');
+    res.json({
+      success: true,
+      coins: user.coins,
+      plan: user.plan,
+      planExpireAt: user.planExpireAt,
+    });
+  } catch (error) {
+    console.error('Get coins error:', error);
+    res.status(500).json({ error: 'Failed to get coins' });
+  }
 });
 
-// Get user's coin balance
-router.get('/coins', verifyToken, (req, res) => {
-  const user = users.get(req.user.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
+// 获取用户作品
+router.get('/works', verifyToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, type } = req.query;
 
-  res.json({ coins: user.coins });
+    const query = { userId: req.user.id, isDeleted: false };
+    if (type) query.type = type;
+
+    const works = await Work.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .populate('taskId', 'type status');
+
+    const total = await Work.countDocuments(query);
+
+    res.json({
+      success: true,
+      works,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Get works error:', error);
+    res.status(500).json({ error: 'Failed to get works' });
+  }
 });
 
-// Add coins (for testing/development)
-router.post('/coins/add', verifyToken, (req, res) => {
-  const user = users.get(req.user.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+// 获取用户订单历史
+router.get('/orders', verifyToken, async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+
+    const orders = await Order.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit));
+
+    const total = await Order.countDocuments({ userId: req.user.id });
+
+    res.json({
+      success: true,
+      orders,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Get orders error:', error);
+    res.status(500).json({ error: 'Failed to get orders' });
   }
-
-  const { amount } = req.body;
-  user.coins += amount || 100;
-  users.set(user.id, user);
-
-  res.json({ coins: user.coins });
 });
 
 export default router;

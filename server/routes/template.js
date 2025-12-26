@@ -1,109 +1,117 @@
-import express from 'express';
-import { templates } from '../config/database.js';
-import { optionalAuth } from '../middleware/auth.js';
+import { Router } from 'express';
+import Template from '../models/Template.js';
 
-const router = express.Router();
+const router = Router();
 
-// Get all templates
-router.get('/', optionalAuth, (req, res) => {
-  const { category, tag, limit = 20, offset = 0 } = req.query;
-  
-  let result = Array.from(templates.values());
-  
-  // Filter by category
-  if (category) {
-    result = result.filter(t => t.category === category);
+// 获取模板列表
+router.get('/', async (req, res) => {
+  try {
+    const { category, page = 1, limit = 20 } = req.query;
+
+    const query = { enabled: true };
+    if (category) query.category = category;
+
+    const templates = await Template.find(query)
+      .sort({ sortOrder: -1, createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .select('-aiParams');
+
+    const total = await Template.countDocuments(query);
+
+    res.json({
+      success: true,
+      templates,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Get templates error:', error);
+    res.status(500).json({ error: 'Failed to get templates' });
   }
-  
-  // Filter by tag
-  if (tag) {
-    result = result.filter(t => t.tags.includes(tag));
+});
+
+// 获取热门模板
+router.get('/trending', async (req, res) => {
+  try {
+    const templates = await Template.find({ enabled: true, isTrending: true })
+      .sort({ usageCount: -1 })
+      .limit(20)
+      .select('-aiParams');
+
+    res.json({ success: true, templates });
+  } catch (error) {
+    console.error('Get trending error:', error);
+    res.status(500).json({ error: 'Failed to get trending templates' });
   }
-  
-  // Sort by views (popularity)
-  result.sort((a, b) => b.views - a.views);
-  
-  // Paginate
-  const total = result.length;
-  result = result.slice(Number(offset), Number(offset) + Number(limit));
-
-  res.json({
-    templates: result,
-    total,
-    hasMore: Number(offset) + result.length < total
-  });
 });
 
-// Get templates by category
-router.get('/category/:category', optionalAuth, (req, res) => {
-  const { category } = req.params;
-  const { limit = 20, offset = 0 } = req.query;
-  
-  let result = Array.from(templates.values())
-    .filter(t => t.category === category)
-    .sort((a, b) => b.views - a.views);
-  
-  const total = result.length;
-  result = result.slice(Number(offset), Number(offset) + Number(limit));
+// 获取新模板
+router.get('/new', async (req, res) => {
+  try {
+    const templates = await Template.find({ enabled: true, isNew: true })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .select('-aiParams');
 
-  res.json({
-    templates: result,
-    total,
-    category
-  });
-});
-
-// Get trending templates
-router.get('/trending', optionalAuth, (req, res) => {
-  const { limit = 10 } = req.query;
-  
-  const result = Array.from(templates.values())
-    .filter(t => t.tags.includes('super') || t.tags.includes('hot') || t.tags.includes('viral'))
-    .sort((a, b) => b.views - a.views)
-    .slice(0, Number(limit));
-
-  res.json({ templates: result });
-});
-
-// Get new templates
-router.get('/new', optionalAuth, (req, res) => {
-  const { limit = 10 } = req.query;
-  
-  const result = Array.from(templates.values())
-    .filter(t => t.tags.includes('new'))
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, Number(limit));
-
-  res.json({ templates: result });
-});
-
-// Get single template
-router.get('/:id', optionalAuth, (req, res) => {
-  const template = templates.get(req.params.id);
-  
-  if (!template) {
-    return res.status(404).json({ error: 'Template not found' });
+    res.json({ success: true, templates });
+  } catch (error) {
+    console.error('Get new templates error:', error);
+    res.status(500).json({ error: 'Failed to get new templates' });
   }
-
-  // Increment views
-  template.views++;
-  templates.set(template.id, template);
-
-  res.json(template);
 });
 
-// Get categories list
-router.get('/meta/categories', (req, res) => {
-  res.json({
-    categories: [
-      { id: 'photo_to_video', name: 'Photo to Video', icon: '🎬' },
-      { id: 'face_swap', name: 'Face Swap', icon: '🔄' },
-      { id: 'ai_image', name: 'AI Image', icon: '🎨' },
-      { id: 'dress_up', name: 'Dress Up', icon: '👗' },
+// 获取分类列表
+router.get('/categories', async (req, res) => {
+  try {
+    const categories = [
+      { id: 'photo2video', name: 'Photo to Video', icon: '🎬' },
+      { id: 'faceswap', name: 'Face Swap', icon: '🎭' },
+      { id: 'dressup', name: 'Dress Up', icon: '👗' },
       { id: 'hd', name: 'HD Upscale', icon: '✨' },
-      { id: 'remove', name: 'Remove', icon: '🧹' }
-    ]
-  });
+      { id: 'remove', name: 'Remove', icon: '🧹' },
+      { id: 'aiimage', name: 'AI Image', icon: '🎨' },
+    ];
+
+    // 获取每个分类的模板数量
+    const counts = await Template.aggregate([
+      { $match: { enabled: true } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]);
+
+    const countMap = {};
+    counts.forEach(c => { countMap[c._id] = c.count; });
+
+    res.json({
+      success: true,
+      categories: categories.map(c => ({
+        ...c,
+        count: countMap[c.id] || 0,
+      })),
+    });
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({ error: 'Failed to get categories' });
+  }
+});
+
+// 获取单个模板详情
+router.get('/:id', async (req, res) => {
+  try {
+    const template = await Template.findById(req.params.id);
+    if (!template || !template.enabled) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+
+    res.json({ success: true, template });
+  } catch (error) {
+    console.error('Get template error:', error);
+    res.status(500).json({ error: 'Failed to get template' });
+  }
 });
 
 export default router;

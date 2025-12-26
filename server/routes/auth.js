@@ -1,12 +1,21 @@
-import express from 'express';
-import bcrypt from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
-import { users } from '../config/database.js';
-import { generateToken, verifyToken } from '../middleware/auth.js';
+import { Router } from 'express';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+import { incrementStats } from '../models/DailyStats.js';
 
-const router = express.Router();
+const router = Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'clingai-jwt-secret-2024';
 
-// Register
+// 生成 JWT Token
+function generateToken(user) {
+  return jwt.sign(
+    { id: user._id, email: user.email, isAdmin: user.isAdmin },
+    JWT_SECRET,
+    { expiresIn: '30d' }
+  );
+}
+
+// 注册
 router.post('/register', async (req, res) => {
   try {
     const { email, password, username } = req.body;
@@ -15,42 +24,39 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Check if user exists
-    const existingUser = Array.from(users.values()).find(u => u.email === email);
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // 检查邮箱是否已存在
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'Email already registered' });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = {
-      id: uuidv4(),
+    // 创建用户
+    const user = new User({
       email,
+      password,
       username: username || email.split('@')[0],
-      password: hashedPassword,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-      coins: 100, // Free starter coins
-      subscription: null,
-      createdAt: new Date().toISOString()
-    };
+    });
+    await user.save();
 
-    users.set(user.id, user);
+    // 统计
+    await incrementStats('newUsers');
 
-    // Generate token
     const token = generateToken(user);
 
     res.status(201).json({
+      success: true,
       token,
       user: {
-        id: user.id,
+        id: user._id,
         email: user.email,
         username: user.username,
-        avatar: user.avatar,
         coins: user.coins,
-        subscription: user.subscription
-      }
+        plan: user.plan,
+      },
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -58,7 +64,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login
+// 登录
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -67,31 +73,40 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    // Find user
-    const user = Array.from(users.values()).find(u => u.email === email);
+    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (user.isBanned) {
+      return res.status(403).json({ error: 'Account is banned' });
     }
 
-    // Generate token
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    // 更新最后登录时间
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    // 统计活跃用户
+    await incrementStats('activeUsers');
+
     const token = generateToken(user);
 
     res.json({
+      success: true,
       token,
       user: {
-        id: user.id,
+        id: user._id,
         email: user.email,
         username: user.username,
         avatar: user.avatar,
         coins: user.coins,
-        subscription: user.subscription
-      }
+        plan: user.plan,
+      },
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -99,69 +114,59 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Google OAuth login
+// Google 登录
 router.post('/google', async (req, res) => {
   try {
-    const { credential, clientId } = req.body;
+    const { googleId, email, name, picture } = req.body;
 
-    // Decode the Google JWT token (in production, verify with Google API)
-    const payload = JSON.parse(Buffer.from(credential.split('.')[1], 'base64').toString());
-    
-    const { email, name, picture, sub: googleId } = payload;
-
-    // Find or create user
-    let user = Array.from(users.values()).find(u => u.email === email);
-
-    if (!user) {
-      user = {
-        id: uuidv4(),
-        email,
-        username: name || email.split('@')[0],
-        password: null, // No password for OAuth users
-        avatar: picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
-        googleId,
-        coins: 100,
-        subscription: null,
-        createdAt: new Date().toISOString()
-      };
-      users.set(user.id, user);
+    if (!googleId || !email) {
+      return res.status(400).json({ error: 'Google ID and email are required' });
     }
 
-    // Generate token
+    // 查找或创建用户
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (user) {
+      // 更新 Google ID 和头像
+      if (!user.googleId) user.googleId = googleId;
+      if (picture) user.avatar = picture;
+      user.lastLoginAt = new Date();
+      await user.save();
+      await incrementStats('activeUsers');
+    } else {
+      // 创建新用户
+      user = new User({
+        email,
+        googleId,
+        username: name || email.split('@')[0],
+        avatar: picture || '',
+      });
+      await user.save();
+      await incrementStats('newUsers');
+    }
+
+    if (user.isBanned) {
+      return res.status(403).json({ error: 'Account is banned' });
+    }
+
     const token = generateToken(user);
 
     res.json({
+      success: true,
       token,
       user: {
-        id: user.id,
+        id: user._id,
         email: user.email,
         username: user.username,
         avatar: user.avatar,
         coins: user.coins,
-        subscription: user.subscription
-      }
+        plan: user.plan,
+      },
     });
   } catch (error) {
     console.error('Google login error:', error);
     res.status(500).json({ error: 'Google login failed' });
   }
-});
-
-// Get current user
-router.get('/me', verifyToken, (req, res) => {
-  const user = users.get(req.user.id);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-
-  res.json({
-    id: user.id,
-    email: user.email,
-    username: user.username,
-    avatar: user.avatar,
-    coins: user.coins,
-    subscription: user.subscription
-  });
 });
 
 export default router;
