@@ -25,14 +25,14 @@ const SaveIcon = () => (
   </svg>
 );
 
-// 示例模板
+// 模板 - 使用本地资源
 const templates = [
-  { id: '1', thumbnail: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=600&fit=crop', badge: null },
-  { id: '2', thumbnail: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=600&fit=crop', badge: 'super' },
-  { id: '3', thumbnail: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=600&fit=crop', badge: null },
-  { id: '4', thumbnail: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=600&fit=crop', badge: 'new' },
-  { id: '5', thumbnail: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=600&fit=crop', badge: null },
-  { id: '6', thumbnail: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=600&fit=crop', badge: 'super' },
+  { id: '1', thumbnail: '/templates/9.jpg', badge: null },
+  { id: '2', thumbnail: '/templates/10.jpg', badge: 'super' },
+  { id: '3', thumbnail: '/templates/11.jpg', badge: null },
+  { id: '4', thumbnail: '/templates/12.jpg', badge: 'new' },
+  { id: '5', thumbnail: '/templates/13.jpg', badge: null },
+  { id: '6', thumbnail: '/templates/14.jpg', badge: 'super' },
 ];
 
 function TemplateCard({ template, index, onSelect }) {
