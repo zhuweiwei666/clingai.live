@@ -70,18 +70,18 @@ function VideoCard({ template, index }) {
             </div>
           )}
           
-          {/* 左下角视频图标 */}
-          <div className="card-icon-left">
-            <VideoIcon />
+          {/* 底部区域 */}
+          <div className="card-bottom">
+            <div className="card-bottom-row">
+              <div className="card-icon-left">
+                <VideoIcon />
+              </div>
+              <div className="card-title">{template.title}</div>
+              <div className="card-icon-right">
+                <SaveIcon />
+              </div>
+            </div>
           </div>
-          
-          {/* 右下角保存图标 */}
-          <div className="card-icon-right">
-            <SaveIcon />
-          </div>
-          
-          {/* 标题 */}
-          <div className="card-title">{template.title}</div>
         </div>
       </div>
     </div>
