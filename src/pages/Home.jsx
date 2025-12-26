@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // 视频图标 - 两个矩形
@@ -18,73 +18,53 @@ const SaveIcon = () => (
   </svg>
 );
 
-// 模板数据 - 使用下载的真实资源
+// 模板数据 - 使用OnlyCrush的真实资源（视频+图片）
 const templates = [
   { id: '1', title: 'RUB HER BODY', thumbnail: '/templates/1.jpg', video: '/templates/video1.mp4', badge: null },
-  { id: '2', title: 'PLAYING WITH EGGPLANT', thumbnail: '/templates/2.jpg', video: '/templates/video2.mp4', badge: 'super' },
-  { id: '3', title: 'DANCE MOTION', thumbnail: '/templates/3.jpg', video: null, badge: 'new' },
-  { id: '4', title: 'BEDROOM SCENE', thumbnail: '/templates/4.jpg', video: null, badge: null },
-  { id: '5', title: 'MIRROR SELFIE', thumbnail: '/templates/5.jpg', video: null, badge: 'super' },
-  { id: '6', title: 'POOL PARTY', thumbnail: '/templates/6.jpg', video: null, badge: null },
-  { id: '7', title: 'BEACH VIBES', thumbnail: '/templates/7.jpg', video: null, badge: 'new' },
-  { id: '8', title: 'WORKOUT SESSION', thumbnail: '/templates/8.jpg', video: null, badge: 'super' },
-  { id: '9', title: 'YOGA POSE', thumbnail: '/templates/9.jpg', video: null, badge: null },
-  { id: '10', title: 'SUNSET WALK', thumbnail: '/templates/10.jpg', video: null, badge: null },
-  { id: '11', title: 'MORNING COFFEE', thumbnail: '/templates/11.jpg', video: null, badge: 'super' },
-  { id: '12', title: 'NIGHT OUT', thumbnail: '/templates/12.jpg', video: null, badge: null },
+  { id: '2', title: 'PLAYING WITH EGGPLANT', thumbnail: '/templates/2.jpg', video: '/templates/video2.mp4', badge: 'new' },
+  { id: '3', title: 'MILK A COW', thumbnail: '/templates/3.jpg', video: '/templates/video3.mp4', badge: null },
+  { id: '4', title: 'AIRY SWING', thumbnail: '/templates/4.jpg', video: '/templates/video4.mp4', badge: null },
+  { id: '5', title: 'PLAYING WITH BREASTS', thumbnail: '/templates/5.jpg', video: '/templates/video5.mp4', badge: 'super' },
+  { id: '6', title: 'ENLARGE BREASTS', thumbnail: '/templates/6.jpg', video: '/templates/video6.mp4', badge: null },
+  { id: '7', title: 'CONFIDENT CHEST MOVES', thumbnail: '/templates/7.jpg', video: '/templates/video7.mp4', badge: null },
+  { id: '8', title: 'AHEGAO', thumbnail: '/templates/8.jpg', video: '/templates/video8.mp4', badge: 'super' },
+  { id: '9', title: 'SAVORING EVERY LICK', thumbnail: '/templates/9.jpg', video: '/templates/video9.mp4', badge: null },
+  { id: '10', title: 'TYING UP HAIR', thumbnail: '/templates/10.jpg', video: '/templates/video10.mp4', badge: null },
+  { id: '11', title: 'TONGUE MOVEMENT', thumbnail: '/templates/11.jpg', video: '/templates/video11.mp4', badge: 'super' },
+  { id: '12', title: 'SHE HAD AN ORGASM', thumbnail: '/templates/12.jpg', video: '/templates/video12.mp4', badge: null },
 ];
 
-// 视频卡片组件
+// 视频卡片组件 - 自动播放视频
 function VideoCard({ template, index }) {
   const navigate = useNavigate();
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const videoRef = useRef(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
-  const handleMouseEnter = () => {
-    setIsHovering(true);
-    if (videoRef.current && template.video) {
+  useEffect(() => {
+    // 视频自动播放
+    if (videoRef.current) {
       videoRef.current.play().catch(() => {});
     }
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovering(false);
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-    }
-  };
+  }, []);
 
   return (
     <div
       className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-[#141414] cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
       style={{ animationDelay: `${index * 0.05}s` }}
       onClick={() => navigate(`/create?template=${template.id}`)}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      {/* 图片 */}
-      <img
-        src={template.thumbnail}
-        alt={template.title}
-        loading="lazy"
-        onLoad={() => setImageLoaded(true)}
-        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
-        style={{ opacity: imageLoaded ? 1 : 0 }}
+      {/* 视频 - 主要显示 */}
+      <video
+        ref={videoRef}
+        src={template.video}
+        poster={template.thumbnail}
+        muted
+        loop
+        playsInline
+        autoPlay
+        onLoadedData={() => setVideoLoaded(true)}
+        className="absolute inset-0 w-full h-full object-cover"
       />
-      
-      {/* 视频 (hover 时播放) */}
-      {template.video && (
-        <video
-          ref={videoRef}
-          src={template.video}
-          muted
-          loop
-          playsInline
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovering ? 'opacity-100' : 'opacity-0'}`}
-        />
-      )}
       
       {/* 渐变遮罩 */}
       <div 
