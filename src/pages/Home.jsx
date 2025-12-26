@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // 视频图标 - 两个矩形
@@ -18,28 +18,51 @@ const SaveIcon = () => (
   </svg>
 );
 
-// 示例模板数据
+// 模板数据 - 使用下载的真实资源
 const templates = [
-  { id: '1', title: 'RUB HER BODY', thumbnail: 'https://images.pexels.com/photos/1382731/pexels-photo-1382731.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: null },
-  { id: '2', title: 'PLAYING WITH EGGPLANT', thumbnail: 'https://images.pexels.com/photos/1468379/pexels-photo-1468379.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'super' },
-  { id: '3', title: 'DANCE MOTION', thumbnail: 'https://images.pexels.com/photos/1386604/pexels-photo-1386604.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'new' },
-  { id: '4', title: 'BEDROOM SCENE', thumbnail: 'https://images.pexels.com/photos/1689731/pexels-photo-1689731.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: null },
-  { id: '5', title: 'MIRROR SELFIE', thumbnail: 'https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'super' },
-  { id: '6', title: 'POOL PARTY', thumbnail: 'https://images.pexels.com/photos/1520760/pexels-photo-1520760.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: null },
-  { id: '7', title: 'BEACH VIBES', thumbnail: 'https://images.pexels.com/photos/1642228/pexels-photo-1642228.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'new' },
-  { id: '8', title: 'WORKOUT SESSION', thumbnail: 'https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=400&h=600&fit=crop', badge: 'super' },
+  { id: '1', title: 'RUB HER BODY', thumbnail: '/templates/1.jpg', video: '/templates/video1.mp4', badge: null },
+  { id: '2', title: 'PLAYING WITH EGGPLANT', thumbnail: '/templates/2.jpg', video: '/templates/video2.mp4', badge: 'super' },
+  { id: '3', title: 'DANCE MOTION', thumbnail: '/templates/3.jpg', video: null, badge: 'new' },
+  { id: '4', title: 'BEDROOM SCENE', thumbnail: '/templates/4.jpg', video: null, badge: null },
+  { id: '5', title: 'MIRROR SELFIE', thumbnail: '/templates/5.jpg', video: null, badge: 'super' },
+  { id: '6', title: 'POOL PARTY', thumbnail: '/templates/6.jpg', video: null, badge: null },
+  { id: '7', title: 'BEACH VIBES', thumbnail: '/templates/7.jpg', video: null, badge: 'new' },
+  { id: '8', title: 'WORKOUT SESSION', thumbnail: '/templates/8.jpg', video: null, badge: 'super' },
+  { id: '9', title: 'YOGA POSE', thumbnail: '/templates/9.jpg', video: null, badge: null },
+  { id: '10', title: 'SUNSET WALK', thumbnail: '/templates/10.jpg', video: null, badge: null },
+  { id: '11', title: 'MORNING COFFEE', thumbnail: '/templates/11.jpg', video: null, badge: 'super' },
+  { id: '12', title: 'NIGHT OUT', thumbnail: '/templates/12.jpg', video: null, badge: null },
 ];
 
 // 视频卡片组件
 function VideoCard({ template, index }) {
   const navigate = useNavigate();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
+  const videoRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    setIsHovering(true);
+    if (videoRef.current && template.video) {
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovering(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
 
   return (
     <div
       className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-[#141414] cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
       style={{ animationDelay: `${index * 0.05}s` }}
       onClick={() => navigate(`/create?template=${template.id}`)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* 图片 */}
       <img
@@ -51,6 +74,18 @@ function VideoCard({ template, index }) {
         style={{ opacity: imageLoaded ? 1 : 0 }}
       />
       
+      {/* 视频 (hover 时播放) */}
+      {template.video && (
+        <video
+          ref={videoRef}
+          src={template.video}
+          muted
+          loop
+          playsInline
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${isHovering ? 'opacity-100' : 'opacity-0'}`}
+        />
+      )}
+      
       {/* 渐变遮罩 */}
       <div 
         className="absolute inset-0 pointer-events-none z-10"
@@ -61,14 +96,14 @@ function VideoCard({ template, index }) {
       
       {/* Super 标签 */}
       {template.badge === 'super' && (
-        <span className="absolute top-0 right-0 px-3 py-1.5 bg-gradient-to-r from-pink-500 to-red-500 rounded-bl-[14px] rounded-tr-[20px] text-[11px] font-bold text-white z-10">
+        <span className="absolute top-0 right-0 px-3 py-1.5 bg-gradient-to-r from-pink-500 to-red-500 rounded-bl-[14px] rounded-tr-[24px] text-[11px] font-bold text-white z-20">
           Super
         </span>
       )}
       
       {/* New 标签 */}
       {template.badge === 'new' && (
-        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[11px] font-bold text-white z-10">
+        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[11px] font-bold text-white z-20">
           <span>🔥</span>
           <span>New</span>
           <span>🔥</span>
