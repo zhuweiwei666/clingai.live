@@ -106,6 +106,7 @@ router.post('/login', async (req, res) => {
         avatar: user.avatar,
         coins: user.coins,
         plan: user.plan,
+        isAdmin: user.isAdmin || false,
       },
     });
   } catch (error) {
