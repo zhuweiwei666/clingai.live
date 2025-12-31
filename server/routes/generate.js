@@ -22,8 +22,14 @@ async function createGenerateTask(req, res, type) {
     }
 
     // 获取费用配置
-    const featureCosts = await getSetting('featureCosts');
-    const cost = featureCosts[type] || 5;
+    let featureCosts;
+    try {
+      featureCosts = await getSetting('featureCosts');
+    } catch (error) {
+      console.error('Failed to get featureCosts setting:', error);
+      featureCosts = DEFAULT_SETTINGS.featureCosts;
+    }
+    const cost = (featureCosts && featureCosts[type]) || 5;
 
     // 检查金币
     if (user.coins < cost) {
@@ -37,7 +43,12 @@ async function createGenerateTask(req, res, type) {
     }
 
     // 扣除金币
-    await user.deductCoins(cost);
+    try {
+      await user.deductCoins(cost);
+    } catch (error) {
+      console.error('Failed to deduct coins:', error);
+      throw new Error(`Failed to deduct coins: ${error.message}`);
+    }
 
     // 创建任务
     const task = new Task({
@@ -81,7 +92,16 @@ async function createGenerateTask(req, res, type) {
     });
   } catch (error) {
     console.error(`Generate ${type} error:`, error);
-    return errorResponse(res, 'Generation failed', 'GENERATION_ERROR', 500);
+    console.error('Error stack:', error.stack);
+    console.error('Request body:', req.body);
+    console.error('User ID:', req.user?.id);
+    
+    // 返回更详细的错误信息（开发环境）
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? `Generation failed: ${error.message}` 
+      : 'Generation failed';
+    
+    return errorResponse(res, errorMessage, 'GENERATION_ERROR', 500);
   }
 }
 
