@@ -92,58 +92,44 @@ export default function Login() {
         console.log('[Login] Backend response type:', typeof response);
         console.log('[Login] Backend response keys:', Object.keys(response || {}));
         
-        // apiClient拦截器已经处理了响应格式，response应该是 { user, token }
-        // 但为了兼容性，我们检查多种可能的格式
-        let user, token;
+        // apiClient拦截器已经处理了响应格式
+        // 后端返回: { success: true, data: { token, user } }
+        // 拦截器处理后: response.data = { token, user }
+        // authService.googleLogin返回: response.data = { token, user }
+        // 所以这里的response应该是 { token, user }
         
-        // 格式1: { user, token } - apiClient拦截器处理后的格式
-        if (response && response.user && response.token) {
-          user = response.user;
-          token = response.token;
-          console.log('[Login] Using format 1: direct { user, token }');
-        }
-        // 格式2: { data: { user, token } } - 嵌套格式
-        else if (response && response.data && response.data.user && response.data.token) {
-          user = response.data.user;
-          token = response.data.token;
-          console.log('[Login] Using format 2: nested { data: { user, token } }');
-        }
-        // 格式3: { success: true, data: { user, token } } - 统一格式
-        else if (response && response.success && response.data && response.data.user && response.data.token) {
-          user = response.data.user;
-          token = response.data.token;
-          console.log('[Login] Using format 3: { success: true, data: { user, token } }');
-        }
-        // 格式4: response本身就是data字段的内容
-        else if (response && typeof response === 'object') {
-          // 尝试直接访问token和user
-          token = response.token;
-          user = response.user;
-          if (token && user) {
-            console.log('[Login] Using format 4: direct access to token and user');
-          } else {
-            console.error('[Login] Invalid response format:', JSON.stringify(response, null, 2));
-            throw new Error('Invalid response format from server: missing token or user');
-          }
-        } else {
-          console.error('[Login] Invalid response format:', JSON.stringify(response, null, 2));
-          throw new Error('Invalid response format from server');
+        if (!response || typeof response !== 'object') {
+          console.error('[Login] Invalid response:', response);
+          throw new Error('Invalid response from server');
         }
         
-        if (token) {
-          setToken(token);
-          setUser({
-            ...user,
-            username: user.username || googleUserInfo.name,
-            email: user.email || googleUserInfo.email,
-            avatar: user.avatar || googleUserInfo.picture,
+        // 直接使用token和user，因为拦截器已经处理好了
+        const token = response.token;
+        const user = response.user;
+        
+        if (!token || !user) {
+          console.error('[Login] Missing token or user in response:', {
+            hasToken: !!token,
+            hasUser: !!user,
+            response: JSON.stringify(response, null, 2)
           });
-          toast.success('Google login successful!');
-          navigate(from, { replace: true });
-        } else {
-          console.error('[Login] No token in response:', response);
-          toast.error('Google login failed: No token received');
+          throw new Error('Missing token or user in response');
         }
+        
+        console.log('[Login] Successfully extracted token and user');
+        
+        // 设置token和user信息
+        setToken(token);
+        setUser({
+          ...user,
+          username: user.username || googleUserInfo.name,
+          email: user.email || googleUserInfo.email,
+          avatar: user.avatar || googleUserInfo.picture,
+        });
+        
+        console.log('[Login] Token and user set successfully');
+        toast.success('Google login successful!');
+        navigate(from, { replace: true });
       } catch (error) {
         console.error('[Login] Google login error:', error);
         const errorMessage = error.response?.data?.error || error.message || 'Google login failed';
