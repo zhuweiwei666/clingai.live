@@ -330,19 +330,53 @@ export async function checkTaskStatus(taskId, taskType = 'image-to-video') {
 
     console.log(`[A2E] Checking status: ${A2E_BASE_URL}${endpoint}, method: ${method}, taskId: ${taskId}`);
     
-    // 尝试 GET 请求
+    // 尝试多种端点格式
     let result;
+    let lastError = null;
+    
+    // 方式1: GET /api/v1/image-to-video/${taskId}
     try {
-      result = await callA2EApi(endpoint, method, null);
+      console.log(`[A2E] Trying GET ${endpoint}...`);
+      result = await callA2EApi(endpoint, 'GET', null);
+      console.log(`[A2E] GET success:`, JSON.stringify(result, null, 2));
     } catch (getError) {
-      // 如果 GET 失败（404），尝试 POST 方式
-      if (getError.message && getError.message.includes('404')) {
-        console.log(`[A2E] GET failed with 404, trying POST with body...`);
+      lastError = getError;
+      console.log(`[A2E] GET failed: ${getError.message}`);
+      
+      // 方式2: POST /api/v1/image-to-video/status with task_id in body
+      try {
         const postEndpoint = endpoint.replace(`/${taskId}`, '/status');
         const requestData = { task_id: taskId };
+        console.log(`[A2E] Trying POST ${postEndpoint} with body:`, requestData);
         result = await callA2EApi(postEndpoint, 'POST', requestData);
-      } else {
-        throw getError;
+        console.log(`[A2E] POST success:`, JSON.stringify(result, null, 2));
+      } catch (postError) {
+        lastError = postError;
+        console.log(`[A2E] POST failed: ${postError.message}`);
+        
+        // 方式3: GET /api/v1/tasks/${taskId} (通用任务查询)
+        try {
+          const taskEndpoint = `/api/v1/tasks/${taskId}`;
+          console.log(`[A2E] Trying GET ${taskEndpoint}...`);
+          result = await callA2EApi(taskEndpoint, 'GET', null);
+          console.log(`[A2E] GET tasks success:`, JSON.stringify(result, null, 2));
+        } catch (taskError) {
+          lastError = taskError;
+          console.log(`[A2E] GET tasks failed: ${taskError.message}`);
+          
+          // 方式4: POST /api/v1/tasks/status with task_id in body
+          try {
+            const taskStatusEndpoint = '/api/v1/tasks/status';
+            const requestData = { task_id: taskId };
+            console.log(`[A2E] Trying POST ${taskStatusEndpoint} with body:`, requestData);
+            result = await callA2EApi(taskStatusEndpoint, 'POST', requestData);
+            console.log(`[A2E] POST tasks/status success:`, JSON.stringify(result, null, 2));
+          } catch (taskStatusError) {
+            lastError = taskStatusError;
+            console.log(`[A2E] POST tasks/status failed: ${taskStatusError.message}`);
+            throw lastError; // 所有方式都失败，抛出最后一个错误
+          }
+        }
       }
     }
     
