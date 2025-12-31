@@ -226,6 +226,8 @@ router.get('/task/:id', verifyToken, async (req, res) => {
       return errorResponse(res, 'Task not found', 'TASK_NOT_FOUND', 404);
     }
 
+    // 如果任务还在处理中，且没有错误，返回当前状态
+    // 不在这里调用 A2E API，让 worker 处理状态更新
     return successResponse(res, {
       task: {
         id: task._id,
@@ -234,12 +236,13 @@ router.get('/task/:id', verifyToken, async (req, res) => {
         progress: task.progress,
         output: task.output,
         error: task.error,
+        externalTaskId: task.externalTaskId, // 返回外部任务ID用于调试
         createdAt: task.createdAt,
         completedAt: task.completedAt,
       },
     });
   } catch (error) {
-    console.error('Get task error:', error);
+    console.error('[Generate] Get task error:', error);
     return errorResponse(res, 'Failed to get task', 'GET_TASK_ERROR', 500);
   }
 });

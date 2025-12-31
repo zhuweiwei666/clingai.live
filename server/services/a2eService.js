@@ -312,6 +312,7 @@ export async function checkTaskStatus(taskId, taskType = 'image-to-video') {
         endpoint = `/api/v1/image-to-video/status/${taskId}`;
     }
 
+    console.log(`[A2E] Checking status: ${A2E_BASE_URL}${endpoint}`);
     const result = await callA2EApi(endpoint, 'GET');
     
     return {
@@ -323,7 +324,18 @@ export async function checkTaskStatus(taskId, taskType = 'image-to-video') {
     };
   } catch (error) {
     console.error('[A2E] Status check failed:', error);
-    return { status: 'processing' };
+    console.error('[A2E] Task ID:', taskId);
+    console.error('[A2E] Task Type:', taskType);
+    
+    // 如果是 404 错误，可能是任务 ID 不存在或端点不正确
+    // 返回 processing 状态，让 worker 继续等待
+    if (error.message && error.message.includes('404')) {
+      console.warn('[A2E] Task not found in A2E API (404), task may still be processing');
+      return { status: 'processing', error: 'Task not found in A2E API, may still be processing' };
+    }
+    
+    // 其他错误也返回 processing，避免任务被标记为失败
+    return { status: 'processing', error: error.message || 'Status check failed' };
   }
 }
 
