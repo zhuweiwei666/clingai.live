@@ -2,6 +2,8 @@ import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { incrementStats } from '../models/DailyStats.js';
+import { verifyToken } from '../middleware/auth.js';
+import { successResponse, errorResponse } from '../utils/response.js';
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'clingai-jwt-secret-2024';
@@ -21,17 +23,17 @@ router.post('/register', async (req, res) => {
     const { email, password, username } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return errorResponse(res, 'Email and password are required', 'MISSING_FIELDS', 400);
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+      return errorResponse(res, 'Password must be at least 6 characters', 'INVALID_PASSWORD', 400);
     }
 
     // 检查邮箱是否已存在
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ error: 'Email already registered' });
+      return errorResponse(res, 'Email already registered', 'EMAIL_EXISTS', 400);
     }
 
     // 创建用户
@@ -47,8 +49,7 @@ router.post('/register', async (req, res) => {
 
     const token = generateToken(user);
 
-    res.status(201).json({
-      success: true,
+    return successResponse(res, {
       token,
       user: {
         id: user._id,
@@ -57,10 +58,10 @@ router.post('/register', async (req, res) => {
         coins: user.coins,
         plan: user.plan,
       },
-    });
+    }, 'Registration successful', 201);
   } catch (error) {
     console.error('Register error:', error);
-    res.status(500).json({ error: 'Registration failed' });
+    return errorResponse(res, 'Registration failed', 'REGISTRATION_ERROR', 500);
   }
 });
 
@@ -70,21 +71,21 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return errorResponse(res, 'Email and password are required', 'MISSING_FIELDS', 400);
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return errorResponse(res, 'Invalid email or password', 'INVALID_CREDENTIALS', 401);
     }
 
     if (user.isBanned) {
-      return res.status(403).json({ error: 'Account is banned' });
+      return errorResponse(res, 'Account is banned', 'ACCOUNT_BANNED', 403);
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return errorResponse(res, 'Invalid email or password', 'INVALID_CREDENTIALS', 401);
     }
 
     // 更新最后登录时间
@@ -96,8 +97,7 @@ router.post('/login', async (req, res) => {
 
     const token = generateToken(user);
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       token,
       user: {
         id: user._id,
@@ -111,7 +111,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
+    return errorResponse(res, 'Login failed', 'LOGIN_ERROR', 500);
   }
 });
 
@@ -121,7 +121,7 @@ router.post('/google', async (req, res) => {
     const { googleId, email, name, picture } = req.body;
 
     if (!googleId || !email) {
-      return res.status(400).json({ error: 'Google ID and email are required' });
+      return errorResponse(res, 'Google ID and email are required', 'MISSING_FIELDS', 400);
     }
 
     // 查找或创建用户
@@ -147,13 +147,12 @@ router.post('/google', async (req, res) => {
     }
 
     if (user.isBanned) {
-      return res.status(403).json({ error: 'Account is banned' });
+      return errorResponse(res, 'Account is banned', 'ACCOUNT_BANNED', 403);
     }
 
     const token = generateToken(user);
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       token,
       user: {
         id: user._id,
@@ -167,7 +166,35 @@ router.post('/google', async (req, res) => {
     });
   } catch (error) {
     console.error('Google login error:', error);
-    res.status(500).json({ error: 'Google login failed' });
+    return errorResponse(res, 'Google login failed', 'GOOGLE_LOGIN_ERROR', 500);
+  }
+});
+
+// 获取当前用户信息
+router.get('/me', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
+    }
+
+    return successResponse(res, {
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        avatar: user.avatar,
+        coins: user.coins,
+        plan: user.plan,
+        planExpireAt: user.planExpireAt,
+        isAdmin: user.isAdmin || false,
+        stats: user.stats,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    return errorResponse(res, 'Failed to get user information', 'GET_USER_ERROR', 500);
   }
 });
 

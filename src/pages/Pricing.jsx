@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Coins, Crown, Check, ArrowLeft, Sparkles } from 'lucide-react';
+import { Coins, Crown, Check, ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import useUserStore from '../store/userStore';
+import orderService from '../services/orderService';
 
 const coinPackages = [
   { id: 1, coins: 100, price: 4.99, bonus: 0, popular: false },
@@ -42,12 +44,71 @@ const subscriptionPlans = [
 
 export default function Pricing() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated, updateUser } = useUserStore();
   const [activeTab, setActiveTab] = useState('coins');
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handlePurchase = () => {
-    toast.success('Payment feature coming soon!');
+  // 处理支付回调
+  useState(() => {
+    const orderId = searchParams.get('orderId');
+    const sessionId = searchParams.get('session_id');
+    const status = searchParams.get('status');
+
+    if (orderId && status === 'success') {
+      // 支付成功，刷新用户信息
+      updateUser();
+      toast.success('Payment successful!');
+    } else if (orderId && status === 'cancel') {
+      toast.error('Payment cancelled');
+    }
+  }, [searchParams, updateUser]);
+
+  const handlePurchase = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to purchase');
+      navigate('/login');
+      return;
+    }
+
+    if (activeTab === 'coins' && !selectedPackage) {
+      toast.error('Please select a package');
+      return;
+    }
+
+    if (activeTab === 'subscription' && !selectedPlan) {
+      toast.error('Please select a plan');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+
+      const packageId = activeTab === 'coins' ? selectedPackage : null;
+      const planId = activeTab === 'subscription' ? selectedPlan : null;
+
+      // 创建订单
+      const result = await orderService.createOrder(
+        activeTab === 'coins' ? 'coins' : 'subscription',
+        packageId,
+        planId,
+        'stripe' // 默认使用 Stripe
+      );
+
+      if (result.success && result.paymentUrl) {
+        // 跳转到支付页面
+        window.location.href = result.paymentUrl;
+      } else {
+        throw new Error(result.error || 'Failed to create order');
+      }
+    } catch (error) {
+      console.error('Purchase error:', error);
+      toast.error(error.response?.data?.error || error.message || 'Failed to process payment');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -191,14 +252,23 @@ export default function Pricing() {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handlePurchase}
-        disabled={activeTab === 'coins' ? !selectedPackage : !selectedPlan}
-        className="w-full btn-primary py-4 text-lg disabled:opacity-50"
+        disabled={(activeTab === 'coins' ? !selectedPackage : !selectedPlan) || isProcessing}
+        className="w-full btn-primary py-4 text-lg disabled:opacity-50 flex items-center justify-center"
       >
-        <Sparkles className="w-5 h-5 inline mr-2" />
-        {activeTab === 'coins' 
-          ? `Buy ${coinPackages.find(p => p.id === selectedPackage)?.coins || ''} Coins`
-          : 'Subscribe Now'
-        }
+        {isProcessing ? (
+          <>
+            <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <Sparkles className="w-5 h-5 inline mr-2" />
+            {activeTab === 'coins' 
+              ? `Buy ${coinPackages.find(p => p.id === selectedPackage)?.coins || ''} Coins`
+              : 'Subscribe Now'
+            }
+          </>
+        )}
       </motion.button>
 
       <p className="text-center text-text-muted text-xs">

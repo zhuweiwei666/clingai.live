@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Image, Video, Wand2, ArrowLeft, Loader2, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useUserStore from '../store/userStore';
 import generationService from '../services/generationService';
+import uploadService from '../services/uploadService';
 
 const GENERATION_TYPES = [
   { id: 'photo_to_video', label: 'Photo to Video', icon: Video, cost: 10, color: 'from-pink-500 to-rose-500' },
@@ -71,32 +72,95 @@ export default function Create() {
       setIsGenerating(true);
       setProgress(0);
 
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 10, 90));
-      }, 500);
+      let imageUrl = null;
 
-      // In production, upload image to server first, then call API
-      // For now, simulate the generation
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Step 1: Upload image if needed
+      if (uploadedImage && selectedType.id !== 'ai_image') {
+        setProgress(10);
+        toast.loading('Uploading image...', { id: 'upload' });
+        
+        const uploadResult = await uploadService.uploadImage(uploadedImage);
+        // 响应格式已由 apiClient 拦截器处理，直接使用 data
+        if (uploadResult && uploadResult.url) {
+          imageUrl = uploadResult.url;
+          toast.success('Image uploaded successfully', { id: 'upload' });
+        } else {
+          throw new Error('Failed to upload image');
+        }
+      }
 
-      clearInterval(progressInterval);
-      setProgress(100);
+      // Step 2: Call generation API
+      setProgress(30);
+      let taskId;
+      let generationResult;
 
-      // Simulated result
-      setResult({
-        type: selectedType.id,
-        outputUrl: selectedType.id === 'photo_to_video' 
-          ? 'https://sample-videos.com/video123.mp4'
-          : imagePreview || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800',
-      });
+      if (selectedType.id === 'photo_to_video') {
+        generationResult = await generationService.generateVideo(imageUrl, templateId, prompt);
+      } else if (selectedType.id === 'ai_image') {
+        generationResult = await generationService.generateImage(prompt, 'realistic', '3:4');
+      } else if (selectedType.id === 'face_swap') {
+        generationResult = await generationService.imageFaceSwap(imageUrl, imageUrl);
+      } else {
+        throw new Error('Unsupported generation type');
+      }
 
-      toast.success('Generation complete!');
+      // 响应格式已由 apiClient 拦截器处理
+      if (!generationResult || !generationResult.taskId) {
+        throw new Error('Failed to start generation');
+      }
+
+      taskId = generationResult.taskId;
+      setProgress(50);
+
+      // Step 3: Poll for task status
+      const maxAttempts = 60; // 5 minutes max
+      let attempts = 0;
+      let completed = false;
+
+      const statusInterval = setInterval(async () => {
+        try {
+          attempts++;
+          const status = await generationService.getImageStatus(taskId);
+          
+          // 响应格式已由 apiClient 拦截器处理
+          if (status && status.task) {
+            setProgress(50 + (status.task.progress || 0) * 0.4);
+
+            if (status.task.status === 'completed') {
+              completed = true;
+              clearInterval(statusInterval);
+              setProgress(100);
+              
+              setResult({
+                type: selectedType.id,
+                outputUrl: status.task.output?.resultUrl,
+                thumbnailUrl: status.task.output?.thumbnailUrl,
+              });
+
+              toast.success('Generation complete!');
+              setIsGenerating(false);
+            } else if (status.task.status === 'failed') {
+              completed = true;
+              clearInterval(statusInterval);
+              throw new Error(status.task.error || 'Generation failed');
+            }
+          }
+
+          if (attempts >= maxAttempts && !completed) {
+            clearInterval(statusInterval);
+            throw new Error('Generation timeout');
+          }
+        } catch (error) {
+          clearInterval(statusInterval);
+          throw error;
+        }
+      }, 5000); // Poll every 5 seconds
+
     } catch (error) {
       console.error('Generation failed:', error);
-      toast.error(error.response?.data?.error || 'Generation failed');
-    } finally {
+      toast.error(error.response?.data?.error || error.message || 'Generation failed');
       setIsGenerating(false);
+      setProgress(0);
     }
   };
 

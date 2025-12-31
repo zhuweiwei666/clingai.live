@@ -5,6 +5,7 @@ import { ArrowLeft, Image, Video, Loader2, Download, Trash2 } from 'lucide-react
 import toast from 'react-hot-toast';
 import useUserStore from '../store/userStore';
 import generationService from '../services/generationService';
+import apiClient from '../services/api';
 
 export default function MyWorks() {
   const navigate = useNavigate();
@@ -26,18 +27,17 @@ export default function MyWorks() {
     try {
       setLoading(true);
       const response = await generationService.getMyWorks();
-      if (response.success) {
-        let filteredWorks = response.works || [];
-        if (filter === 'video') {
-          filteredWorks = filteredWorks.filter(w => w.type === 'video' || w.type === 'photo_to_video');
-        } else if (filter === 'image') {
-          filteredWorks = filteredWorks.filter(w => w.type !== 'video' && w.type !== 'photo_to_video');
-        }
-        setWorks(filteredWorks);
+      // 响应格式已由 apiClient 拦截器处理，直接使用 works
+      let filteredWorks = response.works || [];
+      if (filter === 'video') {
+        filteredWorks = filteredWorks.filter(w => w.type === 'video' || w.type === 'photo_to_video');
+      } else if (filter === 'image') {
+        filteredWorks = filteredWorks.filter(w => w.type !== 'video' && w.type !== 'photo_to_video');
       }
+      setWorks(filteredWorks);
     } catch (error) {
       console.error('Failed to load works:', error);
-      toast.error('Failed to load your works');
+      toast.error(error.message || 'Failed to load your works');
     } finally {
       setLoading(false);
     }
@@ -55,11 +55,13 @@ export default function MyWorks() {
     if (!confirm('Are you sure you want to delete this work?')) return;
     
     try {
-      // TODO: Implement delete API call
+      await apiClient.delete(`/works/${workId}`);
+      // 响应格式已由 apiClient 拦截器处理，成功则直接继续
       toast.success('Work deleted');
       loadWorks();
     } catch (error) {
-      toast.error('Failed to delete work');
+      console.error('Delete work error:', error);
+      toast.error(error.message || 'Failed to delete work');
     }
   };
 

@@ -21,7 +21,9 @@ export const templateService = {
 
   // Get templates by category
   getByCategory: async (category, params = {}) => {
-    const response = await apiClient.get(`/templates/category/${category}`, { params });
+    const response = await apiClient.get('/templates', { 
+      params: { ...params, category } 
+    });
     return response.data;
   },
 
@@ -33,7 +35,7 @@ export const templateService = {
 
   // Get all categories
   getCategories: async () => {
-    const response = await apiClient.get('/templates/meta/categories');
+    const response = await apiClient.get('/templates/categories');
     return response.data;
   },
 };

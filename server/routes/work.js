@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { verifyToken } from '../middleware/auth.js';
 import Work from '../models/Work.js';
+import { successResponse, errorResponse } from '../utils/response.js';
 
 const router = Router();
 
@@ -20,8 +21,7 @@ router.get('/', verifyToken, async (req, res) => {
 
     const total = await Work.countDocuments(query);
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       works,
       pagination: {
         page: Number(page),
@@ -32,7 +32,7 @@ router.get('/', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Get works error:', error);
-    res.status(500).json({ error: 'Failed to get works' });
+    return errorResponse(res, 'Failed to get works', 'GET_WORKS_ERROR', 500);
   }
 });
 
@@ -45,16 +45,16 @@ router.put('/:id/favorite', verifyToken, async (req, res) => {
     });
 
     if (!work) {
-      return res.status(404).json({ error: 'Work not found' });
+      return errorResponse(res, 'Work not found', 'WORK_NOT_FOUND', 404);
     }
 
     work.isFavorite = !work.isFavorite;
     await work.save();
 
-    res.json({ success: true, isFavorite: work.isFavorite });
+    return successResponse(res, { isFavorite: work.isFavorite });
   } catch (error) {
     console.error('Toggle favorite error:', error);
-    res.status(500).json({ error: 'Failed to toggle favorite' });
+    return errorResponse(res, 'Failed to toggle favorite', 'TOGGLE_FAVORITE_ERROR', 500);
   }
 });
 
@@ -67,16 +67,16 @@ router.delete('/:id', verifyToken, async (req, res) => {
     });
 
     if (!work) {
-      return res.status(404).json({ error: 'Work not found' });
+      return errorResponse(res, 'Work not found', 'WORK_NOT_FOUND', 404);
     }
 
     work.isDeleted = true;
     await work.save();
 
-    res.json({ success: true, message: 'Work deleted' });
+    return successResponse(res, { message: 'Work deleted' });
   } catch (error) {
     console.error('Delete work error:', error);
-    res.status(500).json({ error: 'Failed to delete work' });
+    return errorResponse(res, 'Failed to delete work', 'DELETE_WORK_ERROR', 500);
   }
 });
 
