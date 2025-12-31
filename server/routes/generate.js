@@ -6,6 +6,7 @@ import Template from '../models/Template.js';
 import { getSetting } from '../models/Settings.js';
 import { incrementStats } from '../models/DailyStats.js';
 import { generateQueue } from '../services/queue.js';
+import { successResponse, errorResponse } from '../utils/response.js';
 
 const router = Router();
 
@@ -17,7 +18,7 @@ async function createGenerateTask(req, res, type) {
     // 获取用户
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
     }
 
     // 获取费用配置
@@ -26,11 +27,7 @@ async function createGenerateTask(req, res, type) {
 
     // 检查金币
     if (user.coins < cost) {
-      return res.status(400).json({
-        error: 'Insufficient coins',
-        required: cost,
-        current: user.coins,
-      });
+      return errorResponse(res, 'Insufficient coins', 'INSUFFICIENT_COINS', 400);
     }
 
     // 获取模板（如果有）
@@ -77,15 +74,14 @@ async function createGenerateTask(req, res, type) {
       backoff: { type: 'exponential', delay: 5000 },
     });
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       taskId: task._id,
       status: 'pending',
       coins: user.coins,
     });
   } catch (error) {
     console.error(`Generate ${type} error:`, error);
-    res.status(500).json({ error: 'Generation failed' });
+    return errorResponse(res, 'Generation failed', 'GENERATION_ERROR', 500);
   }
 }
 
@@ -119,11 +115,10 @@ router.get('/task/:id', verifyToken, async (req, res) => {
     });
 
     if (!task) {
-      return res.status(404).json({ error: 'Task not found' });
+      return errorResponse(res, 'Task not found', 'TASK_NOT_FOUND', 404);
     }
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       task: {
         id: task._id,
         type: task.type,
@@ -137,7 +132,7 @@ router.get('/task/:id', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Get task error:', error);
-    res.status(500).json({ error: 'Failed to get task' });
+    return errorResponse(res, 'Failed to get task', 'GET_TASK_ERROR', 500);
   }
 });
 
@@ -158,8 +153,7 @@ router.get('/history', verifyToken, async (req, res) => {
 
     const total = await Task.countDocuments(query);
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       tasks,
       pagination: {
         page: Number(page),
@@ -170,7 +164,7 @@ router.get('/history', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Get history error:', error);
-    res.status(500).json({ error: 'Failed to get history' });
+    return errorResponse(res, 'Failed to get history', 'GET_HISTORY_ERROR', 500);
   }
 });
 

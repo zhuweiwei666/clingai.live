@@ -5,6 +5,7 @@ import Order from '../models/Order.js';
 import { getSetting } from '../models/Settings.js';
 import { incrementStats } from '../models/DailyStats.js';
 import paymentService from '../services/paymentService.js';
+import { successResponse, errorResponse } from '../utils/response.js';
 
 const router = Router();
 
@@ -12,10 +13,10 @@ const router = Router();
 router.get('/packages', async (req, res) => {
   try {
     const coinPackages = await getSetting('coinPackages');
-    res.json({ success: true, packages: coinPackages });
+    return successResponse(res, { packages: coinPackages });
   } catch (error) {
     console.error('Get packages error:', error);
-    res.status(500).json({ error: 'Failed to get packages' });
+    return errorResponse(res, 'Failed to get packages', 'GET_PACKAGES_ERROR', 500);
   }
 });
 
@@ -23,10 +24,10 @@ router.get('/packages', async (req, res) => {
 router.get('/plans', async (req, res) => {
   try {
     const subscriptionPlans = await getSetting('subscriptionPlans');
-    res.json({ success: true, plans: subscriptionPlans });
+    return successResponse(res, { plans: subscriptionPlans });
   } catch (error) {
     console.error('Get plans error:', error);
-    res.status(500).json({ error: 'Failed to get plans' });
+    return errorResponse(res, 'Failed to get plans', 'GET_PLANS_ERROR', 500);
   }
 });
 
@@ -46,7 +47,7 @@ router.post('/create', verifyToken, async (req, res) => {
       const coinPackages = await getSetting('coinPackages');
       const pkg = coinPackages.find(p => p.id === packageId);
       if (!pkg) {
-        return res.status(400).json({ error: 'Invalid package' });
+        return errorResponse(res, 'Invalid package', 'INVALID_PACKAGE', 400);
       }
       orderData.packageId = packageId;
       orderData.coins = pkg.coins;
@@ -57,13 +58,13 @@ router.post('/create', verifyToken, async (req, res) => {
       const subscriptionPlans = await getSetting('subscriptionPlans');
       const plan = subscriptionPlans.find(p => p.id === planId);
       if (!plan) {
-        return res.status(400).json({ error: 'Invalid plan' });
+        return errorResponse(res, 'Invalid plan', 'INVALID_PLAN', 400);
       }
       orderData.plan = planId;
       orderData.planDuration = 1; // 1个月
       orderData.amount = plan.price;
     } else {
-      return res.status(400).json({ error: 'Invalid order type' });
+      return errorResponse(res, 'Invalid order type', 'INVALID_ORDER_TYPE', 400);
     }
 
     const order = new Order(orderData);
@@ -85,8 +86,7 @@ router.post('/create', verifyToken, async (req, res) => {
       }
     }
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       orderId: order.orderId,
       amount: order.amount,
       paymentUrl: paymentResult?.approveUrl || paymentResult?.url,
@@ -94,7 +94,7 @@ router.post('/create', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Create order error:', error);
-    res.status(500).json({ error: 'Failed to create order' });
+    return errorResponse(res, 'Failed to create order', 'CREATE_ORDER_ERROR', 500);
   }
 });
 

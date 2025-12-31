@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import Template from '../models/Template.js';
+import { successResponse, errorResponse } from '../utils/response.js';
 
 const router = Router();
 
@@ -19,8 +20,7 @@ router.get('/', async (req, res) => {
 
     const total = await Template.countDocuments(query);
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       templates,
       pagination: {
         page: Number(page),
@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Get templates error:', error);
-    res.status(500).json({ error: 'Failed to get templates' });
+    return errorResponse(res, 'Failed to get templates', 'GET_TEMPLATES_ERROR', 500);
   }
 });
 
@@ -43,10 +43,10 @@ router.get('/trending', async (req, res) => {
       .limit(20)
       .select('-aiParams');
 
-    res.json({ success: true, templates });
+    return successResponse(res, { templates });
   } catch (error) {
     console.error('Get trending error:', error);
-    res.status(500).json({ error: 'Failed to get trending templates' });
+    return errorResponse(res, 'Failed to get trending templates', 'GET_TRENDING_ERROR', 500);
   }
 });
 
@@ -58,10 +58,10 @@ router.get('/new', async (req, res) => {
       .limit(20)
       .select('-aiParams');
 
-    res.json({ success: true, templates });
+    return successResponse(res, { templates });
   } catch (error) {
     console.error('Get new templates error:', error);
-    res.status(500).json({ error: 'Failed to get new templates' });
+    return errorResponse(res, 'Failed to get new templates', 'GET_NEW_TEMPLATES_ERROR', 500);
   }
 });
 
@@ -86,8 +86,7 @@ router.get('/categories', async (req, res) => {
     const countMap = {};
     counts.forEach(c => { countMap[c._id] = c.count; });
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       categories: categories.map(c => ({
         ...c,
         count: countMap[c.id] || 0,
@@ -95,7 +94,7 @@ router.get('/categories', async (req, res) => {
     });
   } catch (error) {
     console.error('Get categories error:', error);
-    res.status(500).json({ error: 'Failed to get categories' });
+    return errorResponse(res, 'Failed to get categories', 'GET_CATEGORIES_ERROR', 500);
   }
 });
 
@@ -104,13 +103,13 @@ router.get('/:id', async (req, res) => {
   try {
     const template = await Template.findById(req.params.id);
     if (!template || !template.enabled) {
-      return res.status(404).json({ error: 'Template not found' });
+      return errorResponse(res, 'Template not found', 'TEMPLATE_NOT_FOUND', 404);
     }
 
-    res.json({ success: true, template });
+    return successResponse(res, { template });
   } catch (error) {
     console.error('Get template error:', error);
-    res.status(500).json({ error: 'Failed to get template' });
+    return errorResponse(res, 'Failed to get template', 'GET_TEMPLATE_ERROR', 500);
   }
 });
 

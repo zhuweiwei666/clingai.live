@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Work from '../models/Work.js';
 import Order from '../models/Order.js';
 import { verifyToken } from '../middleware/auth.js';
+import { successResponse, errorResponse } from '../utils/response.js';
 
 const router = Router();
 
@@ -11,11 +12,10 @@ router.get('/profile', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
     }
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       user: {
         id: user._id,
         email: user.email,
@@ -30,7 +30,7 @@ router.get('/profile', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Get profile error:', error);
-    res.status(500).json({ error: 'Failed to get profile' });
+    return errorResponse(res, 'Failed to get profile', 'GET_PROFILE_ERROR', 500);
   }
 });
 
@@ -41,15 +41,14 @@ router.put('/profile', verifyToken, async (req, res) => {
     const user = await User.findById(req.user.id);
 
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
     }
 
     if (username) user.username = username;
     if (avatar) user.avatar = avatar;
     await user.save();
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       user: {
         id: user._id,
         email: user.email,
@@ -59,7 +58,7 @@ router.put('/profile', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Update profile error:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    return errorResponse(res, 'Failed to update profile', 'UPDATE_PROFILE_ERROR', 500);
   }
 });
 
@@ -67,15 +66,14 @@ router.put('/profile', verifyToken, async (req, res) => {
 router.get('/coins', verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('coins plan planExpireAt');
-    res.json({
-      success: true,
+    return successResponse(res, {
       coins: user.coins,
       plan: user.plan,
       planExpireAt: user.planExpireAt,
     });
   } catch (error) {
     console.error('Get coins error:', error);
-    res.status(500).json({ error: 'Failed to get coins' });
+    return errorResponse(res, 'Failed to get coins', 'GET_COINS_ERROR', 500);
   }
 });
 
@@ -95,8 +93,7 @@ router.get('/works', verifyToken, async (req, res) => {
 
     const total = await Work.countDocuments(query);
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       works,
       pagination: {
         page: Number(page),
@@ -107,7 +104,7 @@ router.get('/works', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Get works error:', error);
-    res.status(500).json({ error: 'Failed to get works' });
+    return errorResponse(res, 'Failed to get works', 'GET_WORKS_ERROR', 500);
   }
 });
 
@@ -123,8 +120,7 @@ router.get('/orders', verifyToken, async (req, res) => {
 
     const total = await Order.countDocuments({ userId: req.user.id });
 
-    res.json({
-      success: true,
+    return successResponse(res, {
       orders,
       pagination: {
         page: Number(page),
@@ -135,7 +131,7 @@ router.get('/orders', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Get orders error:', error);
-    res.status(500).json({ error: 'Failed to get orders' });
+    return errorResponse(res, 'Failed to get orders', 'GET_ORDERS_ERROR', 500);
   }
 });
 

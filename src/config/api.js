@@ -17,31 +17,25 @@ export const API_ENDPOINTS = {
     WORKS: `${API_BASE_URL}/user/works`,
     COINS: `${API_BASE_URL}/user/coins`,
   },
-  // Video
-  VIDEO: {
-    GENERATE: `${API_BASE_URL}/video/generate`,
-    FACE_SWAP: `${API_BASE_URL}/video/face-swap`,
-    STATUS: (taskId) => `${API_BASE_URL}/video/status/${taskId}`,
-    HISTORY: `${API_BASE_URL}/video/history`,
-  },
-  // Image
-  IMAGE: {
-    GENERATE: `${API_BASE_URL}/image/generate`,
-    FACE_SWAP: `${API_BASE_URL}/image/face-swap`,
-    DRESS_UP: `${API_BASE_URL}/image/dress-up`,
-    HD_UPSCALE: `${API_BASE_URL}/image/hd-upscale`,
-    REMOVE: `${API_BASE_URL}/image/remove`,
-    STATUS: (taskId) => `${API_BASE_URL}/image/status/${taskId}`,
-    HISTORY: `${API_BASE_URL}/image/history`,
+  // Generate (统一生成 API)
+  GENERATE: {
+    PHOTO2VIDEO: `${API_BASE_URL}/generate/photo2video`,
+    FACESWAP: `${API_BASE_URL}/generate/faceswap`,
+    FACESWAP_VIDEO: `${API_BASE_URL}/generate/faceswap-video`,
+    DRESSUP: `${API_BASE_URL}/generate/dressup`,
+    HD: `${API_BASE_URL}/generate/hd`,
+    REMOVE: `${API_BASE_URL}/generate/remove`,
+    AIIMAGE: `${API_BASE_URL}/generate/aiimage`,
+    TASK_STATUS: (taskId) => `${API_BASE_URL}/generate/task/${taskId}`,
+    HISTORY: `${API_BASE_URL}/generate/history`,
   },
   // Templates
   TEMPLATES: {
     LIST: `${API_BASE_URL}/templates`,
     TRENDING: `${API_BASE_URL}/templates/trending`,
     NEW: `${API_BASE_URL}/templates/new`,
-    CATEGORY: (category) => `${API_BASE_URL}/templates/category/${category}`,
+    CATEGORIES: `${API_BASE_URL}/templates/categories`,
     DETAIL: (id) => `${API_BASE_URL}/templates/${id}`,
-    CATEGORIES: `${API_BASE_URL}/templates/meta/categories`,
   },
 };
 
