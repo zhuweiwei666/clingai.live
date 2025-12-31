@@ -85,16 +85,43 @@ async function callA2EApi(endpoint, method = 'GET', data = null) {
       options.body = JSON.stringify(data);
     }
 
+    console.log(`[A2E] Making ${method} request to: ${url}`);
+    if (data) {
+      console.log(`[A2E] Request body:`, JSON.stringify(data, null, 2));
+    }
+    console.log(`[A2E] Request headers:`, {
+      'Content-Type': options.headers['Content-Type'],
+      'Authorization': options.headers['Authorization'] ? 'Bearer ***' : 'none',
+      'X-User-Id': options.headers['X-User-Id'] || 'none',
+    });
+    
     const response = await fetch(url, options);
+    
+    console.log(`[A2E] Response status: ${response.status} ${response.statusText}`);
+    const responseText = await response.text();
+    console.log(`[A2E] Response body (first 500 chars):`, responseText.substring(0, 500));
 
     if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`A2E API error: ${response.status} - ${error}`);
+      console.error(`[A2E] API error response (full):`, responseText);
+      throw new Error(`A2E API error: ${response.status} - ${responseText.substring(0, 200)}`);
     }
 
-    return await response.json();
+    try {
+      const responseData = JSON.parse(responseText);
+      console.log(`[A2E] API response data:`, JSON.stringify(responseData, null, 2));
+      return responseData;
+    } catch (parseError) {
+      console.error(`[A2E] Failed to parse JSON response:`, parseError);
+      console.error(`[A2E] Response text:`, responseText);
+      throw new Error(`A2E API returned invalid JSON: ${responseText.substring(0, 200)}`);
+    }
   } catch (error) {
     console.error('[A2E] API call failed:', error);
+    console.error('[A2E] Error name:', error.name);
+    console.error('[A2E] Error message:', error.message);
+    if (error.stack) {
+      console.error('[A2E] Error stack:', error.stack);
+    }
     throw error;
   }
 }
