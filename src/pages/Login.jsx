@@ -89,23 +89,44 @@ export default function Login() {
         });
         
         console.log('[Login] Backend response:', response);
+        console.log('[Login] Backend response type:', typeof response);
+        console.log('[Login] Backend response keys:', Object.keys(response || {}));
         
-        // 处理统一响应格式：response.data 可能包含 { user, token } 或 { success: true, data: { user, token } }
+        // apiClient拦截器已经处理了响应格式，response应该是 { user, token }
+        // 但为了兼容性，我们检查多种可能的格式
         let user, token;
-        if (response.user && response.token) {
-          // 直接格式：{ user, token }
+        
+        // 格式1: { user, token } - apiClient拦截器处理后的格式
+        if (response && response.user && response.token) {
           user = response.user;
           token = response.token;
-        } else if (response.data && response.data.user && response.data.token) {
-          // 嵌套格式：{ data: { user, token } }
+          console.log('[Login] Using format 1: direct { user, token }');
+        }
+        // 格式2: { data: { user, token } } - 嵌套格式
+        else if (response && response.data && response.data.user && response.data.token) {
           user = response.data.user;
           token = response.data.token;
-        } else if (response.success && response.data) {
-          // 统一格式：{ success: true, data: { user, token } }
+          console.log('[Login] Using format 2: nested { data: { user, token } }');
+        }
+        // 格式3: { success: true, data: { user, token } } - 统一格式
+        else if (response && response.success && response.data && response.data.user && response.data.token) {
           user = response.data.user;
           token = response.data.token;
+          console.log('[Login] Using format 3: { success: true, data: { user, token } }');
+        }
+        // 格式4: response本身就是data字段的内容
+        else if (response && typeof response === 'object') {
+          // 尝试直接访问token和user
+          token = response.token;
+          user = response.user;
+          if (token && user) {
+            console.log('[Login] Using format 4: direct access to token and user');
+          } else {
+            console.error('[Login] Invalid response format:', JSON.stringify(response, null, 2));
+            throw new Error('Invalid response format from server: missing token or user');
+          }
         } else {
-          console.error('[Login] Invalid response format:', response);
+          console.error('[Login] Invalid response format:', JSON.stringify(response, null, 2));
           throw new Error('Invalid response format from server');
         }
         
