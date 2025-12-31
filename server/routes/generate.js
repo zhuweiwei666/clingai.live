@@ -226,8 +226,48 @@ router.get('/task/:id', verifyToken, async (req, res) => {
       return errorResponse(res, 'Task not found', 'TASK_NOT_FOUND', 404);
     }
 
-    // 如果任务还在处理中，且没有错误，返回当前状态
-    // 不在这里调用 A2E API，让 worker 处理状态更新
+    // 如果任务还在处理中且有 externalTaskId，尝试从 A2E API 获取最新状态
+    if (task.status === 'processing' && task.externalTaskId) {
+      try {
+        const { default: aiService } = await import('../services/aiService.js');
+        const taskTypeMap = {
+          'photo2video': 'image-to-video',
+          'faceswap': 'face-swap',
+          'faceswap_video': 'face-swap',
+          'dressup': 'virtual-try-on',
+          'aiimage': 'text-to-image',
+          'remove': 'caption-removal',
+          'hd': 'video-to-video',
+        };
+        const a2eTaskType = taskTypeMap[task.type] || 'image-to-video';
+        
+        console.log(`[Generate] Fetching latest status from A2E for task ${task._id}, externalTaskId: ${task.externalTaskId}`);
+        const a2eStatus = await aiService.checkTaskStatus(task.externalTaskId, a2eTaskType);
+        
+        // 更新任务状态
+        if (a2eStatus.status === 'completed' && a2eStatus.resultUrl) {
+          task.status = 'completed';
+          task.progress = 100;
+          task.output = {
+            resultUrl: a2eStatus.resultUrl,
+            thumbnailUrl: a2eStatus.thumbnailUrl || a2eStatus.resultUrl,
+          };
+          task.completedAt = new Date();
+          await task.save();
+        } else if (a2eStatus.status === 'failed') {
+          task.status = 'failed';
+          task.error = a2eStatus.error || 'A2E API returned failed status';
+          await task.save();
+        } else if (a2eStatus.progress) {
+          task.progress = Math.max(task.progress, a2eStatus.progress);
+          await task.save();
+        }
+      } catch (a2eError) {
+        console.error(`[Generate] Failed to fetch A2E status:`, a2eError);
+        // 不抛出错误，继续返回数据库中的状态
+      }
+    }
+
     return successResponse(res, {
       task: {
         id: task._id,
