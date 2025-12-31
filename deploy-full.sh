@@ -200,6 +200,16 @@ A2E_BASE_URL=$A2E_BASE_URL
 # ============================================
 # GOOGLE_CLIENT_ID=
 # GOOGLE_CLIENT_SECRET=
+
+# ============================================
+# Cloudflare R2 Storage 配置
+# ============================================
+R2_ACCOUNT_ID=18f292ca4a886046b6a8ad0b3fa316a0
+R2_ACCESS_KEY_ID=a22464d3f1b4513b76081065e0aef973
+R2_SECRET_ACCESS_KEY=0b78b662d3d9b8eddd6d49b147ca37cf9f0e86077a3245d29f4a8bd02fedaa57
+R2_BUCKET_NAME=clingailive
+R2_PUBLIC_URL=https://pub-17497f33464648bdb5f47bbbdbf732e7.r2.dev
+R2_ENDPOINT=https://18f292ca4a886046b6a8ad0b3fa316a0.r2.cloudflarestorage.com
 EOF
 
     # 上传 .env 文件
