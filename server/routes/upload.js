@@ -17,9 +17,7 @@ const storage = multer.memoryStorage();
 // 文件过滤器
 const fileFilter = (req, file, cb) => {
   // 允许图片和视频
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else if (file.mimetype.startsWith('video/')) {
+  if (file.mimetype && (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/'))) {
     cb(null, true);
   } else {
     cb(new Error('Only image and video files are allowed'), false);

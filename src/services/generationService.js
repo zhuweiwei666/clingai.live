@@ -99,10 +99,14 @@ export const generationService = {
 
   // ========== USER ==========
 
-  // Get user's works
+  // Get user's works (使用 /api/works 端点)
   getMyWorks: async () => {
-    const response = await apiClient.get('/user/works');
-    return response.data;
+    const response = await apiClient.get('/works');
+    // 统一响应格式：response.data 已经是 data 字段的内容
+    return {
+      works: response.data.works || [],
+      pagination: response.data.pagination || {},
+    };
   },
 
   // Get coin balance

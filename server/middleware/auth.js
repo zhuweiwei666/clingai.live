@@ -21,7 +21,11 @@ export function verifyToken(req, res, next) {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'No token provided',
+        code: 'NO_TOKEN',
+      });
     }
 
     const token = authHeader.split(' ')[1];
@@ -31,9 +35,17 @@ export function verifyToken(req, res, next) {
     next();
   } catch (error) {
     if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Token expired' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'Token expired',
+        code: 'TOKEN_EXPIRED',
+      });
     }
-    return res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ 
+      success: false,
+      error: 'Invalid token',
+      code: 'INVALID_TOKEN',
+    });
   }
 }
 
@@ -58,7 +70,11 @@ export function optionalAuth(req, res, next) {
 // 管理员验证
 export function verifyAdmin(req, res, next) {
   if (!req.user || !req.user.isAdmin) {
-    return res.status(403).json({ error: 'Admin access required' });
+    return res.status(403).json({ 
+      success: false,
+      error: 'Admin access required',
+      code: 'ADMIN_REQUIRED',
+    });
   }
   next();
 }

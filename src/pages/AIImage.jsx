@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, Wand2, Image } from 'lucide-react';
+import useUserStore from '../store/userStore';
 
 // Sample templates for AI Image
 const imageTemplates = [
@@ -34,7 +36,7 @@ const imageTemplates = [
   },
 ];
 
-function TemplateCard({ template, index }) {
+function TemplateCard({ template, index, onClick }) {
   const renderBadge = () => {
     if (template.tags.includes('super')) {
       return <span className="badge badge-super">Super</span>;
@@ -54,6 +56,7 @@ function TemplateCard({ template, index }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       className="card cursor-pointer"
+      onClick={onClick}
     >
       <div className="card-image">
         <img
@@ -78,7 +81,17 @@ function TemplateCard({ template, index }) {
 }
 
 export default function AIImage() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useUserStore();
   const [templates] = useState(imageTemplates);
+
+  const handleTemplateClick = (template) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    navigate(`/create?type=ai_image&style=${template.category}`);
+  };
 
   return (
     <div className="min-h-screen">
@@ -103,7 +116,12 @@ export default function AIImage() {
       {/* Templates Grid */}
       <div className="grid-cards">
         {templates.map((template, index) => (
-          <TemplateCard key={template.id} template={template} index={index} />
+          <TemplateCard 
+            key={template.id} 
+            template={template} 
+            index={index}
+            onClick={() => handleTemplateClick(template)}
+          />
         ))}
       </div>
     </div>

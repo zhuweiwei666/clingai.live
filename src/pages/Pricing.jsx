@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Coins, Crown, Check, ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
@@ -52,19 +52,19 @@ export default function Pricing() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // 处理支付回调
-  useState(() => {
+  useEffect(() => {
     const orderId = searchParams.get('orderId');
     const sessionId = searchParams.get('session_id');
     const status = searchParams.get('status');
 
     if (orderId && status === 'success') {
       // 支付成功，刷新用户信息
-      updateUser();
+      // 可以通过重新获取用户信息来更新
       toast.success('Payment successful!');
     } else if (orderId && status === 'cancel') {
       toast.error('Payment cancelled');
     }
-  }, [searchParams, updateUser]);
+  }, [searchParams]);
 
   const handlePurchase = async () => {
     if (!isAuthenticated) {

@@ -53,9 +53,12 @@ app.use('/api/admin', adminRoutes);
 // 健康检查
 app.get('/api/health', (req, res) => {
   res.json({ 
-    status: 'ok', 
-    version: '2.0.0',
-    timestamp: new Date().toISOString(),
+    success: true,
+    data: {
+      status: 'ok', 
+      version: '2.0.0',
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
