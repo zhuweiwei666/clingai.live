@@ -126,10 +126,22 @@ export async function imageToVideo(imageUrl, params = {}) {
     motion: params.motion || 'default',
   };
 
-  const result = await callA2EApi('/api/v1/image-to-video/start', 'POST', requestData);
+  console.log(`[A2E] Starting image-to-video: ${A2E_BASE_URL}/api/v1/image-to-video`);
+  const result = await callA2EApi('/api/v1/image-to-video', 'POST', requestData);
+  console.log(`[A2E] Image-to-video started, result:`, JSON.stringify(result, null, 2));
+  
+  // A2E API 可能返回不同的字段名
+  const taskId = result.task_id || result.id || result.taskId || result._id;
+  const status = result.status || 'processing';
+  
+  if (!taskId) {
+    console.error('[A2E] No task ID returned from API:', result);
+    throw new Error('Failed to get task ID from A2E API');
+  }
+  
   return {
-    taskId: result.task_id || result.id,
-    status: result.status || 'processing',
+    taskId,
+    status,
   };
 }
 
