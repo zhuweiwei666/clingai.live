@@ -3,7 +3,7 @@ import { verifyToken } from '../middleware/auth.js';
 import User from '../models/User.js';
 import Task from '../models/Task.js';
 import Template from '../models/Template.js';
-import { getSetting } from '../models/Settings.js';
+import { getSetting, DEFAULT_SETTINGS } from '../models/Settings.js';
 import { incrementStats } from '../models/DailyStats.js';
 import { generateQueue } from '../services/queue.js';
 import { successResponse, errorResponse } from '../utils/response.js';
