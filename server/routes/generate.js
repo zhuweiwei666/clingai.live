@@ -54,7 +54,23 @@ async function createGenerateTask(req, res, type) {
     // 获取模板（如果有）
     let template = null;
     if (templateId) {
-      template = await Template.findById(templateId);
+      try {
+        // 尝试将templateId转换为ObjectId
+        const mongoose = (await import('mongoose')).default;
+        let templateIdObj = templateId;
+        
+        // 如果templateId是字符串，尝试转换为ObjectId
+        if (typeof templateId === 'string' && mongoose.Types.ObjectId.isValid(templateId)) {
+          templateIdObj = new mongoose.Types.ObjectId(templateId);
+        }
+        
+        template = await Template.findById(templateIdObj);
+        console.log(`[Generate] Template lookup: id=${templateId}, found=${!!template}`);
+      } catch (templateError) {
+        console.error('[Generate] Template lookup error:', templateError);
+        // 模板查找失败不影响主流程，继续执行
+        template = null;
+      }
     }
 
     // 扣除金币
