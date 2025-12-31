@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Create from './pages/Create';
 import Profile from './pages/Profile';
+import MyWorks from './pages/MyWorks';
+import Settings from './pages/Settings';
 import AIImage from './pages/AIImage';
 import FaceSwap from './pages/FaceSwap';
 import DressUp from './pages/DressUp';
@@ -18,8 +20,8 @@ import Privacy from './pages/Privacy';
 import Refund from './pages/Refund';
 import useUserStore from './store/userStore';
 
-// Google OAuth Client ID
-const GOOGLE_CLIENT_ID = '1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com';
+// Google OAuth Client ID - should be set via environment variable
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated } = useUserStore();
@@ -61,7 +63,10 @@ function App() {
                 <PrivateRoute><Create /></PrivateRoute>
               } />
               <Route path="my-works" element={
-                <PrivateRoute><Create /></PrivateRoute>
+                <PrivateRoute><MyWorks /></PrivateRoute>
+              } />
+              <Route path="settings" element={
+                <PrivateRoute><Settings /></PrivateRoute>
               } />
             </Route>
 

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, Image, Video, Wand2, ArrowLeft, Loader2, Check, Coins } from 'lucide-react';
+import { Upload, Image, Video, Wand2, ArrowLeft, Loader2, Coins } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useUserStore from '../store/userStore';
 import generationService from '../services/generationService';

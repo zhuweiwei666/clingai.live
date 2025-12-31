@@ -65,6 +65,18 @@ async function processJob(job) {
     task.progress = 30;
     await task.save();
 
+    // 映射任务类型到 A2E 任务类型
+    const taskTypeMap = {
+      'photo2video': 'image-to-video',
+      'faceswap': 'face-swap',
+      'faceswap_video': 'face-swap',
+      'dressup': 'virtual-try-on',
+      'aiimage': 'text-to-image',
+      'remove': 'caption-removal',
+      'hd': 'video-to-video',
+    };
+    const a2eTaskType = taskTypeMap[type] || 'image-to-video';
+
     // 轮询等待结果
     let attempts = 0;
     const maxAttempts = 60; // 最多等待 5 分钟
@@ -74,7 +86,7 @@ async function processJob(job) {
     while (attempts < maxAttempts && !completed) {
       await new Promise(resolve => setTimeout(resolve, 5000)); // 等待 5 秒
       
-      const status = await aiService.checkTaskStatus(result.taskId);
+      const status = await aiService.checkTaskStatus(result.taskId, a2eTaskType);
       task.progress = Math.min(30 + attempts * 2, 90);
       await task.save();
 

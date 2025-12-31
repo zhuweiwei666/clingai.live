@@ -1,4 +1,5 @@
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
+import useUserStore from '../store/userStore';
 
 // ========== 顶部功能 Tab 图标 ==========
 
@@ -45,7 +46,7 @@ const HDIcon = () => (
   </svg>
 );
 
-// MaterMark 图标
+// Watermark 图标
 const WatermarkIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
     <circle cx="12" cy="12" r="9" />
@@ -85,13 +86,14 @@ const featureTabs = [
   { path: '/ai-image', label: 'AI Image', icon: AIImageIcon, badge: '19', superBadge: true },
   { path: '/', label: 'AI Video', icon: AIVideoIcon, isMain: true, superBadge: true },
   { path: '/hd', label: 'HD', icon: HDIcon },
-  { path: '/watermark', label: 'MaterMark', icon: WatermarkIcon },
+  { path: '/watermark', label: 'Watermark', icon: WatermarkIcon },
 ];
 
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const { isAuthenticated, user } = useUserStore();
 
   // 显示顶部 Header 的页面
   const showHeader = ['/', '/ai-image', '/ai-video', '/hd', '/remove', '/chat-edit', '/watermark', '/face-swap'].includes(currentPath);
@@ -108,13 +110,32 @@ export default function Layout() {
               <span className="px-3 py-1 bg-gradient-to-r from-purple-500 to-violet-600 rounded-full text-white text-lg font-bold" style={{ fontFamily: 'Notable, sans-serif' }}>AI</span>
             </div>
             <div className="flex items-center gap-3">
+              {isAuthenticated ? (
+                <button 
+                  onClick={() => navigate('/profile')}
+                  className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
+                >
+                  {user?.avatar ? (
+                    <img src={user.avatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-white text-xs font-bold">
+                      {user?.username?.[0]?.toUpperCase() || 'U'}
+                    </span>
+                  )}
+                </button>
+              ) : (
+                <button 
+                  onClick={() => navigate('/login')}
+                  className="px-4 py-1.5 bg-[#2a2a2a] rounded-full text-white text-sm font-medium"
+                >
+                  Log in
+                </button>
+              )}
               <button 
-                onClick={() => navigate('/login')}
-                className="px-4 py-1.5 bg-[#2a2a2a] rounded-full text-white text-sm font-medium"
+                onClick={() => navigate('/profile')}
+                className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                title="Menu"
               >
-                Log in
-              </button>
-              <button className="w-8 h-8 flex items-center justify-center text-white/70">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
                   <rect x="3" y="3" width="18" height="18" rx="2" />
                   <path d="M7 7h10M7 12h10M7 17h10" />
