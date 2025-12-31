@@ -13,23 +13,38 @@ const router = Router();
 // 通用生成函数
 async function createGenerateTask(req, res, type) {
   try {
+    console.log(`[Generate] Creating ${type} task`);
+    console.log(`[Generate] Request body:`, JSON.stringify(req.body, null, 2));
+    console.log(`[Generate] User ID:`, req.user?.id);
+    
     const { templateId, sourceImage, targetImage, prompt, params } = req.body;
+
+    // 验证必需参数
+    if (!sourceImage && type !== 'aiimage') {
+      console.error(`[Generate] Missing sourceImage for type ${type}`);
+      return errorResponse(res, 'Source image is required', 'MISSING_IMAGE', 400);
+    }
 
     // 获取用户
     const user = await User.findById(req.user.id);
     if (!user) {
+      console.error(`[Generate] User not found: ${req.user.id}`);
       return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
     }
+    console.log(`[Generate] User found: ${user.email}, coins: ${user.coins}`);
 
     // 获取费用配置
     let featureCosts;
     try {
       featureCosts = await getSetting('featureCosts');
+      console.log(`[Generate] Feature costs loaded:`, featureCosts);
     } catch (error) {
-      console.error('Failed to get featureCosts setting:', error);
+      console.error('[Generate] Failed to get featureCosts setting:', error);
       featureCosts = DEFAULT_SETTINGS.featureCosts;
+      console.log(`[Generate] Using default feature costs:`, featureCosts);
     }
     const cost = (featureCosts && featureCosts[type]) || 5;
+    console.log(`[Generate] Cost for ${type}: ${cost}`);
 
     // 检查金币
     if (user.coins < cost) {
@@ -51,6 +66,13 @@ async function createGenerateTask(req, res, type) {
     }
 
     // 创建任务
+    console.log(`[Generate] Creating task with input:`, {
+      sourceImage: sourceImage?.substring(0, 50) + '...',
+      hasTargetImage: !!targetImage,
+      hasPrompt: !!prompt,
+      hasTemplate: !!template,
+    });
+    
     const task = new Task({
       userId: user._id,
       templateId: template?._id,
@@ -64,7 +86,14 @@ async function createGenerateTask(req, res, type) {
         params: { ...params, templateParams: template?.aiParams },
       },
     });
-    await task.save();
+    
+    try {
+      await task.save();
+      console.log(`[Generate] Task created: ${task._id}`);
+    } catch (saveError) {
+      console.error('[Generate] Failed to save task:', saveError);
+      throw new Error(`Failed to create task: ${saveError.message}`);
+    }
 
     // 统计
     await incrementStats('tasksByType', 1, type);
@@ -76,15 +105,27 @@ async function createGenerateTask(req, res, type) {
     }
 
     // 添加到队列
-    await generateQueue.add('generate', {
-      taskId: task._id.toString(),
-      type,
-      input: task.input,
-    }, {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 5000 },
-    });
+    try {
+      console.log(`[Generate] Adding task to queue: ${task._id}`);
+      const job = await generateQueue.add('generate', {
+        taskId: task._id.toString(),
+        type,
+        input: task.input,
+      }, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+      });
+      console.log(`[Generate] Job added to queue: ${job.id}`);
+    } catch (queueError) {
+      console.error('[Generate] Failed to add task to queue:', queueError);
+      // 更新任务状态为失败
+      task.status = 'failed';
+      task.error = `Queue error: ${queueError.message}`;
+      await task.save();
+      throw new Error(`Failed to add task to queue: ${queueError.message}`);
+    }
 
+    console.log(`[Generate] Task ${task._id} created successfully`);
     return successResponse(res, {
       taskId: task._id,
       status: 'pending',
