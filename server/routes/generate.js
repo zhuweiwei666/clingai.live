@@ -96,12 +96,24 @@ async function createGenerateTask(req, res, type) {
     }
 
     // 统计
-    await incrementStats('tasksByType', 1, type);
+    try {
+      await incrementStats('tasksByType', 1, type);
+      console.log(`[Generate] Stats updated for ${type}`);
+    } catch (statsError) {
+      console.error('[Generate] Failed to update stats:', statsError);
+      // 统计失败不影响主流程，继续执行
+    }
 
     // 更新模板使用次数
     if (template) {
-      template.usageCount += 1;
-      await template.save();
+      try {
+        template.usageCount = (template.usageCount || 0) + 1;
+        await template.save();
+        console.log(`[Generate] Template usage count updated: ${template.usageCount}`);
+      } catch (templateError) {
+        console.error('[Generate] Failed to update template usage:', templateError);
+        // 模板更新失败不影响主流程，继续执行
+      }
     }
 
     // 添加到队列
