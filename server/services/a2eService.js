@@ -299,40 +299,52 @@ export async function checkTaskStatus(taskId, taskType = 'image-to-video') {
   }
 
   try {
-    // 根据任务类型选择不同的查询端点
-    // 根据 A2E API 文档，状态查询可能需要使用 POST 请求
+    // 根据 A2E API 文档，状态查询应该使用 GET 请求，taskId 在 URL 路径中
+    // 参考文档：Image to Video -> Check Status of One Task
     let endpoint;
-    let method = 'POST'; // A2E API 可能使用 POST 查询状态
+    let method = 'GET';
     
     switch (taskType) {
       case 'image-to-video':
-        // 尝试两种格式：POST /api/v1/image-to-video/status 或 GET /api/v1/image-to-video/${taskId}
-        endpoint = `/api/v1/image-to-video/status`;
+        // GET /api/v1/image-to-video/${taskId} 或类似格式
+        endpoint = `/api/v1/image-to-video/${taskId}`;
         break;
       case 'face-swap':
-        endpoint = `/api/v1/face-swap/status`;
+        endpoint = `/api/v1/face-swap/${taskId}`;
         break;
       case 'virtual-try-on':
-        endpoint = `/api/v1/virtual-try-on/status`;
+        endpoint = `/api/v1/virtual-try-on/${taskId}`;
         break;
       case 'text-to-image':
-        endpoint = `/api/v1/text-to-image/status`;
+        endpoint = `/api/v1/text-to-image/${taskId}`;
         break;
       case 'caption-removal':
-        endpoint = `/api/v1/caption-removal/status`;
+        endpoint = `/api/v1/caption-removal/${taskId}`;
         break;
       case 'video-to-video':
-        endpoint = `/api/v1/video-to-video/status`;
+        endpoint = `/api/v1/video-to-video/${taskId}`;
         break;
       default:
-        endpoint = `/api/v1/image-to-video/status`;
+        endpoint = `/api/v1/image-to-video/${taskId}`;
     }
 
-    // 如果使用 POST，需要传递 taskId 在 body 中
-    const requestData = method === 'POST' ? { task_id: taskId } : null;
-    
     console.log(`[A2E] Checking status: ${A2E_BASE_URL}${endpoint}, method: ${method}, taskId: ${taskId}`);
-    const result = await callA2EApi(endpoint, method, requestData);
+    
+    // 尝试 GET 请求
+    let result;
+    try {
+      result = await callA2EApi(endpoint, method, null);
+    } catch (getError) {
+      // 如果 GET 失败（404），尝试 POST 方式
+      if (getError.message && getError.message.includes('404')) {
+        console.log(`[A2E] GET failed with 404, trying POST with body...`);
+        const postEndpoint = endpoint.replace(`/${taskId}`, '/status');
+        const requestData = { task_id: taskId };
+        result = await callA2EApi(postEndpoint, 'POST', requestData);
+      } else {
+        throw getError;
+      }
+    }
     
     return {
       status: result.status || 'processing',

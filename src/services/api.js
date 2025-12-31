@@ -7,7 +7,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 60000, // 增加到60秒，特别是上传大文件时
   headers: {
     'Content-Type': 'application/json',
   },
