@@ -126,6 +126,16 @@ deploy_frontend() {
     # 在服务器上拉取代码
     ssh_exec "cd $SERVER_PROJECT_DIR && git pull origin main || (cd /root && git clone https://github.com/zhuweiwei666/clingai.live.git honeyai 2>/dev/null || true)"
     
+    # 创建前端 .env 文件（用于构建时注入环境变量）
+    log_info "创建前端环境变量文件..."
+    cat > /tmp/frontend.env << EOF
+VITE_GOOGLE_CLIENT_ID=1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com
+EOF
+    
+    # 上传前端 .env 文件
+    scp_file "/tmp/frontend.env" "$SERVER_PROJECT_DIR/.env"
+    rm -f /tmp/frontend.env
+    
     # 在服务器上构建前端
     log_info "在服务器上构建前端..."
     ssh_exec "cd $SERVER_PROJECT_DIR && npm install && npm run build"
