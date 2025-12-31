@@ -163,7 +163,7 @@ configure_env() {
     log_info "配置后端环境变量（智能合并模式）..."
     
     # 在服务器上备份现有 .env 文件
-    ssh_exec "if [ -f $SERVER_BACKEND_DIR/.env ]; then cp $SERVER_BACKEND_DIR/.env $SERVER_BACKEND_DIR/.env.backup.\$(date +%Y%m%d_%H%M%S); fi"
+    ssh_exec "if [ -f $SERVER_BACKEND_DIR/.env ]; then cp $SERVER_BACKEND_DIR/.env $SERVER_BACKEND_DIR/.env.backup.\$(date +%Y%m%d_%H%M%S); fi" || true
     
     # 创建更新脚本，智能合并环境变量
     cat > /tmp/update_env.sh << 'ENVSCRIPT'
