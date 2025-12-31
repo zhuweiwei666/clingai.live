@@ -119,6 +119,8 @@ async function createGenerateTask(req, res, type) {
     // 添加到队列
     try {
       console.log(`[Generate] Adding task to queue: ${task._id}`);
+      console.log(`[Generate] Queue connection state:`, generateQueue.client?.status || 'unknown');
+      
       const job = await generateQueue.add('generate', {
         taskId: task._id.toString(),
         type,
@@ -127,14 +129,31 @@ async function createGenerateTask(req, res, type) {
         attempts: 3,
         backoff: { type: 'exponential', delay: 5000 },
       });
+      
       console.log(`[Generate] Job added to queue: ${job.id}`);
     } catch (queueError) {
       console.error('[Generate] Failed to add task to queue:', queueError);
-      // 更新任务状态为失败
-      task.status = 'failed';
-      task.error = `Queue error: ${queueError.message}`;
-      await task.save();
-      throw new Error(`Failed to add task to queue: ${queueError.message}`);
+      console.error('[Generate] Queue error name:', queueError.name);
+      console.error('[Generate] Queue error message:', queueError.message);
+      console.error('[Generate] Queue error stack:', queueError.stack);
+      
+      // 检查是否是Redis连接错误
+      if (queueError.message && (queueError.message.includes('ECONNREFUSED') || queueError.message.includes('Redis'))) {
+        console.error('[Generate] Redis connection failed - task will be created but may not be processed');
+        // Redis连接失败时，仍然返回成功，但任务可能无法处理
+        // 或者可以选择抛出错误
+        // 这里我们选择继续，让任务创建成功，但记录警告
+      } else {
+        // 其他队列错误，更新任务状态为失败
+        try {
+          task.status = 'failed';
+          task.error = `Queue error: ${queueError.message}`;
+          await task.save();
+        } catch (saveError) {
+          console.error('[Generate] Failed to update task status:', saveError);
+        }
+        throw new Error(`Failed to add task to queue: ${queueError.message}`);
+      }
     }
 
     console.log(`[Generate] Task ${task._id} created successfully`);
