@@ -158,78 +158,150 @@ deploy_backend() {
     log_info "后端代码部署完成"
 }
 
-# 4. 配置环境变量
+# 4. 配置环境变量（智能合并，保留现有变量）
 configure_env() {
-    log_info "配置后端环境变量..."
+    log_info "配置后端环境变量（智能合并模式）..."
     
-    # 创建 .env 文件内容
-    cat > /tmp/server.env << EOF
-# ============================================
-# ClingAI 后端环境变量配置
-# ============================================
+    # 在服务器上备份现有 .env 文件
+    ssh_exec "if [ -f $SERVER_BACKEND_DIR/.env ]; then cp $SERVER_BACKEND_DIR/.env $SERVER_BACKEND_DIR/.env.backup.\$(date +%Y%m%d_%H%M%S); fi"
+    
+    # 创建更新脚本，智能合并环境变量
+    cat > /tmp/update_env.sh << 'ENVSCRIPT'
+#!/bin/bash
+ENV_FILE="$1"
 
-# 服务器配置
-PORT=3001
-NODE_ENV=production
+# 如果 .env 文件不存在，创建新文件
+if [ ! -f "$ENV_FILE" ]; then
+    touch "$ENV_FILE"
+fi
 
-# 数据库配置（请根据实际情况修改）
-MONGODB_URI=mongodb://localhost:27017/clingai
+# 定义需要更新的环境变量（格式：KEY=VALUE）
+declare -A env_updates=(
+    ["PORT"]="3001"
+    ["NODE_ENV"]="production"
+    ["MONGODB_URI"]="mongodb://localhost:27017/clingai"
+    ["REDIS_HOST"]="localhost"
+    ["REDIS_PORT"]="6379"
+    ["REDIS_PASSWORD"]=""
+    ["JWT_SECRET"]="clingai-jwt-secret-2024-production-change-this"
+    ["CORS_ORIGIN"]="*"
+    ["FRONTEND_URL"]="https://clingai.live"
+    ["A2E_API_TOKEN"]="ENV_A2E_API_TOKEN"
+    ["A2E_USER_ID"]="ENV_A2E_USER_ID"
+    ["A2E_BASE_URL"]="ENV_A2E_BASE_URL"
+    ["GOOGLE_CLIENT_ID"]="1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com"
+    ["GOOGLE_CLIENT_SECRET"]="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"
+    ["R2_ACCOUNT_ID"]="18f292ca4a886046b6a8ad0b3fa316a0"
+    ["R2_ACCESS_KEY_ID"]="a22464d3f1b4513b76081065e0aef973"
+    ["R2_SECRET_ACCESS_KEY"]="0b78b662d3d9b8eddd6d49b147ca37cf9f0e86077a3245d29f4a8bd02fedaa57"
+    ["R2_BUCKET_NAME"]="clingailive"
+    ["R2_PUBLIC_URL"]="https://pub-17497f33464648bdb5f47bbbdbf732e7.r2.dev"
+    ["R2_ENDPOINT"]="https://18f292ca4a886046b6a8ad0b3fa316a0.r2.cloudflarestorage.com"
+)
 
-# Redis 配置（请根据实际情况修改）
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
+# 创建临时文件
+TMP_FILE=$(mktemp)
 
-# JWT 密钥（请修改为安全的密钥）
-JWT_SECRET=clingai-jwt-secret-2024-production-change-this
+# 读取现有 .env 文件，保留注释和未定义的变量
+while IFS= read -r line || [ -n "$line" ]; do
+    # 跳过空行和注释
+    if [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]]; then
+        echo "$line" >> "$TMP_FILE"
+        continue
+    fi
+    
+    # 提取键名
+    key=$(echo "$line" | cut -d'=' -f1 | xargs)
+    
+    # 如果这个键需要更新，跳过（后面会添加新值）
+    if [[ -n "${env_updates[$key]}" ]]; then
+        continue
+    fi
+    
+    # 保留其他变量
+    echo "$line" >> "$TMP_FILE"
+done < "$ENV_FILE"
 
-# CORS 配置
-CORS_ORIGIN=*
+# 添加/更新需要的环境变量
+echo "" >> "$TMP_FILE"
+echo "# ============================================" >> "$TMP_FILE"
+echo "# ClingAI 后端环境变量配置（自动更新于 $(date)）" >> "$TMP_FILE"
+echo "# ============================================" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
 
-# 前端 URL
-FRONTEND_URL=https://clingai.live
+echo "# 服务器配置" >> "$TMP_FILE"
+echo "PORT=${env_updates[PORT]}" >> "$TMP_FILE"
+echo "NODE_ENV=${env_updates[NODE_ENV]}" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
 
-# ============================================
-# A2E.ai API 配置
-# ============================================
-A2E_API_TOKEN=$A2E_API_TOKEN
-A2E_USER_ID=$A2E_USER_ID
-A2E_BASE_URL=$A2E_BASE_URL
+echo "# 数据库配置" >> "$TMP_FILE"
+echo "MONGODB_URI=${env_updates[MONGODB_URI]}" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
 
-# ============================================
-# 支付配置（可选）
-# ============================================
-# STRIPE_SECRET_KEY=
-# STRIPE_WEBHOOK_SECRET=
-# PAYPAL_CLIENT_ID=
-# PAYPAL_CLIENT_SECRET=
-# PAYPAL_MODE=sandbox
+echo "# Redis 配置" >> "$TMP_FILE"
+echo "REDIS_HOST=${env_updates[REDIS_HOST]}" >> "$TMP_FILE"
+echo "REDIS_PORT=${env_updates[REDIS_PORT]}" >> "$TMP_FILE"
+echo "REDIS_PASSWORD=${env_updates[REDIS_PASSWORD]}" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
 
-# ============================================
-# Google OAuth 配置
-# ============================================
-GOOGLE_CLIENT_ID=1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+echo "# JWT 密钥" >> "$TMP_FILE"
+echo "JWT_SECRET=${env_updates[JWT_SECRET]}" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
 
-# ============================================
-# Cloudflare R2 Storage 配置
-# ============================================
-R2_ACCOUNT_ID=18f292ca4a886046b6a8ad0b3fa316a0
-R2_ACCESS_KEY_ID=a22464d3f1b4513b76081065e0aef973
-R2_SECRET_ACCESS_KEY=0b78b662d3d9b8eddd6d49b147ca37cf9f0e86077a3245d29f4a8bd02fedaa57
-R2_BUCKET_NAME=clingailive
-R2_PUBLIC_URL=https://pub-17497f33464648bdb5f47bbbdbf732e7.r2.dev
-R2_ENDPOINT=https://18f292ca4a886046b6a8ad0b3fa316a0.r2.cloudflarestorage.com
-EOF
+echo "# CORS 配置" >> "$TMP_FILE"
+echo "CORS_ORIGIN=${env_updates[CORS_ORIGIN]}" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
 
-    # 上传 .env 文件
-    log_info "上传 .env 文件到服务器..."
-    scp_file "/tmp/server.env" "$SERVER_BACKEND_DIR/.env"
+echo "# 前端 URL" >> "$TMP_FILE"
+echo "FRONTEND_URL=${env_updates[FRONTEND_URL]}" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
+
+echo "# ============================================" >> "$TMP_FILE"
+echo "# A2E.ai API 配置" >> "$TMP_FILE"
+echo "# ============================================" >> "$TMP_FILE"
+echo "A2E_API_TOKEN=${env_updates[A2E_API_TOKEN]}" >> "$TMP_FILE"
+echo "A2E_USER_ID=${env_updates[A2E_USER_ID]}" >> "$TMP_FILE"
+echo "A2E_BASE_URL=${env_updates[A2E_BASE_URL]}" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
+
+echo "# ============================================" >> "$TMP_FILE"
+echo "# Google OAuth 配置" >> "$TMP_FILE"
+echo "# ============================================" >> "$TMP_FILE"
+echo "GOOGLE_CLIENT_ID=${env_updates[GOOGLE_CLIENT_ID]}" >> "$TMP_FILE"
+echo "GOOGLE_CLIENT_SECRET=${env_updates[GOOGLE_CLIENT_SECRET]}" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
+
+echo "# ============================================" >> "$TMP_FILE"
+echo "# Cloudflare R2 Storage 配置" >> "$TMP_FILE"
+echo "# ============================================" >> "$TMP_FILE"
+echo "R2_ACCOUNT_ID=${env_updates[R2_ACCOUNT_ID]}" >> "$TMP_FILE"
+echo "R2_ACCESS_KEY_ID=${env_updates[R2_ACCESS_KEY_ID]}" >> "$TMP_FILE"
+echo "R2_SECRET_ACCESS_KEY=${env_updates[R2_SECRET_ACCESS_KEY]}" >> "$TMP_FILE"
+echo "R2_BUCKET_NAME=${env_updates[R2_BUCKET_NAME]}" >> "$TMP_FILE"
+echo "R2_PUBLIC_URL=${env_updates[R2_PUBLIC_URL]}" >> "$TMP_FILE"
+echo "R2_ENDPOINT=${env_updates[R2_ENDPOINT]}" >> "$TMP_FILE"
+
+# 替换占位符
+sed -i "s|ENV_A2E_API_TOKEN|$2|g" "$TMP_FILE"
+sed -i "s|ENV_A2E_USER_ID|$3|g" "$TMP_FILE"
+sed -i "s|ENV_A2E_BASE_URL|$4|g" "$TMP_FILE"
+
+# 移动临时文件到目标位置
+mv "$TMP_FILE" "$ENV_FILE"
+ENVSCRIPT
+
+    # 上传更新脚本到服务器
+    scp_file "/tmp/update_env.sh" "/tmp/update_env.sh"
+    
+    # 在服务器上执行更新脚本
+    log_info "智能合并环境变量..."
+    ssh_exec "chmod +x /tmp/update_env.sh && /tmp/update_env.sh $SERVER_BACKEND_DIR/.env '$A2E_API_TOKEN' '$A2E_USER_ID' '$A2E_BASE_URL'"
     
     # 清理临时文件
-    rm -f /tmp/server.env
+    rm -f /tmp/update_env.sh
+    ssh_exec "rm -f /tmp/update_env.sh"
     
-    log_info "环境变量配置完成"
+    log_info "环境变量配置完成（已保留现有变量）"
 }
 
 # 5. 重启服务
