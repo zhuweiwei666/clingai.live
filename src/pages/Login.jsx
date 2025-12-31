@@ -132,14 +132,30 @@ export default function Login() {
         navigate(from, { replace: true });
       } catch (error) {
         console.error('[Login] Google login error:', error);
-        const errorMessage = error.response?.data?.error || error.message || 'Google login failed';
-        toast.error(errorMessage);
+        console.error('[Login] Error stack:', error.stack);
+        console.error('[Login] Error response:', error.response);
+        console.error('[Login] Error response data:', error.response?.data);
+        
+        // 检查是否是网络错误
+        if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+          toast.error('Network error. Please check your connection and try again.');
+        } else if (error.response?.data?.error) {
+          toast.error(`Google login failed: ${error.response.data.error}`);
+        } else if (error.response?.data?.message) {
+          toast.error(`Google login failed: ${error.response.data.message}`);
+        } else if (error.message) {
+          toast.error(`Google login failed: ${error.message}`);
+        } else {
+          toast.error('Google login failed. Please check console for details.');
+        }
       } finally {
         setGoogleLoading(false);
       }
     },
     onError: (error) => {
       console.error('[Login] Google OAuth error:', error);
+      console.error('[Login] OAuth error type:', typeof error);
+      console.error('[Login] OAuth error keys:', Object.keys(error || {}));
       console.error('[Login] Error details:', JSON.stringify(error, null, 2));
       
       // 处理不同类型的错误
