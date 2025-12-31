@@ -288,32 +288,39 @@ export async function checkTaskStatus(taskId, taskType = 'image-to-video') {
 
   try {
     // 根据任务类型选择不同的查询端点
+    // 根据 A2E API 文档，状态查询可能需要使用 POST 请求
     let endpoint;
+    let method = 'POST'; // A2E API 可能使用 POST 查询状态
+    
     switch (taskType) {
       case 'image-to-video':
-        endpoint = `/api/v1/image-to-video/status/${taskId}`;
+        // 尝试两种格式：POST /api/v1/image-to-video/status 或 GET /api/v1/image-to-video/${taskId}
+        endpoint = `/api/v1/image-to-video/status`;
         break;
       case 'face-swap':
-        endpoint = `/api/v1/face-swap/status/${taskId}`;
+        endpoint = `/api/v1/face-swap/status`;
         break;
       case 'virtual-try-on':
-        endpoint = `/api/v1/virtual-try-on/status/${taskId}`;
+        endpoint = `/api/v1/virtual-try-on/status`;
         break;
       case 'text-to-image':
-        endpoint = `/api/v1/text-to-image/status/${taskId}`;
+        endpoint = `/api/v1/text-to-image/status`;
         break;
       case 'caption-removal':
-        endpoint = `/api/v1/caption-removal/status/${taskId}`;
+        endpoint = `/api/v1/caption-removal/status`;
         break;
       case 'video-to-video':
-        endpoint = `/api/v1/video-to-video/status/${taskId}`;
+        endpoint = `/api/v1/video-to-video/status`;
         break;
       default:
-        endpoint = `/api/v1/image-to-video/status/${taskId}`;
+        endpoint = `/api/v1/image-to-video/status`;
     }
 
-    console.log(`[A2E] Checking status: ${A2E_BASE_URL}${endpoint}`);
-    const result = await callA2EApi(endpoint, 'GET');
+    // 如果使用 POST，需要传递 taskId 在 body 中
+    const requestData = method === 'POST' ? { task_id: taskId } : null;
+    
+    console.log(`[A2E] Checking status: ${A2E_BASE_URL}${endpoint}, method: ${method}, taskId: ${taskId}`);
+    const result = await callA2EApi(endpoint, method, requestData);
     
     return {
       status: result.status || 'processing',
