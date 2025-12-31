@@ -196,10 +196,10 @@ A2E_BASE_URL=$A2E_BASE_URL
 # PAYPAL_MODE=sandbox
 
 # ============================================
-# Google OAuth 配置（可选）
+# Google OAuth 配置
 # ============================================
-# GOOGLE_CLIENT_ID=
-# GOOGLE_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=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
 
 # ============================================
 # Cloudflare R2 Storage 配置
