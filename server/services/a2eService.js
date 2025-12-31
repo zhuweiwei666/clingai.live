@@ -18,7 +18,11 @@
  *   A2E_USER_ID=your-user-id
  */
 
+import dotenv from 'dotenv';
 import fetch from 'node-fetch';
+
+// 加载环境变量（ES module 需要手动加载）
+dotenv.config();
 
 // API 配置
 const A2E_API_TOKEN = process.env.A2E_API_TOKEN || '';
