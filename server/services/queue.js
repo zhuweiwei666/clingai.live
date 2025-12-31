@@ -16,7 +16,9 @@ export const generateQueue = new Queue('generate', REDIS_URL, {
 });
 
 generateQueue.on('error', (error) => {
-  console.error('Queue error:', error);
+  console.error('[Queue] Connection error:', error);
+  console.error('[Queue] Error message:', error.message);
+  console.error('[Queue] Error stack:', error.stack);
 });
 
 generateQueue.on('waiting', (jobId) => {
