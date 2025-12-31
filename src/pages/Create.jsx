@@ -83,6 +83,7 @@ export default function Create() {
     try {
       setIsGenerating(true);
       setProgress(0);
+      console.log('[Create] Starting generation:', { type: selectedType.id, templateId, hasImage: !!uploadedImage });
 
       let imageUrl = null;
 
@@ -90,14 +91,29 @@ export default function Create() {
       if (uploadedImage && selectedType.id !== 'ai_image') {
         setProgress(10);
         toast.loading('Uploading image...', { id: 'upload' });
+        console.log('[Create] Uploading image...');
         
-        const uploadResult = await uploadService.uploadImage(uploadedImage);
-        // 响应格式已由 apiClient 拦截器处理，直接使用 data
-        if (uploadResult && uploadResult.url) {
-          imageUrl = uploadResult.url;
-          toast.success('Image uploaded successfully', { id: 'upload' });
-        } else {
-          throw new Error('Failed to upload image');
+        try {
+          const uploadResult = await uploadService.uploadImage(uploadedImage);
+          console.log('[Create] Upload result:', uploadResult);
+          
+          // 检查响应格式
+          if (uploadResult && uploadResult.url) {
+            imageUrl = uploadResult.url;
+            console.log('[Create] Image uploaded successfully:', imageUrl);
+            toast.success('Image uploaded successfully', { id: 'upload' });
+          } else if (uploadResult && uploadResult.data && uploadResult.data.url) {
+            // 处理嵌套的data格式
+            imageUrl = uploadResult.data.url;
+            console.log('[Create] Image uploaded successfully (nested):', imageUrl);
+            toast.success('Image uploaded successfully', { id: 'upload' });
+          } else {
+            console.error('[Create] Upload failed - no URL:', uploadResult);
+            throw new Error('Failed to upload image: No URL returned');
+          }
+        } catch (uploadError) {
+          console.error('[Create] Upload error:', uploadError);
+          throw new Error(`Upload failed: ${uploadError.message || 'Unknown error'}`);
         }
       }
 
@@ -106,22 +122,53 @@ export default function Create() {
       let taskId;
       let generationResult;
 
-      if (selectedType.id === 'photo_to_video') {
-        generationResult = await generationService.generateVideo(imageUrl, templateId, prompt);
-      } else if (selectedType.id === 'ai_image') {
-        generationResult = await generationService.generateImage(prompt, 'realistic', '3:4');
-      } else if (selectedType.id === 'face_swap') {
-        generationResult = await generationService.imageFaceSwap(imageUrl, imageUrl);
-      } else {
-        throw new Error('Unsupported generation type');
+      console.log('[Create] Calling generation API:', { 
+        type: selectedType.id, 
+        imageUrl, 
+        templateId, 
+        prompt: selectedType.id === 'ai_image' ? prompt : 'N/A' 
+      });
+
+      try {
+        if (selectedType.id === 'photo_to_video') {
+          if (!imageUrl) {
+            throw new Error('Image URL is required for photo to video');
+          }
+          generationResult = await generationService.generateVideo(imageUrl, templateId, prompt);
+        } else if (selectedType.id === 'ai_image') {
+          if (!prompt.trim()) {
+            throw new Error('Prompt is required for AI image generation');
+          }
+          generationResult = await generationService.generateImage(prompt, 'realistic', '3:4');
+        } else if (selectedType.id === 'face_swap') {
+          if (!imageUrl) {
+            throw new Error('Image URL is required for face swap');
+          }
+          generationResult = await generationService.imageFaceSwap(imageUrl, imageUrl);
+        } else {
+          throw new Error('Unsupported generation type');
+        }
+
+        console.log('[Create] Generation API response:', generationResult);
+
+        // 处理不同的响应格式
+        if (generationResult && generationResult.taskId) {
+          taskId = generationResult.taskId;
+        } else if (generationResult && generationResult.data && generationResult.data.taskId) {
+          taskId = generationResult.data.taskId;
+        } else if (generationResult && generationResult.success && generationResult.data && generationResult.data.taskId) {
+          taskId = generationResult.data.taskId;
+        } else {
+          console.error('[Create] Invalid generation response:', generationResult);
+          throw new Error(`Failed to start generation: ${JSON.stringify(generationResult)}`);
+        }
+
+        console.log('[Create] Task ID:', taskId);
+      } catch (apiError) {
+        console.error('[Create] Generation API error:', apiError);
+        throw new Error(`API call failed: ${apiError.message || 'Unknown error'}`);
       }
 
-      // 响应格式已由 apiClient 拦截器处理
-      if (!generationResult || !generationResult.taskId) {
-        throw new Error('Failed to start generation');
-      }
-
-      taskId = generationResult.taskId;
       setProgress(50);
 
       // Step 3: Poll for task status
@@ -129,48 +176,89 @@ export default function Create() {
       let attempts = 0;
       let completed = false;
 
+      console.log('[Create] Starting status polling for task:', taskId);
+
       const statusInterval = setInterval(async () => {
         try {
           attempts++;
-          const status = await generationService.getImageStatus(taskId);
+          console.log(`[Create] Polling status (attempt ${attempts}/${maxAttempts})...`);
           
-          // 响应格式已由 apiClient 拦截器处理
+          // 根据类型选择正确的状态查询方法
+          const status = selectedType.id === 'photo_to_video' 
+            ? await generationService.getVideoStatus(taskId)
+            : await generationService.getImageStatus(taskId);
+          console.log('[Create] Status response:', status);
+          
+          // 处理不同的响应格式
+          let task = null;
           if (status && status.task) {
-            setProgress(50 + (status.task.progress || 0) * 0.4);
+            task = status.task;
+          } else if (status && status.data && status.data.task) {
+            task = status.data.task;
+          } else if (status && status.data) {
+            task = status.data;
+          }
 
-            if (status.task.status === 'completed') {
+          if (task) {
+            const progressValue = task.progress || 0;
+            setProgress(50 + progressValue * 0.4);
+            console.log(`[Create] Task status: ${task.status}, progress: ${progressValue}%`);
+
+            if (task.status === 'completed') {
               completed = true;
               clearInterval(statusInterval);
               setProgress(100);
               
+              const outputUrl = task.output?.resultUrl || task.output?.url || task.resultUrl || task.url;
+              console.log('[Create] Generation completed! Output URL:', outputUrl);
+              
+              if (!outputUrl) {
+                console.error('[Create] No output URL in completed task:', task);
+                throw new Error('Generation completed but no output URL found');
+              }
+              
               setResult({
                 type: selectedType.id,
-                outputUrl: status.task.output?.resultUrl,
-                thumbnailUrl: status.task.output?.thumbnailUrl,
+                outputUrl: outputUrl,
+                thumbnailUrl: task.output?.thumbnailUrl || task.thumbnailUrl,
               });
 
               toast.success('Generation complete!');
               setIsGenerating(false);
-            } else if (status.task.status === 'failed') {
+            } else if (task.status === 'failed') {
               completed = true;
               clearInterval(statusInterval);
-              throw new Error(status.task.error || 'Generation failed');
+              const errorMsg = task.error || 'Generation failed';
+              console.error('[Create] Generation failed:', errorMsg);
+              throw new Error(errorMsg);
+            } else if (task.status === 'processing' || task.status === 'pending') {
+              // 继续轮询
+              console.log('[Create] Task still processing...');
+            } else {
+              console.warn('[Create] Unknown task status:', task.status);
             }
+          } else {
+            console.warn('[Create] No task data in status response:', status);
           }
 
           if (attempts >= maxAttempts && !completed) {
             clearInterval(statusInterval);
-            throw new Error('Generation timeout');
+            console.error('[Create] Status polling timeout');
+            throw new Error('Generation timeout - please try again');
           }
         } catch (error) {
+          console.error('[Create] Status polling error:', error);
           clearInterval(statusInterval);
-          throw error;
+          setIsGenerating(false);
+          setProgress(0);
+          toast.error(error.message || 'Failed to check generation status');
         }
       }, 5000); // Poll every 5 seconds
 
     } catch (error) {
-      console.error('Generation failed:', error);
-      toast.error(error.response?.data?.error || error.message || 'Generation failed');
+      console.error('[Create] Generation failed:', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Generation failed';
+      toast.error(errorMessage);
       setIsGenerating(false);
       setProgress(0);
     }
