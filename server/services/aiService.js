@@ -10,18 +10,28 @@
  * 6. removeBackground - 去背景
  * 7. generateImage - AI文生图
  * 
- * TODO: 用户提供 API Key 后，在 .env 文件中配置:
+ * 优先使用 A2E.ai 服务（如果配置了 A2E_API_TOKEN）
+ * 否则使用通用 AI API（需要配置 AI_API_KEY 和 AI_API_BASE）
+ * 
+ * A2E 配置（推荐）:
+ *   A2E_API_TOKEN=your-api-token
+ *   A2E_BASE_URL=https://video.a2e.ai (或 https://video.a2e.com.cn)
+ *   A2E_USER_ID=your-user-id
+ * 
+ * 通用 AI API 配置:
  *   AI_API_KEY=your-api-key
  *   AI_API_BASE=https://api.example.com
  */
 
 import fetch from 'node-fetch';
+import a2eService from './a2eService.js';
 
-// API 配置
+// 优先使用 A2E 服务
+const USE_A2E = a2eService.getServiceStatus().enabled;
+
+// 通用 AI API 配置（备用）
 const AI_API_KEY = process.env.AI_API_KEY || '';
 const AI_API_BASE = process.env.AI_API_BASE || '';
-
-// 是否启用 AI 服务
 const AI_ENABLED = !!(AI_API_KEY && AI_API_BASE);
 
 /**
@@ -89,6 +99,14 @@ function mockStatusCheck() {
 export async function photo2video(sourceImage, params = {}) {
   console.log('[AI] photo2video called');
   
+  // 优先使用 A2E 服务
+  if (USE_A2E) {
+    return a2eService.imageToVideo(sourceImage, {
+      duration: params.duration || 5,
+      motion: params.motion || 'default',
+    });
+  }
+  
   if (!AI_ENABLED) return mockResponse();
 
   return callAIApi('/v1/photo2video', {
@@ -102,9 +120,15 @@ export async function photo2video(sourceImage, params = {}) {
 /**
  * 查询 AI 任务状态
  * @param {string} externalTaskId - AI 服务返回的任务 ID
+ * @param {string} taskType - 任务类型（用于 A2E）
  */
-export async function checkTaskStatus(externalTaskId) {
+export async function checkTaskStatus(externalTaskId, taskType = 'image-to-video') {
   console.log('[AI] checkTaskStatus called:', externalTaskId);
+  
+  // 优先使用 A2E 服务
+  if (USE_A2E) {
+    return a2eService.checkTaskStatus(externalTaskId, taskType);
+  }
   
   if (!AI_ENABLED) return mockStatusCheck();
 
@@ -118,6 +142,11 @@ export async function checkTaskStatus(externalTaskId) {
  */
 export async function faceSwapImage(sourceImage, targetImage, params = {}) {
   console.log('[AI] faceSwapImage called');
+  
+  // 优先使用 A2E 服务
+  if (USE_A2E) {
+    return a2eService.faceSwap(sourceImage, targetImage);
+  }
   
   if (!AI_ENABLED) return mockResponse();
 
@@ -136,6 +165,11 @@ export async function faceSwapImage(sourceImage, targetImage, params = {}) {
 export async function faceSwapVideo(sourceImage, targetVideo, params = {}) {
   console.log('[AI] faceSwapVideo called');
   
+  // 优先使用 A2E 服务
+  if (USE_A2E) {
+    return a2eService.faceSwap(sourceImage, null, targetVideo);
+  }
+  
   if (!AI_ENABLED) return mockResponse();
 
   return callAIApi('/v1/faceswap/video', {
@@ -152,6 +186,11 @@ export async function faceSwapVideo(sourceImage, targetVideo, params = {}) {
  */
 export async function dressUp(sourceImage, targetClothing, params = {}) {
   console.log('[AI] dressUp called');
+  
+  // 优先使用 A2E 服务（Virtual Try-On）
+  if (USE_A2E) {
+    return a2eService.virtualTryOn(sourceImage, targetClothing);
+  }
   
   if (!AI_ENABLED) return mockResponse();
 
@@ -179,16 +218,25 @@ export async function hdUpscale(sourceImage, scale = 2) {
 }
 
 /**
- * 去背景 (Remove Background)
- * @param {string} sourceImage - 源图片
+ * 去背景/水印 (Remove Background/Watermark)
+ * @param {string} sourceImage - 源图片或视频 URL
+ * @param {string} removeType - 移除类型: 'background' 或 'watermark'
  */
-export async function removeBackground(sourceImage) {
-  console.log('[AI] removeBackground called');
+export async function removeBackground(sourceImage, removeType = 'background') {
+  console.log('[AI] removeBackground called, type:', removeType);
+  
+  // A2E 的 Caption Removal 主要用于视频字幕移除
+  // 对于图片去背景，可能需要使用其他服务或 A2E 的其他功能
+  if (USE_A2E && removeType === 'watermark') {
+    // 如果是视频水印移除，使用 Caption Removal
+    return a2eService.captionRemoval(sourceImage);
+  }
   
   if (!AI_ENABLED) return mockResponse();
 
   return callAIApi('/v1/remove-bg', {
     image: sourceImage,
+    type: removeType,
   });
 }
 
@@ -199,6 +247,11 @@ export async function removeBackground(sourceImage) {
  */
 export async function generateImage(prompt, params = {}) {
   console.log('[AI] generateImage called:', prompt.substring(0, 50));
+  
+  // 优先使用 A2E 服务
+  if (USE_A2E) {
+    return a2eService.textToImage(prompt, params);
+  }
   
   if (!AI_ENABLED) return mockResponse();
 
@@ -215,9 +268,15 @@ export async function generateImage(prompt, params = {}) {
  * 获取 AI 服务状态
  */
 export function getServiceStatus() {
+  const a2eStatus = a2eService.getServiceStatus();
   return {
-    enabled: AI_ENABLED,
-    apiBase: AI_API_BASE ? AI_API_BASE.substring(0, 30) + '...' : 'Not configured',
+    provider: USE_A2E ? 'A2E.ai' : (AI_ENABLED ? 'Generic API' : 'Mock'),
+    enabled: USE_A2E || AI_ENABLED,
+    a2e: a2eStatus,
+    generic: {
+      enabled: AI_ENABLED,
+      apiBase: AI_API_BASE ? AI_API_BASE.substring(0, 30) + '...' : 'Not configured',
+    },
   };
 }
 
