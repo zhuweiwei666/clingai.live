@@ -20,8 +20,22 @@ export const authService = {
       typeof payloadOrCredential === 'string'
         ? { credential: payloadOrCredential, clientId }
         : payloadOrCredential;
-    const response = await apiClient.post('/auth/google', payload);
-    return response.data;
+    
+    console.log('[AuthService] Google login request:', { 
+      googleId: payload.googleId, 
+      email: payload.email,
+      hasName: !!payload.name,
+      hasPicture: !!payload.picture,
+    });
+    
+    try {
+      const response = await apiClient.post('/auth/google', payload);
+      console.log('[AuthService] Google login response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('[AuthService] Google login error:', error);
+      throw error;
+    }
   },
 
   // Get current user

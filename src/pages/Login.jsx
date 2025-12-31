@@ -64,13 +64,39 @@ export default function Login() {
         const googleUserInfo = await googleResponse.json();
 
         // Send user info to our backend (same contract as server/routes/auth.js)
+        console.log('[Login] Sending Google user info to backend:', {
+          googleId: googleUserInfo.sub,
+          email: googleUserInfo.email,
+          name: googleUserInfo.name,
+        });
+        
         const response = await authService.googleLogin({
           googleId: googleUserInfo.sub,
           email: googleUserInfo.email,
           name: googleUserInfo.name,
           picture: googleUserInfo.picture,
         });
-        const { user, token } = response;
+        
+        console.log('[Login] Backend response:', response);
+        
+        // 处理统一响应格式：response.data 可能包含 { user, token } 或 { success: true, data: { user, token } }
+        let user, token;
+        if (response.user && response.token) {
+          // 直接格式：{ user, token }
+          user = response.user;
+          token = response.token;
+        } else if (response.data && response.data.user && response.data.token) {
+          // 嵌套格式：{ data: { user, token } }
+          user = response.data.user;
+          token = response.data.token;
+        } else if (response.success && response.data) {
+          // 统一格式：{ success: true, data: { user, token } }
+          user = response.data.user;
+          token = response.data.token;
+        } else {
+          console.error('[Login] Invalid response format:', response);
+          throw new Error('Invalid response format from server');
+        }
         
         if (token) {
           setToken(token);
@@ -83,7 +109,8 @@ export default function Login() {
           toast.success('Google login successful!');
           navigate(from, { replace: true });
         } else {
-          toast.error('Google login failed');
+          console.error('[Login] No token in response:', response);
+          toast.error('Google login failed: No token received');
         }
       } catch (error) {
         console.error('Google login error:', error);
