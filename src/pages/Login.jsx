@@ -44,12 +44,10 @@ export default function Login() {
   };
 
   // Google OAuth - 使用 implicit 流程（后端已支持）
-  // 注意：COOP错误是库内部的警告，不影响功能，但我们可以通过配置来减少它
+  // 注意：COOP警告是@react-oauth/google库内部的，不影响实际功能
+  // 如果popup模式有问题，可以尝试使用redirect模式
   const handleGoogleLogin = useGoogleLogin({
     flow: 'implicit',
-    // 使用 redirect 模式而不是 popup 可以避免 COOP 问题
-    // 但为了更好的用户体验，我们仍然使用 popup，并忽略 COOP 警告
-    ux_mode: 'popup',
     onSuccess: async (tokenResponse) => {
       setGoogleLoading(true);
       
