@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Sparkles, ArrowLeft } from 'lucide-react';
@@ -50,6 +50,8 @@ export default function Login() {
       setGoogleLoading(true);
       
       try {
+        console.log('[Login] Google OAuth token received');
+        
         // Get Google user info
         const googleResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: {
@@ -58,12 +60,19 @@ export default function Login() {
         });
         
         if (!googleResponse.ok) {
+          const errorText = await googleResponse.text();
+          console.error('[Login] Failed to get Google user info:', errorText);
           throw new Error('Failed to get Google user info');
         }
         
         const googleUserInfo = await googleResponse.json();
+        console.log('[Login] Google user info:', {
+          sub: googleUserInfo.sub,
+          email: googleUserInfo.email,
+          name: googleUserInfo.name,
+        });
 
-        // Send user info to our backend (same contract as server/routes/auth.js)
+        // Send user info to our backend
         console.log('[Login] Sending Google user info to backend:', {
           googleId: googleUserInfo.sub,
           email: googleUserInfo.email,
@@ -113,18 +122,28 @@ export default function Login() {
           toast.error('Google login failed: No token received');
         }
       } catch (error) {
-        console.error('Google login error:', error);
-        toast.error(error.message || 'Google login failed');
+        console.error('[Login] Google login error:', error);
+        const errorMessage = error.response?.data?.error || error.message || 'Google login failed';
+        toast.error(errorMessage);
       } finally {
         setGoogleLoading(false);
       }
     },
     onError: (error) => {
-      console.error('Google OAuth error:', error);
+      console.error('[Login] Google OAuth error:', error);
+      console.error('[Login] Error details:', JSON.stringify(error, null, 2));
+      
+      // 处理不同类型的错误
       if (error.error === 'popup_closed_by_user') {
         toast.error('Google login cancelled');
+      } else if (error.error === 'access_denied') {
+        toast.error('Google login denied');
+      } else if (error.error_description) {
+        toast.error(`Google login failed: ${error.error_description}`);
+      } else if (error.message) {
+        toast.error(`Google login failed: ${error.message}`);
       } else {
-        toast.error('Google login failed');
+        toast.error('Google login failed. Please try again.');
       }
       setGoogleLoading(false);
     },
