@@ -82,22 +82,53 @@ async function processJob(job) {
     const maxAttempts = 60; // 最多等待 5 分钟
     let completed = false;
     let finalResult = null;
+    let lastError = null;
 
     while (attempts < maxAttempts && !completed) {
       await new Promise(resolve => setTimeout(resolve, 5000)); // 等待 5 秒
       
-      const status = await aiService.checkTaskStatus(result.taskId, a2eTaskType);
-      task.progress = Math.min(30 + attempts * 2, 90);
-      await task.save();
+      try {
+        const status = await aiService.checkTaskStatus(result.taskId, a2eTaskType);
+        task.progress = Math.min(30 + attempts * 2, 90);
+        
+        // 清除之前的错误（如果有）
+        if (lastError && !status.error) {
+          lastError = null;
+        }
+        
+        await task.save();
 
-      if (status.status === 'completed') {
-        completed = true;
-        finalResult = status;
-      } else if (status.status === 'failed') {
-        throw new Error(status.error || 'AI generation failed');
+        if (status.status === 'completed') {
+          completed = true;
+          finalResult = status;
+        } else if (status.status === 'failed') {
+          throw new Error(status.error || 'AI generation failed');
+        } else if (status.error && status.error.includes('404')) {
+          // 404 错误可能是任务还在处理中，继续等待
+          console.log(`[Worker] Task ${taskId} status check returned 404, continuing to wait...`);
+          lastError = status.error;
+        }
+      } catch (statusError) {
+        console.error(`[Worker] Status check error for task ${taskId}:`, statusError);
+        // 如果是 404 错误，继续等待
+        if (statusError.message && statusError.message.includes('404')) {
+          console.log(`[Worker] Task ${taskId} not found in A2E API (404), continuing to wait...`);
+          lastError = statusError.message;
+          task.progress = Math.min(30 + attempts * 2, 90);
+          await task.save();
+        } else {
+          // 其他错误，记录但继续等待
+          console.error(`[Worker] Status check failed for task ${taskId}, continuing...`);
+          lastError = statusError.message;
+        }
       }
 
       attempts++;
+    }
+    
+    // 如果最后还有错误，记录到任务中
+    if (lastError && !completed) {
+      console.warn(`[Worker] Task ${taskId} completed with warnings: ${lastError}`);
     }
 
     if (!completed) {
