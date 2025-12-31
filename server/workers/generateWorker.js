@@ -34,10 +34,13 @@ async function processJob(job) {
 
     // 根据类型调用不同的 AI 服务
     let result;
-    switch (type) {
-      case 'photo2video':
-        result = await aiService.photo2video(input.sourceImage, input.params);
-        break;
+    try {
+      switch (type) {
+        case 'photo2video':
+          console.log(`[Worker] Calling A2E imageToVideo with image: ${input.sourceImage?.substring(0, 100)}...`);
+          result = await aiService.photo2video(input.sourceImage, input.params);
+          console.log(`[Worker] A2E imageToVideo result:`, JSON.stringify(result, null, 2));
+          break;
       case 'faceswap':
         result = await aiService.faceSwapImage(input.sourceImage, input.targetImage, input.params);
         break;
@@ -53,14 +56,26 @@ async function processJob(job) {
       case 'remove':
         result = await aiService.removeBackground(input.sourceImage);
         break;
-      case 'aiimage':
-        result = await aiService.generateImage(input.prompt, input.params);
-        break;
-      default:
-        throw new Error(`Unknown task type: ${type}`);
+        case 'aiimage':
+          result = await aiService.generateImage(input.prompt, input.params);
+          break;
+        default:
+          throw new Error(`Unknown task type: ${type}`);
+      }
+    } catch (aiServiceError) {
+      console.error(`[Worker] AI service call failed for task ${taskId}:`, aiServiceError);
+      console.error(`[Worker] Error stack:`, aiServiceError.stack);
+      console.error(`[Worker] Error message:`, aiServiceError.message);
+      throw new Error(`AI service call failed: ${aiServiceError.message}`);
+    }
+
+    if (!result || !result.taskId) {
+      console.error(`[Worker] No taskId returned from AI service for task ${taskId}:`, result);
+      throw new Error('AI service did not return a task ID');
     }
 
     // 保存外部任务 ID
+    console.log(`[Worker] Saving externalTaskId: ${result.taskId} for task ${taskId}`);
     task.externalTaskId = result.taskId;
     task.progress = 30;
     await task.save();
