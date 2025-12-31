@@ -43,7 +43,7 @@ export default function Login() {
     }
   };
 
-  // Google OAuth
+  // Google OAuth - 使用 implicit 流程（后端已支持）
   const handleGoogleLogin = useGoogleLogin({
     flow: 'implicit',
     onSuccess: async (tokenResponse) => {
