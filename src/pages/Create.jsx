@@ -17,11 +17,23 @@ export default function Create() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const templateId = searchParams.get('template');
+  const typeParam = searchParams.get('type');
+  const targetParam = searchParams.get('target');
   
   const { isAuthenticated, user } = useUserStore();
   const fileInputRef = useRef(null);
 
-  const [selectedType, setSelectedType] = useState(GENERATION_TYPES[0]);
+  // 根据URL参数设置初始类型
+  const getInitialType = () => {
+    if (typeParam === 'face_swap') {
+      return GENERATION_TYPES.find(t => t.id === 'face_swap') || GENERATION_TYPES[0];
+    } else if (typeParam === 'ai_image') {
+      return GENERATION_TYPES.find(t => t.id === 'ai_image') || GENERATION_TYPES[0];
+    }
+    return GENERATION_TYPES[0];
+  };
+
+  const [selectedType, setSelectedType] = useState(getInitialType());
   const [uploadedImage, setUploadedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [prompt, setPrompt] = useState('');

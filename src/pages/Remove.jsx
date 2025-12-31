@@ -1,7 +1,11 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eraser, Upload, ImageMinus, Layers } from 'lucide-react';
+import { Eraser, Upload, ImageMinus, Layers, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import useUserStore from '../store/userStore';
+import generationService from '../services/generationService';
+import uploadService from '../services/uploadService';
 
 const removeTypes = [
   { id: 'background', label: 'Remove Background', icon: Layers, cost: 5 },
@@ -9,11 +13,15 @@ const removeTypes = [
 ];
 
 export default function Remove() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useUserStore();
   const fileInputRef = useRef(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [removeType, setRemoveType] = useState('background');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [result, setResult] = useState(null);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -31,15 +39,90 @@ export default function Remove() {
   };
 
   const handleRemove = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please login to remove');
+      navigate('/login');
+      return;
+    }
+
     if (!uploadedImage) {
       toast.error('Please upload an image first');
       return;
     }
 
-    setIsProcessing(true);
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    toast.success(`${removeType === 'background' ? 'Background' : 'Watermark'} removed!`);
-    setIsProcessing(false);
+    try {
+      setIsProcessing(true);
+      setProgress(0);
+
+      // Step 1: Upload image
+      setProgress(10);
+      toast.loading('Uploading image...', { id: 'upload' });
+      
+      const uploadResult = await uploadService.uploadImage(uploadedImage);
+      if (!uploadResult || !uploadResult.url) {
+        throw new Error('Failed to upload image');
+      }
+      
+      toast.success('Image uploaded', { id: 'upload' });
+      setProgress(30);
+
+      // Step 2: Call remove API
+      const generationResult = await generationService.remove(uploadResult.url, removeType);
+      
+      if (!generationResult || !generationResult.taskId) {
+        throw new Error('Failed to start removal');
+      }
+
+      const taskId = generationResult.taskId;
+      setProgress(50);
+
+      // Step 3: Poll for task status
+      const maxAttempts = 60;
+      let attempts = 0;
+      let completed = false;
+
+      const statusInterval = setInterval(async () => {
+        try {
+          attempts++;
+          const status = await generationService.getImageStatus(taskId);
+          
+          if (status && status.task) {
+            setProgress(50 + (status.task.progress || 0) * 0.4);
+
+            if (status.task.status === 'completed') {
+              completed = true;
+              clearInterval(statusInterval);
+              setProgress(100);
+              
+              setResult({
+                outputUrl: status.task.output?.resultUrl,
+              });
+
+              toast.success(`${removeType === 'background' ? 'Background' : 'Watermark'} removed!`);
+              setIsProcessing(false);
+            } else if (status.task.status === 'failed') {
+              completed = true;
+              clearInterval(statusInterval);
+              throw new Error(status.task.error || 'Removal failed');
+            }
+          }
+
+          if (attempts >= maxAttempts && !completed) {
+            clearInterval(statusInterval);
+            throw new Error('Removal timeout');
+          }
+        } catch (error) {
+          clearInterval(statusInterval);
+          throw error;
+        }
+      }, 5000);
+
+    } catch (error) {
+      console.error('Remove failed:', error);
+      toast.error(error.message || 'Removal failed');
+      setIsProcessing(false);
+      setProgress(0);
+    }
   };
 
   return (
@@ -107,29 +190,69 @@ export default function Remove() {
         )}
       </motion.div>
 
+      {/* Result Display */}
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card rounded-3xl overflow-hidden"
+        >
+          <img 
+            src={result.outputUrl} 
+            alt="Processed" 
+            className="w-full rounded-2xl object-contain"
+          />
+          <div className="flex gap-4 mt-4">
+            <button
+              onClick={() => {
+                setResult(null);
+                setUploadedImage(null);
+                setImagePreview(null);
+                setProgress(0);
+              }}
+              className="flex-1 btn-secondary"
+            >
+              New Process
+            </button>
+            <button
+              onClick={() => window.open(result.outputUrl, '_blank')}
+              className="flex-1 btn-primary"
+            >
+              Download
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Process Button */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={handleRemove}
-        disabled={!uploadedImage || isProcessing}
-        className="w-full btn-primary py-4 text-lg disabled:opacity-50"
-      >
-        {isProcessing ? (
-          <span className="flex items-center justify-center gap-2">
-            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-            Processing...
-          </span>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            <Eraser className="w-5 h-5" />
-            Remove {removeType === 'background' ? 'Background' : 'Watermark'} (5🪙)
-          </span>
-        )}
-      </motion.button>
+      {!result && (
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleRemove}
+          disabled={!uploadedImage || isProcessing}
+          className="w-full btn-primary py-4 text-lg disabled:opacity-50 relative overflow-hidden"
+        >
+          {isProcessing ? (
+            <span className="flex items-center justify-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Processing... {progress}%
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              <Eraser className="w-5 h-5" />
+              Remove {removeType === 'background' ? 'Background' : 'Watermark'} (5🪙)
+            </span>
+          )}
+          {isProcessing && (
+            <motion.div
+              className="absolute bottom-0 left-0 h-1 bg-white/30"
+              initial={{ width: '0%' }}
+              animate={{ width: `${progress}%` }}
+            />
+          )}
+        </motion.button>
+      )}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import useUserStore from '../store/userStore';
 
 // 图标
 const FaceIcon = () => (
@@ -72,6 +74,7 @@ function TemplateCard({ template, index, onSelect }) {
 
 export default function FaceSwap() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useUserStore();
   const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState('image');
   const [sourcePreview, setSourcePreview] = useState(null);
@@ -90,8 +93,19 @@ export default function FaceSwap() {
     reader.readAsDataURL(file);
   };
 
-  const handleTemplateSelect = (template) => {
-    navigate(`/create?type=face_swap&target=${template.id}`);
+  const handleTemplateSelect = async (template) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    if (!sourcePreview) {
+      toast.error('Please upload your photo first');
+      return;
+    }
+
+    // Navigate to create page with face swap parameters
+    navigate(`/create?type=face_swap&target=${template.id}&source=${encodeURIComponent(sourcePreview)}`);
   };
 
   return (
