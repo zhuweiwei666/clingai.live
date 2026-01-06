@@ -1,5 +1,8 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useUserStore from '../store/userStore';
+import { generationService } from '../services/generationService';
+import { assetUrl } from '../utils/assetUrl';
 
 // 用户图标
 const UserIcon = () => (
@@ -12,6 +15,33 @@ const UserIcon = () => (
 export default function Profile() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useUserStore();
+  const [works, setWorks] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load user works (benchmark: /app/tools/undress/get)
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadWorks();
+    }
+  }, [isAuthenticated]);
+
+  const loadWorks = async () => {
+    try {
+      setLoading(true);
+      const response = await generationService.getMyWorks();
+      if (response.success && response.data?.works) {
+        // Get first video work for display
+        const videoWorks = response.data.works.filter(w => 
+          w.type === 'video' || w.type === 'photo_to_video'
+        );
+        setWorks(videoWorks.slice(0, 1)); // Show first video
+      }
+    } catch (error) {
+      console.error('Failed to load works:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 未登录视图
   if (!isAuthenticated) {
@@ -83,21 +113,59 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Content Cards (benchmark: empty card + Discord card) */}
+      {/* Content Cards (benchmark: work card + Discord card) */}
       <div className="px-4 grid grid-cols-2 gap-3 mb-6">
-        {/* Empty card (placeholder for works) */}
-        <div className="relative aspect-[3/4] bg-[#141414] rounded-2xl border border-[#262626] overflow-hidden">
-          <button className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-          </button>
-          <button className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
+        {/* Work card (show first video work) */}
+        <div 
+          className="relative aspect-[3/4] bg-[#141414] rounded-2xl border border-[#262626] overflow-hidden cursor-pointer"
+          onClick={() => works.length > 0 ? navigate(`/result?taskId=${works[0].taskId}`) : navigate('/my-works')}
+        >
+          {works.length > 0 && works[0].outputUrl ? (
+            <>
+              <video
+                src={works[0].outputUrl}
+                className="w-full h-full object-cover"
+                muted
+                loop
+                playsInline
+                autoPlay
+              />
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // TODO: Delete work
+                }}
+                className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white bg-black/50 rounded-full"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </button>
+            </>
+          ) : (
+            <>
+              {loading ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                </div>
+              ) : (
+                <>
+                  <button className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                  <button className="absolute bottom-2 right-2 w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </>
+          )}
         </div>
 
         {/* Discord community card */}

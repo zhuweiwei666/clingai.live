@@ -38,6 +38,12 @@ export const orderService = {
     const response = await apiClient.get(`/order/${orderId}`);
     return response.data;
   },
+
+  // 获取用户订阅信息 (benchmark: /app/order/my_subscribe)
+  getMySubscribe: async () => {
+    const response = await apiClient.get('/order/my_subscribe');
+    return response.data;
+  },
 };
 
 export default orderService;

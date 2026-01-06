@@ -267,4 +267,31 @@ router.get('/payment/status', async (req, res) => {
   }
 });
 
+// 获取用户订阅信息 (benchmark: /app/order/my_subscribe)
+router.get('/my_subscribe', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('plan planExpireAt');
+    if (!user) {
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
+    }
+
+    // Find active subscription order
+    const activeOrder = await Order.findOne({
+      userId: req.user.id,
+      type: 'subscription',
+      status: 'paid',
+    }).sort({ createdAt: -1 });
+
+    return successResponse(res, {
+      plan: user.plan || 'free',
+      planExpireAt: user.planExpireAt || null,
+      isActive: user.plan && user.plan !== 'free' && (!user.planExpireAt || user.planExpireAt > new Date()),
+      orderId: activeOrder?.orderId || null,
+    });
+  } catch (error) {
+    console.error('Get subscription error:', error);
+    return errorResponse(res, 'Failed to get subscription', 'GET_SUBSCRIPTION_ERROR', 500);
+  }
+});
+
 export default router;

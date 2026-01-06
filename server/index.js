@@ -18,6 +18,7 @@ import generateRoutes from './routes/generate.js';
 import workRoutes from './routes/work.js';
 import orderRoutes from './routes/order.js';
 import uploadRoutes from './routes/upload.js';
+import settingsRoutes from './routes/settings.js';
 import adminRoutes from './routes/admin/index.js';
 
 // 导入错误处理中间件
@@ -55,6 +56,7 @@ app.use('/api/generate', generateRoutes);
 app.use('/api/works', workRoutes);
 app.use('/api/order', orderRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
 
 // 健康检查
