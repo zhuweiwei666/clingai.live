@@ -319,6 +319,25 @@ ENVSCRIPT
     log_info "环境变量配置完成（已保留现有变量）"
 }
 
+# 4.1 配置 Nginx
+configure_nginx() {
+    log_info "配置 Nginx..."
+    
+    # 上传 nginx.conf
+    scp_file "nginx.conf" "/etc/nginx/sites-available/honeyai"
+    
+    # 启用站点
+    ssh_exec "ln -sf /etc/nginx/sites-available/honeyai /etc/nginx/sites-enabled/honeyai"
+    
+    # 移除默认配置（如果有）
+    ssh_exec "rm -f /etc/nginx/sites-enabled/default"
+    
+    # 测试配置
+    ssh_exec "nginx -t"
+    
+    log_info "Nginx 配置完成"
+}
+
 # 5. 重启服务
 restart_services() {
     log_info "重启后端服务..."
@@ -368,6 +387,7 @@ main() {
     deploy_admin
     deploy_backend
     configure_env
+    configure_nginx
     restart_services
     verify_deployment
     
