@@ -53,3 +53,10 @@ video-resources/
 
 # Template assets are served from R2 (not tracked in git)
 public/templates/
+
+# Playwright test results
+test-results/
+playwright-report/
+playwright/.cache/
+e2e/screenshots/
+e2e/test-results/
