@@ -6,6 +6,10 @@ const taskSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  isGuest: {
+    type: Boolean,
+    default: false,
+  },
   templateId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Template',

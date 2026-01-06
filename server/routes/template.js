@@ -7,10 +7,23 @@ const router = Router();
 // 获取模板列表
 router.get('/', async (req, res) => {
   try {
-    const { category, page = 1, limit = 20 } = req.query;
+    const { category, tag, page = 1, limit = 20 } = req.query;
 
     const query = { enabled: true };
-    if (category) query.category = category;
+    
+    // Support both category (photo2video, faceswap, etc.) and tag (viral, cosplay, etc.)
+    if (category) {
+      // Check if it's a benchmark category tag
+      if (['viral', 'cosplay', 'closeup', 'charm'].includes(category)) {
+        query.tags = category;
+      } else {
+        query.category = category;
+      }
+    }
+    
+    if (tag) {
+      query.tags = tag;
+    }
 
     const templates = await Template.find(query)
       .sort({ sortOrder: -1, createdAt: -1 })
@@ -38,9 +51,10 @@ router.get('/', async (req, res) => {
 // 获取热门模板
 router.get('/trending', async (req, res) => {
   try {
+    const { limit = 79 } = req.query;
     const templates = await Template.find({ enabled: true, isTrending: true })
-      .sort({ usageCount: -1 })
-      .limit(20)
+      .sort({ usageCount: -1, createdAt: -1 })
+      .limit(Number(limit))
       .select('-aiParams');
 
     return successResponse(res, { templates });
@@ -53,9 +67,10 @@ router.get('/trending', async (req, res) => {
 // 获取新模板
 router.get('/new', async (req, res) => {
   try {
+    const { limit = 79 } = req.query;
     const templates = await Template.find({ enabled: true, isNew: true })
       .sort({ createdAt: -1 })
-      .limit(20)
+      .limit(Number(limit))
       .select('-aiParams');
 
     return successResponse(res, { templates });
@@ -95,6 +110,31 @@ router.get('/categories', async (req, res) => {
   } catch (error) {
     console.error('Get categories error:', error);
     return errorResponse(res, 'Failed to get categories', 'GET_CATEGORIES_ERROR', 500);
+  }
+});
+
+// 点赞模板
+router.post('/like', async (req, res) => {
+  try {
+    const { templateId } = req.body;
+    if (!templateId) {
+      return errorResponse(res, 'Template ID is required', 'MISSING_TEMPLATE_ID', 400);
+    }
+
+    const template = await Template.findByIdAndUpdate(
+      templateId,
+      { $inc: { likes: 1 } },
+      { new: true }
+    );
+
+    if (!template) {
+      return errorResponse(res, 'Template not found', 'TEMPLATE_NOT_FOUND', 404);
+    }
+
+    return successResponse(res, { template, likes: template.likes });
+  } catch (error) {
+    console.error('Like template error:', error);
+    return errorResponse(res, 'Failed to like template', 'LIKE_TEMPLATE_ERROR', 500);
   }
 });
 

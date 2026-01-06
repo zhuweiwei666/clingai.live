@@ -1,21 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import useUserStore from '../store/userStore';
 import { generationService } from '../services/generationService';
 import { uploadService } from '../services/uploadService';
+import templateService from '../services/templateService';
 import { assetUrl } from '../utils/assetUrl';
-
-// Template data (from Home page)
-const templates = [
-  { id: '1', title: 'RUB HER BODY', thumbnail: '/templates/1.jpg', video: '/templates/video1.mp4', badge: null },
-  { id: '2', title: 'PLAYING WITH EGGPLANT', thumbnail: '/templates/2.jpg', video: '/templates/video2.mp4', badge: 'new' },
-  { id: '3', title: 'MILK A COW', thumbnail: '/templates/3.jpg', video: '/templates/video3.mp4', badge: null },
-  { id: '4', title: 'AIRY SWING', thumbnail: '/templates/4.jpg', video: '/templates/video4.mp4', badge: null },
-  { id: '5', title: 'PLAYING WITH BREASTS', thumbnail: '/templates/5.jpg', video: '/templates/video5.mp4', badge: 'super' },
-  { id: '6', title: 'ENLARGE BREASTS', thumbnail: '/templates/6.jpg', video: '/templates/video6.mp4', badge: null },
-  // ... more templates would be loaded from API
-];
 
 const features = [
   { title: 'AI Video', path: '/', color: 'from-purple-600 to-indigo-600', icon: '🎬' },
@@ -37,15 +27,39 @@ export default function Create() {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  // Load template from API when templateId is provided
   useEffect(() => {
     if (templateId) {
-      const template = templates.find(t => t.id === templateId);
-      if (template) {
-        setSelectedTemplate(template);
-      }
+      setLoading(true);
+      templateService.getById(templateId)
+        .then((response) => {
+          if (response.template) {
+            const template = response.template;
+            // Transform API template to match expected format
+            setSelectedTemplate({
+              id: template._id || template.id,
+              title: template.name || template.title,
+              thumbnail: template.thumbnail,
+              video: template.previewVideo || template.video,
+              badge: template.isSuper ? 'super' : (template.isNew ? 'new' : null),
+            });
+          } else {
+            toast.error('Template not found');
+            navigate('/');
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to load template:', error);
+          toast.error('Failed to load template');
+          navigate('/');
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     }
-  }, [templateId]);
+  }, [templateId, navigate]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -103,6 +117,15 @@ export default function Create() {
       setIsProcessing(false);
     }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen pb-24 flex items-center justify-center">
+        <div className="text-white">Loading template...</div>
+      </div>
+    );
+  }
 
   // If template is selected, show upload + generate flow
   if (selectedTemplate) {

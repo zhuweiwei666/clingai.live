@@ -332,4 +332,53 @@ router.get('/my_subscribe', verifyToken, async (req, res) => {
   }
 });
 
+// Stripe取消订阅 (benchmark: /app/order/stripe_unsubscribe)
+router.post('/stripe/unsubscribe', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
+    }
+
+    // Find active subscription order
+    const activeOrder = await Order.findOne({
+      userId: req.user.id,
+      type: 'subscription',
+      status: 'paid',
+      paymentMethod: 'stripe',
+    }).sort({ createdAt: -1 });
+
+    if (!activeOrder || !activeOrder.paymentId) {
+      return errorResponse(res, 'No active subscription found', 'NO_ACTIVE_SUBSCRIPTION', 404);
+    }
+
+    // Cancel subscription via Stripe
+    try {
+      const cancelResult = await paymentService.cancelStripeSubscription(activeOrder.paymentId);
+      
+      if (cancelResult.success) {
+        // Update user plan
+        user.plan = 'free';
+        user.planExpireAt = null;
+        await user.save();
+
+        // Update order status
+        activeOrder.status = 'cancelled';
+        activeOrder.cancelledAt = new Date();
+        await activeOrder.save();
+
+        return successResponse(res, { message: 'Subscription cancelled successfully' });
+      } else {
+        return errorResponse(res, cancelResult.error || 'Failed to cancel subscription', 'CANCEL_SUBSCRIPTION_ERROR', 500);
+      }
+    } catch (stripeError) {
+      console.error('Stripe cancel error:', stripeError);
+      return errorResponse(res, 'Failed to cancel subscription', 'CANCEL_SUBSCRIPTION_ERROR', 500);
+    }
+  } catch (error) {
+    console.error('Unsubscribe error:', error);
+    return errorResponse(res, 'Failed to unsubscribe', 'UNSUBSCRIBE_ERROR', 500);
+  }
+});
+
 export default router;

@@ -103,6 +103,16 @@ body {
   display: none;
 }
 
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 .feature-tab {
   position: relative;
   flex-shrink: 0;
@@ -546,6 +556,16 @@ body {
   font-size: 28px;
   font-weight: 300;
   color: var(--text-primary);
+}
+
+/* ========================================
+   Glass Card Utility
+   ======================================== */
+
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
 }
 
 /* ========================================

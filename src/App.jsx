@@ -3,10 +3,14 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout';
 import Home from './pages/Home';
+import All from './pages/All';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Create from './pages/Create';
 import Profile from './pages/Profile';
+import Feedback from './pages/Feedback';
+import Quiz from './pages/Quiz';
+import Access from './pages/Access';
 import MyWorks from './pages/MyWorks';
 import Settings from './pages/Settings';
 import Result from './pages/Result';
@@ -47,6 +51,7 @@ function App() {
             <Route path="/" element={<Layout />}>
               {/* Public routes */}
               <Route index element={<Home />} />
+              <Route path="all" element={<All />} />
               <Route path="ai-image" element={<AIImage />} />
               <Route path="ai-video" element={<Home />} />
               <Route path="face-swap" element={<FaceSwap />} />
@@ -78,6 +83,9 @@ function App() {
               <Route path="makeovergen" element={<FaceSwap />} />
               <Route path="face" element={<FaceSwap />} />
               <Route path="takeoff" element={<Remove />} />
+              <Route path="feedback" element={<Feedback />} />
+              <Route path="quiz" element={<Quiz />} />
+              <Route path="access" element={<Access />} />
               
               {/* Protected routes */}
               <Route path="create" element={

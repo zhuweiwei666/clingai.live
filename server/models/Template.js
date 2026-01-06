@@ -9,7 +9,13 @@ const templateSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['photo2video', 'faceswap', 'dressup', 'hd', 'remove', 'aiimage'],
+    enum: ['photo2video', 'faceswap', 'dressup', 'hd', 'remove', 'aiimage', 'viral', 'cosplay', 'closeup', 'charm'],
+  },
+  // Benchmark分类标签（用于All页面的分类筛选）
+  tags: {
+    type: [String],
+    default: [],
+    enum: ['viral', 'cosplay', 'closeup', 'charm'],
   },
   type: {
     type: String,
@@ -63,6 +69,10 @@ const templateSchema = new mongoose.Schema({
   },
   // 统计
   usageCount: {
+    type: Number,
+    default: 0,
+  },
+  likes: {
     type: Number,
     default: 0,
   },

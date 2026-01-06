@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { assetUrl } from '../utils/assetUrl';
 import templateService from '../services/templateService';
 import toast from 'react-hot-toast';
 
-// 视频图标 - 两个矩形 (Consistent with Layout)
+// 视频图标
 const VideoIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <rect x="2" y="4" width="8" height="16" rx="1" />
@@ -12,7 +12,7 @@ const VideoIcon = () => (
   </svg>
 );
 
-// 保存图标 (Consistent with Layout)
+// 保存图标
 const SaveIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
     <rect x="5" y="3" width="14" height="18" rx="2" />
@@ -21,9 +21,8 @@ const SaveIcon = () => (
   </svg>
 );
 
-// 分类tabs配置（用于首页）
+// 分类tabs配置
 const categoryTabs = [
-  { id: 'trending', label: '🔥 Trending', icon: '🔥' },
   { id: 'all', label: 'All' },
   { id: 'new', label: 'New' },
   { id: 'viral', label: 'Viral' },
@@ -32,11 +31,17 @@ const categoryTabs = [
   { id: 'charm', label: 'Charm' },
 ];
 
-// 视频卡片组件 - 自动播放视频
+// 视频卡片组件
 function VideoCard({ template, index }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
+
+  useEffect(() => {
+    if (videoRef.current && template.video) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [template.video]);
 
   // Transform template to match expected format
   const transformedTemplate = {
@@ -46,13 +51,6 @@ function VideoCard({ template, index }) {
     video: template.previewVideo || template.video,
     badge: template.isSuper ? 'super' : (template.isNew ? 'new' : null),
   };
-
-  useEffect(() => {
-    // 视频自动播放
-    if (videoRef.current && transformedTemplate.video) {
-      videoRef.current.play().catch(() => {});
-    }
-  }, [transformedTemplate.video]);
 
   return (
     <div
@@ -122,42 +120,98 @@ function VideoCard({ template, index }) {
   );
 }
 
-export default function Home() {
+export default function All() {
   const navigate = useNavigate();
-  const [activeCategory, setActiveCategory] = useState('trending');
+  const [activeCategory, setActiveCategory] = useState('all');
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Load templates based on category
-  useEffect(() => {
-    const loadTemplates = async () => {
-      try {
+  const loadTemplates = async (category, pageNum = 1, append = false) => {
+    try {
+      if (pageNum === 1) {
         setLoading(true);
-        let response;
-        
-        if (activeCategory === 'trending') {
-          response = await templateService.getTrending(79);
-        } else if (activeCategory === 'new') {
-          response = await templateService.getNew(79);
-        } else {
-          response = await templateService.getAll({ category: activeCategory, limit: 79 });
-        }
+      } else {
+        setLoadingMore(true);
+      }
 
-        setTemplates(response.templates || []);
-      } catch (error) {
-        console.error('Failed to load templates:', error);
-        toast.error('Failed to load templates');
-        setTemplates([]);
-      } finally {
-        setLoading(false);
+      let response;
+      if (category === 'all') {
+        response = await templateService.getAll({ page: pageNum, limit: 20 });
+      } else if (category === 'new') {
+        const newResponse = await templateService.getNew(20);
+        // Transform to match pagination format
+        response = { 
+          templates: newResponse.templates || [], 
+          pagination: { 
+            page: 1, 
+            limit: 20, 
+            total: newResponse.templates?.length || 0, 
+            pages: 1 
+          } 
+        };
+      } else {
+        // For other categories (viral, cosplay, closeup, charm), use tag filter
+        // These are tags, not categories, so we need to filter by tag
+        response = await templateService.getAll({ page: pageNum, limit: 20, tag: category });
+      }
+
+      const newTemplates = response.templates || [];
+      
+      if (append) {
+        setTemplates(prev => [...prev, ...newTemplates]);
+      } else {
+        setTemplates(newTemplates);
+      }
+
+      // Check if there are more pages
+      if (response.pagination) {
+        setHasMore(pageNum < response.pagination.pages);
+      } else {
+        setHasMore(newTemplates.length === 20);
+      }
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+      toast.error('Failed to load templates');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // Load templates when category changes
+  useEffect(() => {
+    setPage(1);
+    setTemplates([]);
+    loadTemplates(activeCategory, 1, false);
+  }, [activeCategory]);
+
+  // Infinite scroll handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loadingMore || !hasMore) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const windowHeight = window.innerHeight;
+      const documentHeight = document.documentElement.scrollHeight;
+
+      // Load more when 200px from bottom
+      if (scrollTop + windowHeight >= documentHeight - 200) {
+        const nextPage = page + 1;
+        setPage(nextPage);
+        loadTemplates(activeCategory, nextPage, true);
       }
     };
 
-    loadTemplates();
-  }, [activeCategory]);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [page, activeCategory, hasMore, loadingMore]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24">
       {/* 分类 Tabs */}
       <div className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-[#262626]">
         <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
@@ -171,50 +225,49 @@ export default function Home() {
                   : 'bg-[#141414] text-white/60 hover:text-white'
               }`}
             >
-              {tab.icon && <span className="mr-1">{tab.icon}</span>}
               {tab.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Section Header */}
-      <div className="section-header">
-        <div>
-          <span className="fire-emoji">🔥</span>
-          <span className="title-text">Trending: Photo to video</span>
-        </div>
-        <button
-          onClick={() => navigate('/all')}
-          className="flex items-center gap-1 text-white text-sm font-medium hover:opacity-80 transition-opacity"
-        >
-          See All
-          <svg className="w-4 h-4 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
-
       {/* 加载状态 */}
-      {loading ? (
+      {loading && templates.length === 0 ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-white">Loading templates...</div>
         </div>
       ) : (
-        /* 视频卡片网格 */
-        <div className="cards-grid">
-          {templates.map((template, index) => (
-            <VideoCard key={template._id || template.id} template={template} index={index} />
-          ))}
-        </div>
-      )}
+        <>
+          {/* 模板网格 */}
+          <div className="cards-grid px-4 py-6">
+            {templates.map((template, index) => (
+              <VideoCard key={template._id || template.id} template={template} index={index} />
+            ))}
+          </div>
 
-      {/* 空状态 */}
-      {!loading && templates.length === 0 && (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-white/60">No templates found</div>
-        </div>
+          {/* 加载更多指示器 */}
+          {loadingMore && (
+            <div className="flex items-center justify-center py-6">
+              <div className="text-white/60">Loading more...</div>
+            </div>
+          )}
+
+          {/* 没有更多内容 */}
+          {!hasMore && templates.length > 0 && (
+            <div className="flex items-center justify-center py-6">
+              <div className="text-white/60">No more templates</div>
+            </div>
+          )}
+
+          {/* 空状态 */}
+          {!loading && templates.length === 0 && (
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <div className="text-white/60">No templates found</div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
+

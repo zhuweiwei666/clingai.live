@@ -135,4 +135,93 @@ router.get('/orders', verifyToken, async (req, res) => {
   }
 });
 
+// 获取用户反馈 (benchmark: /app/user/feedback)
+router.get('/feedback', verifyToken, async (req, res) => {
+  try {
+    // For now, return empty array. Can be extended to store feedback in DB
+    return successResponse(res, { feedback: [] });
+  } catch (error) {
+    console.error('Get feedback error:', error);
+    return errorResponse(res, 'Failed to get feedback', 'GET_FEEDBACK_ERROR', 500);
+  }
+});
+
+// 提交用户反馈 (benchmark: /app/user/feedback)
+router.post('/feedback', verifyToken, async (req, res) => {
+  try {
+    const { content, type } = req.body;
+    if (!content) {
+      return errorResponse(res, 'Feedback content is required', 'MISSING_FEEDBACK_CONTENT', 400);
+    }
+
+    // TODO: Store feedback in database if needed
+    // For now, just return success
+    return successResponse(res, { message: 'Feedback submitted successfully' });
+  } catch (error) {
+    console.error('Submit feedback error:', error);
+    return errorResponse(res, 'Failed to submit feedback', 'SUBMIT_FEEDBACK_ERROR', 500);
+  }
+});
+
+// 获取用户邮箱 (benchmark: /app/user/email)
+router.get('/email', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('email');
+    if (!user) {
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
+    }
+
+    return successResponse(res, { email: user.email || '' });
+  } catch (error) {
+    console.error('Get email error:', error);
+    return errorResponse(res, 'Failed to get email', 'GET_EMAIL_ERROR', 500);
+  }
+});
+
+// 保存用户邮箱 (benchmark: /app/user/save_email)
+router.put('/email', verifyToken, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return errorResponse(res, 'Email is required', 'MISSING_EMAIL', 400);
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
+    }
+
+    user.email = email;
+    await user.save();
+
+    return successResponse(res, { message: 'Email saved successfully', email: user.email });
+  } catch (error) {
+    console.error('Save email error:', error);
+    return errorResponse(res, 'Failed to save email', 'SAVE_EMAIL_ERROR', 500);
+  }
+});
+
+// 删除账户 (benchmark: /app/user/destory)
+router.delete('/destroy', verifyToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return errorResponse(res, 'User not found', 'USER_NOT_FOUND', 404);
+    }
+
+    // Soft delete: mark as deleted instead of actually deleting
+    user.isDeleted = true;
+    user.deletedAt = new Date();
+    await user.save();
+
+    // Clear token
+    res.clearCookie('token');
+
+    return successResponse(res, { message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    return errorResponse(res, 'Failed to delete account', 'DELETE_ACCOUNT_ERROR', 500);
+  }
+});
+
 export default router;

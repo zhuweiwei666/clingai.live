@@ -242,6 +242,59 @@ export function verifyStripeWebhook(payload, signature) {
 }
 
 /**
+ * Stripe - 取消订阅
+ */
+export async function cancelStripeSubscription(subscriptionId) {
+  if (!STRIPE_SECRET_KEY) {
+    return { success: false, error: 'Stripe not configured' };
+  }
+
+  try {
+    const Stripe = (await import('stripe')).default;
+    const stripe = new Stripe(STRIPE_SECRET_KEY);
+    
+    // Try to cancel subscription by subscription ID
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const cancelled = await stripe.subscriptions.cancel(subscriptionId);
+    
+    return {
+      success: true,
+      subscriptionId: cancelled.id,
+      status: cancelled.status,
+    };
+  } catch (error) {
+    console.error('[Payment] Stripe cancel subscription error:', error);
+    // If subscription ID is not found, try to find it from payment intent
+    try {
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(STRIPE_SECRET_KEY);
+      
+      // Search for subscription by payment intent
+      const subscriptions = await stripe.subscriptions.list({
+        limit: 100,
+      });
+      
+      const foundSubscription = subscriptions.data.find(
+        sub => sub.latest_invoice?.payment_intent === subscriptionId
+      );
+      
+      if (foundSubscription) {
+        const cancelled = await stripe.subscriptions.cancel(foundSubscription.id);
+        return {
+          success: true,
+          subscriptionId: cancelled.id,
+          status: cancelled.status,
+        };
+      }
+      
+      return { success: false, error: 'Subscription not found' };
+    } catch (searchError) {
+      return { success: false, error: error.message || 'Failed to cancel subscription' };
+    }
+  }
+}
+
+/**
  * 获取支付服务状态
  */
 export function getPaymentStatus() {
@@ -260,6 +313,7 @@ export function getPaymentStatus() {
 export default {
   createStripePayment,
   verifyStripeWebhook,
+  cancelStripeSubscription,
   createPayPalOrder,
   capturePayPalOrder,
   verifyPayPalWebhook,

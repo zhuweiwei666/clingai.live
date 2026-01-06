@@ -38,6 +38,12 @@ export const templateService = {
     const response = await apiClient.get('/templates/categories');
     return response.data;
   },
+
+  // Like a template
+  likeTemplate: async (templateId) => {
+    const response = await apiClient.post('/templates/like', { templateId });
+    return response.data;
+  },
 };
 
 export default templateService;
