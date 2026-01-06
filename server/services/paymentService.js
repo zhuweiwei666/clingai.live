@@ -1,7 +1,7 @@
 /**
  * Payment Service - Stripe & PayPal Integration
  */
-import fetch from 'node-fetch';
+// Node.js >= 18 has global fetch. Do NOT import node-fetch to avoid missing dependency in production.
 
 // Stripe (待配置)
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';

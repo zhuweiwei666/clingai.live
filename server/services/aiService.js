@@ -23,7 +23,7 @@
  *   AI_API_BASE=https://api.example.com
  */
 
-import fetch from 'node-fetch';
+// Node.js >= 18 has global fetch. Do NOT import node-fetch to avoid missing dependency in production.
 import a2eService from './a2eService.js';
 
 // 优先使用 A2E 服务

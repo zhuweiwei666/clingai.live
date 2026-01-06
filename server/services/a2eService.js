@@ -19,7 +19,7 @@
  */
 
 import dotenv from 'dotenv';
-import fetch from 'node-fetch';
+// Node.js >= 18 has global fetch. Do NOT import node-fetch to avoid missing dependency in production.
 
 // 加载环境变量（ES module 需要手动加载）
 dotenv.config();
