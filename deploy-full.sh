@@ -158,11 +158,12 @@ deploy_admin() {
     # 上传构建产物到服务器临时目录
     log_info "上传管理后台构建产物到服务器..."
     ssh_exec "rm -rf /tmp/honeyai-admin-dist && mkdir -p /tmp/honeyai-admin-dist"
-    scp_file "/Users/zhuweiwei/ClingAI.live/admin/dist/" "/tmp/honeyai-admin-dist"
+    # 复制 dist 目录内容到临时目录（避免多一层 dist/ 目录导致找不到文件）
+    scp_file "/Users/zhuweiwei/ClingAI.live/admin/dist/." "/tmp/honeyai-admin-dist"
 
     # 部署管理后台文件到 /var/www/honeyai-admin
     log_info "部署管理后台文件到 /var/www/honeyai-admin..."
-    ssh_exec "rm -rf /var/www/honeyai-admin && mkdir -p /var/www/honeyai-admin && cp -r /tmp/honeyai-admin-dist/dist/* /var/www/honeyai-admin/ && chown -R www-data:www-data /var/www/honeyai-admin && chmod -R 755 /var/www/honeyai-admin"
+    ssh_exec "rm -rf /var/www/honeyai-admin && mkdir -p /var/www/honeyai-admin && cp -r /tmp/honeyai-admin-dist/* /var/www/honeyai-admin/ && chown -R www-data:www-data /var/www/honeyai-admin && chmod -R 755 /var/www/honeyai-admin"
 
     # 清理临时目录
     ssh_exec "rm -rf /tmp/honeyai-admin-dist"
@@ -187,7 +188,8 @@ configure_env() {
     
     # 在服务器上备份现有 .env 文件
     # 注意：避免在 expect/tcl 中使用 [] 触发解析错误
-    ssh_exec "if test -f $SERVER_BACKEND_DIR/.env; then cp $SERVER_BACKEND_DIR/.env $SERVER_BACKEND_DIR/.env.backup.\$(date +%Y%m%d_%H%M%S); fi" || true
+    # 注意：避免在 expect/tcl 中出现 `$(` 触发变量解析错误，改用反引号
+    ssh_exec "if test -f $SERVER_BACKEND_DIR/.env; then cp $SERVER_BACKEND_DIR/.env $SERVER_BACKEND_DIR/.env.backup.`date +%Y%m%d_%H%M%S`; fi" || true
     
     # 创建更新脚本，智能合并环境变量
     cat > /tmp/update_env.sh << 'ENVSCRIPT'
