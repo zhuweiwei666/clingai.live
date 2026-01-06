@@ -140,7 +140,8 @@ export default function All() {
 
       let response;
       if (category === 'all') {
-        response = await templateService.getAll({ page: pageNum, limit: 20 });
+        const allResponse = await templateService.getAll({ page: pageNum, limit: 20 });
+        response = allResponse;
       } else if (category === 'new') {
         const newResponse = await templateService.getNew(20);
         // Transform to match pagination format
@@ -156,10 +157,12 @@ export default function All() {
       } else {
         // For other categories (viral, cosplay, closeup, charm), use tag filter
         // These are tags, not categories, so we need to filter by tag
-        response = await templateService.getAll({ page: pageNum, limit: 20, tag: category });
+        const tagResponse = await templateService.getAll({ page: pageNum, limit: 20, tag: category });
+        response = tagResponse;
       }
 
-      const newTemplates = response.templates || [];
+      // Handle both direct response and nested data structure
+      const newTemplates = response?.templates || response?.data?.templates || [];
       
       if (append) {
         setTemplates(prev => [...prev, ...newTemplates]);
@@ -168,8 +171,9 @@ export default function All() {
       }
 
       // Check if there are more pages
-      if (response.pagination) {
-        setHasMore(pageNum < response.pagination.pages);
+      const pagination = response?.pagination || response?.data?.pagination;
+      if (pagination) {
+        setHasMore(pageNum < pagination.pages);
       } else {
         setHasMore(newTemplates.length === 20);
       }
