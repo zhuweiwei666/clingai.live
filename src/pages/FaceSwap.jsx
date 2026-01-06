@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { generationService } from '../services/generationService';
+import { uploadService } from '../services/uploadService';
 import useUserStore from '../store/userStore';
 
-// 图标
+// Icons
 const FaceIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="8" cy="8" r="4" />
@@ -13,9 +15,9 @@ const FaceIcon = () => (
 );
 
 const VideoIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <rect x="2" y="3" width="8" height="18" rx="2" />
-    <rect x="14" y="3" width="8" height="18" rx="2" />
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="2" y="4" width="8" height="16" rx="1" />
+    <rect x="14" y="4" width="8" height="16" rx="1" />
   </svg>
 );
 
@@ -27,14 +29,14 @@ const SaveIcon = () => (
   </svg>
 );
 
-// 模板 - 使用本地资源
+// Sample templates
 const templates = [
-  { id: '1', thumbnail: '/templates/9.jpg', badge: null },
-  { id: '2', thumbnail: '/templates/10.jpg', badge: 'super' },
-  { id: '3', thumbnail: '/templates/11.jpg', badge: null },
-  { id: '4', thumbnail: '/templates/12.jpg', badge: 'new' },
-  { id: '5', thumbnail: '/templates/13.jpg', badge: null },
-  { id: '6', thumbnail: '/templates/14.jpg', badge: 'super' },
+  { id: '1', title: 'Action Star', thumbnail: '/templates/9.jpg', type: 'image', badge: null },
+  { id: '2', title: 'Red Carpet', thumbnail: '/templates/10.jpg', type: 'image', badge: 'super' },
+  { id: '3', title: 'Vintage', thumbnail: '/templates/11.jpg', type: 'image', badge: null },
+  { id: '4', title: 'Cyber', thumbnail: '/templates/12.jpg', type: 'video', badge: 'new' },
+  { id: '5', title: 'Fantasy', thumbnail: '/templates/13.jpg', type: 'video', badge: null },
+  { id: '6', title: 'Business', thumbnail: '/templates/14.jpg', type: 'video', badge: 'super' },
 ];
 
 function TemplateCard({ template, index, onSelect }) {
@@ -53,18 +55,28 @@ function TemplateCard({ template, index, onSelect }) {
           loading="lazy"
           onLoad={() => setLoaded(true)}
           style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}
+          onError={(e) => e.target.src = 'https://via.placeholder.com/300x400'}
         />
         <div className="video-card-overlay" />
-        <div className="video-card-content">
-          {template.badge === 'super' && <span className="badge-super">Super</span>}
-          {template.badge === 'new' && (
-            <div className="badge-new">
-              <span className="fire">🔥</span>
-              <span>New</span>
-              <span className="fire">🔥</span>
-            </div>
-          )}
+        
+        {/* Badges */}
+        {template.badge === 'super' && (
+          <span className="absolute top-0 right-0 px-3 py-1.5 bg-gradient-to-r from-pink-500 to-red-500 rounded-bl-[14px] rounded-tr-[24px] text-[11px] font-bold text-white z-20">
+            Super
+          </span>
+        )}
+        {template.badge === 'new' && (
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[11px] font-bold text-white z-20">
+            <span>🔥</span>
+            <span>New</span>
+            <span>🔥</span>
+          </div>
+        )}
+
+        {/* Bottom Info */}
+        <div className="card-bottom">
           <div className="card-icon-left"><VideoIcon /></div>
+          <div className="card-title">{template.title}</div>
           <div className="card-icon-right"><SaveIcon /></div>
         </div>
       </div>
@@ -77,17 +89,25 @@ export default function FaceSwap() {
   const { isAuthenticated } = useUserStore();
   const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState('image');
+  const [sourceFile, setSourceFile] = useState(null);
   const [sourcePreview, setSourcePreview] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const tabs = [
     { id: 'image', label: 'Image Face Swap' },
     { id: 'video', label: 'Video Face Swap' },
-    { id: 'dress', label: 'Dress Up' },
   ];
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB');
+      return;
+    }
+
+    setSourceFile(file);
     const reader = new FileReader();
     reader.onload = (e) => setSourcePreview(e.target.result);
     reader.readAsDataURL(file);
@@ -99,17 +119,58 @@ export default function FaceSwap() {
       return;
     }
 
-    if (!sourcePreview) {
+    if (!sourceFile) {
       toast.error('Please upload your photo first');
       return;
     }
 
-    // Navigate to create page with face swap parameters
-    navigate(`/create?type=face_swap&target=${template.id}&source=${encodeURIComponent(sourcePreview)}`);
+    setIsProcessing(true);
+    try {
+      // 1. Upload Source Image
+      toast.loading('Uploading source image...', { id: 'faceswap' });
+      const uploadResult = await uploadService.uploadImage(sourceFile);
+      
+      if (!uploadResult || !uploadResult.url) {
+        throw new Error('Failed to upload image');
+      }
+
+      // 2. Generate
+      toast.loading('Starting Face Swap...', { id: 'faceswap' });
+      
+      let result;
+      if (template.type === 'video' || activeTab === 'video') {
+        // Video Face Swap (Template is target video)
+        // Since templates have thumbnails only in mock, we assume template.id maps to a video url in backend or use a mock url
+        // For real implementation, template should have .video url
+        const targetVideoUrl = template.video || `https://example.com/videos/${template.id}.mp4`; // Mock
+        result = await generationService.videoFaceSwap(uploadResult.url, targetVideoUrl);
+      } else {
+        // Image Face Swap
+        const targetImageUrl = template.image || template.thumbnail; // Use thumbnail as target for now
+        result = await generationService.imageFaceSwap(uploadResult.url, targetImageUrl);
+      }
+
+      if (result && result.taskId) {
+        toast.success('Task created! Check My Works later.', { id: 'faceswap' });
+        navigate('/profile');
+      } else {
+        toast.error('Failed to create task', { id: 'faceswap' });
+      }
+    } catch (error) {
+      console.error('Face Swap error:', error);
+      toast.error(error.message || 'Failed to create task', { id: 'faceswap' });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
+  // Filter templates based on active tab
+  const displayTemplates = templates.filter(t => 
+    activeTab === 'video' ? t.type === 'video' : t.type === 'image'
+  );
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-24">
       {/* 功能 Tab */}
       <div className="function-tabs">
         {tabs.map((tab) => (
@@ -126,7 +187,7 @@ export default function FaceSwap() {
       {/* 上传按钮 */}
       <div
         className="upload-button"
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !isProcessing && fileInputRef.current?.click()}
       >
         <input
           ref={fileInputRef}
@@ -149,15 +210,15 @@ export default function FaceSwap() {
         </div>
         
         <div className="upload-button-text">
-          Custom Image Face Swap
+          {isProcessing ? 'Processing...' : 'Upload Your Face'}
         </div>
         
-        <div className="upload-button-plus">+</div>
+        {!isProcessing && <div className="upload-button-plus">+</div>}
       </div>
 
       {/* 模板网格 */}
       <div className="cards-grid">
-        {templates.map((template, index) => (
+        {displayTemplates.map((template, index) => (
           <TemplateCard
             key={template.id}
             template={template}

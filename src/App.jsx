@@ -14,6 +14,7 @@ import FaceSwap from './pages/FaceSwap';
 import DressUp from './pages/DressUp';
 import HD from './pages/HD';
 import Remove from './pages/Remove';
+import ChatEdit from './pages/ChatEdit'; // Import ChatEdit
 import Pricing from './pages/Pricing';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -48,7 +49,7 @@ function App() {
               <Route path="dress-up" element={<DressUp />} />
               <Route path="hd" element={<HD />} />
               <Route path="remove" element={<Remove />} />
-              <Route path="chat-edit" element={<FaceSwap />} />
+              <Route path="chat-edit" element={<ChatEdit />} />
               <Route path="watermark" element={<Remove />} />
               <Route path="pricing" element={<Pricing />} />
               <Route path="terms" element={<Terms />} />

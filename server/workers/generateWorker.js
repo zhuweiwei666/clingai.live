@@ -59,6 +59,9 @@ async function processJob(job) {
         case 'aiimage':
           result = await aiService.generateImage(input.prompt, input.params);
           break;
+        case 'chatedit':
+          result = await aiService.chatEdit(input.sourceImage, input.text, input.voiceId, input.params);
+          break;
         default:
           throw new Error(`Unknown task type: ${type}`);
       }
@@ -89,6 +92,7 @@ async function processJob(job) {
       'aiimage': 'text-to-image',
       'remove': 'caption-removal',
       'hd': 'video-to-video',
+      'chatedit': 'talking-photo',
     };
     const a2eTaskType = taskTypeMap[type] || 'image-to-video';
 

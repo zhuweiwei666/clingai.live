@@ -305,6 +305,36 @@ export async function videoToVideo(videoUrl, params = {}) {
 }
 
 /**
+ * 聊天编辑/数字人视频 (Chat Edit / Avatar Video)
+ * @param {string} sourceImage - 人物图片 URL (Talking Photo) 或 Avatar ID
+ * @param {string} text - 要说的话
+ * @param {string} voiceId - 声音 ID
+ * @param {object} params - 其他参数
+ */
+export async function chatEdit(sourceImage, text, voiceId, params = {}) {
+  console.log('[A2E] chatEdit called');
+  
+  if (!A2E_ENABLED) return mockResponse();
+
+  // 这里的实现可能是 Talking Photo (图片+文字) 或 Avatar Video (预设数字人+文字)
+  // 根据 OnlyCrush 类似功能，通常是 Talking Photo (让照片说话)
+  
+  const requestData = {
+    image_url: sourceImage,
+    text: text,
+    voice_id: voiceId || 'en-US-1', // 默认声音
+    ...params
+  };
+
+  // 假设端点为 /api/v1/talking-photo/start
+  const result = await callA2EApi('/api/v1/talking-photo/start', 'POST', requestData);
+  return {
+    taskId: result.task_id || result.id,
+    status: result.status || 'processing',
+  };
+}
+
+/**
  * 查询任务状态
  * @param {string} taskId - A2E 任务 ID
  * @param {string} taskType - 任务类型 (image-to-video, face-swap, etc.)
@@ -350,6 +380,9 @@ export async function checkTaskStatus(taskId, taskType = 'image-to-video') {
         break;
       case 'video-to-video':
         endpoint = `/api/v1/video-to-video/${taskId}`;
+        break;
+      case 'talking-photo':
+        endpoint = `/api/v1/talking-photo/${taskId}`;
         break;
       default:
         endpoint = `/api/v1/image-to-video/${taskId}`;
@@ -469,6 +502,7 @@ export default {
   captionRemoval,
   videoToVideo,
   checkTaskStatus,
+  chatEdit,
   getUserCredits,
   getServiceStatus,
 };

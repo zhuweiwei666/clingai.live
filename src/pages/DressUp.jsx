@@ -1,83 +1,85 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Shirt, Sparkles, Upload, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { generationService } from '../services/generationService';
+import { uploadService } from '../services/uploadService';
 import useUserStore from '../store/userStore';
-import generationService from '../services/generationService';
-import uploadService from '../services/uploadService';
+
+// Icons
+const ShirtIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z" />
+  </svg>
+);
+
+const UploadIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="17 8 12 3 7 8" />
+    <line x1="12" y1="3" x2="12" y2="15" />
+  </svg>
+);
+
+const SaveIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <rect x="5" y="3" width="14" height="18" rx="2" />
+    <line x1="9" y1="11" x2="15" y2="11" />
+    <line x1="12" y1="8" x2="12" y2="14" />
+  </svg>
+);
 
 // Sample dress-up templates
-const dressTemplates = [
-  {
-    id: '1',
-    title: 'Elegant Dress',
-    thumbnail: 'https://images.unsplash.com/photo-1518577915332-c2a19f149a75?w=400&h=600&fit=crop',
-    tags: ['super'],
-  },
-  {
-    id: '2',
-    title: 'Casual Style',
-    thumbnail: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=600&fit=crop',
-    tags: ['new'],
-  },
-  {
-    id: '3',
-    title: 'Swimwear',
-    thumbnail: 'https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?w=400&h=600&fit=crop',
-    tags: ['hot'],
-  },
-  {
-    id: '4',
-    title: 'Lingerie',
-    thumbnail: 'https://images.unsplash.com/photo-1529271230144-e8c648ef570d?w=400&h=600&fit=crop',
-    tags: ['viral'],
-  },
+const templates = [
+  { id: '1', title: 'Elegant Dress', thumbnail: '/templates/1.jpg', badge: 'super' },
+  { id: '2', title: 'Casual Style', thumbnail: '/templates/2.jpg', badge: 'new' },
+  { id: '3', title: 'Swimwear', thumbnail: '/templates/3.jpg', badge: 'hot' },
+  { id: '4', title: 'Lingerie', thumbnail: '/templates/4.jpg', badge: 'viral' },
+  { id: '5', title: 'Office Wear', thumbnail: '/templates/5.jpg', badge: null },
+  { id: '6', title: 'Party Dress', thumbnail: '/templates/6.jpg', badge: 'super' },
 ];
 
-function TemplateCard({ template, index }) {
-  const renderBadge = () => {
-    if (template.tags.includes('super')) {
-      return <span className="badge badge-super">Super</span>;
-    }
-    if (template.tags.includes('new')) {
-      return <span className="badge badge-new">New</span>;
-    }
-    if (template.tags.includes('hot')) {
-      return <span className="badge badge-hot">Hot</span>;
-    }
-    if (template.tags.includes('viral')) {
-      return <span className="badge badge-viral">Viral</span>;
-    }
-    return null;
-  };
+function TemplateCard({ template, index, onSelect }) {
+  const [loaded, setLoaded] = useState(false);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="card cursor-pointer"
+    <div
+      className="video-card fade-in"
+      style={{ animationDelay: `${index * 0.04}s` }}
+      onClick={() => onSelect(template)}
     >
-      <div className="card-image">
+      <div className="video-card-media">
         <img
           src={template.thumbnail}
-          alt={template.title}
+          alt=""
           loading="lazy"
+          onLoad={() => setLoaded(true)}
+          style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.3s' }}
+          onError={(e) => e.target.src = 'https://via.placeholder.com/300x400'}
         />
-        <div className="card-overlay">
-          <div className="absolute top-3 right-3">
-            {renderBadge()}
+        <div className="video-card-overlay" />
+        
+        {/* Badges */}
+        {template.badge === 'super' && (
+          <span className="absolute top-0 right-0 px-3 py-1.5 bg-gradient-to-r from-pink-500 to-red-500 rounded-bl-[14px] rounded-tr-[24px] text-[11px] font-bold text-white z-20">
+            Super
+          </span>
+        )}
+        {template.badge === 'new' && (
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[11px] font-bold text-white z-20">
+            <span>🔥</span>
+            <span>New</span>
+            <span>🔥</span>
           </div>
-          <div className="absolute top-3 left-3">
-            <div className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm flex items-center justify-center">
-              <Shirt className="w-4 h-4 text-white" />
-            </div>
-          </div>
-          <h3 className="card-title">{template.title}</h3>
+        )}
+
+        {/* Bottom Info */}
+        <div className="card-bottom">
+          <div className="card-icon-left"><ShirtIcon /></div>
+          <div className="card-title">{template.title}</div>
+          <div className="card-icon-right"><SaveIcon /></div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -85,20 +87,17 @@ export default function DressUp() {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserStore();
   const fileInputRef = useRef(null);
-  const [templates] = useState(dressTemplates);
+  const [activeTab, setActiveTab] = useState('All');
   const [uploadedImage, setUploadedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [result, setResult] = useState(null);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image size must be less than 10MB');
       return;
     }
 
@@ -110,7 +109,6 @@ export default function DressUp() {
 
   const handleDressUp = async (template) => {
     if (!isAuthenticated) {
-      toast.error('Please login to use dress up');
       navigate('/login');
       return;
     }
@@ -120,97 +118,47 @@ export default function DressUp() {
       return;
     }
 
+    setIsProcessing(true);
     try {
-      setIsProcessing(true);
-      setSelectedTemplate(template);
-      setProgress(0);
-
-      // Step 1: Upload image
-      setProgress(10);
-      toast.loading('Uploading image...', { id: 'upload' });
-      
+      // 1. Upload image
+      toast.loading('Uploading image...', { id: 'dressup' });
       const uploadResult = await uploadService.uploadImage(uploadedImage);
+      
       if (!uploadResult || !uploadResult.url) {
         throw new Error('Failed to upload image');
       }
-      
-      toast.success('Image uploaded', { id: 'upload' });
-      setProgress(30);
 
-      // Step 2: Call dress up API
-      const generationResult = await generationService.dressUp(uploadResult.url, template.id);
-      
-      if (!generationResult || !generationResult.taskId) {
-        throw new Error('Failed to start dress up');
+      // 2. Start task
+      toast.loading('Starting Dress Up...', { id: 'dressup' });
+      const result = await generationService.dressUp(uploadResult.url, template.id);
+
+      if (result && result.taskId) {
+        toast.success('Task created! Check My Works later.', { id: 'dressup' });
+        navigate('/profile');
+      } else {
+        toast.error('Failed to create task', { id: 'dressup' });
       }
-
-      const taskId = generationResult.taskId;
-      setProgress(50);
-
-      // Step 3: Poll for task status
-      const maxAttempts = 60;
-      let attempts = 0;
-      let completed = false;
-
-      const statusInterval = setInterval(async () => {
-        try {
-          attempts++;
-          const status = await generationService.getImageStatus(taskId);
-          
-          if (status && status.task) {
-            setProgress(50 + (status.task.progress || 0) * 0.4);
-
-            if (status.task.status === 'completed') {
-              completed = true;
-              clearInterval(statusInterval);
-              setProgress(100);
-              
-              setResult({
-                outputUrl: status.task.output?.resultUrl,
-              });
-
-              toast.success('Dress up complete!');
-              setIsProcessing(false);
-            } else if (status.task.status === 'failed') {
-              completed = true;
-              clearInterval(statusInterval);
-              throw new Error(status.task.error || 'Dress up failed');
-            }
-          }
-
-          if (attempts >= maxAttempts && !completed) {
-            clearInterval(statusInterval);
-            throw new Error('Dress up timeout');
-          }
-        } catch (error) {
-          clearInterval(statusInterval);
-          throw error;
-        }
-      }, 5000);
-
     } catch (error) {
       console.error('Dress up failed:', error);
-      toast.error(error.message || 'Dress up failed');
+      toast.error(error.message || 'Dress up failed', { id: 'dressup' });
+    } finally {
       setIsProcessing(false);
-      setProgress(0);
     }
   };
 
   return (
-    <div className="min-h-screen p-4 space-y-6">
-      {/* Section Header */}
-      <div className="section-header p-0">
-        <Shirt className="w-6 h-6 text-pink-500" />
-        <span className="gradient-text font-bold">Dress Up</span>
+    <div className="min-h-screen pb-24">
+      {/* Header */}
+      <div className="section-header">
+        <span className="fire-emoji">👗</span>
+        <span className="title-text">Virtual Try-On</span>
       </div>
 
       {/* Upload Area */}
-      {!imagePreview && (
-        <motion.div
-          onClick={() => fileInputRef.current?.click()}
-          className="glass-card rounded-3xl p-8 flex flex-col items-center justify-center cursor-pointer hover:border-accent-start transition-colors min-h-[200px]"
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+      <div className="px-4 mb-6">
+        <div
+          className="upload-button m-0"
+          onClick={() => !isProcessing && fileInputRef.current?.click()}
         >
           <input
             ref={fileInputRef}
@@ -220,142 +168,50 @@ export default function DressUp() {
             className="hidden"
           />
           
-          <div className="w-20 h-20 rounded-full glass-elevated flex items-center justify-center mb-4">
-            <Upload className="w-8 h-8 text-accent-start" />
+          <div className="upload-button-icon">
+            {imagePreview ? (
+              <img 
+                src={imagePreview} 
+                alt="" 
+                className="w-full h-full object-cover rounded-xl"
+              />
+            ) : (
+              <ShirtIcon />
+            )}
           </div>
-          <h3 className="text-lg font-semibold mb-2">Upload Your Photo</h3>
-          <p className="text-text-muted text-sm text-center">
-            Select a photo to try on different outfits
-          </p>
-        </motion.div>
-      )}
+          
+          <div className="upload-button-text">
+            {isProcessing ? 'Processing...' : 'Upload Your Photo'}
+          </div>
+          
+          {!isProcessing && <div className="upload-button-plus">+</div>}
+        </div>
+      </div>
 
-      {/* Image Preview */}
-      {imagePreview && !result && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-3xl overflow-hidden"
-        >
-          <img 
-            src={imagePreview} 
-            alt="Preview" 
-            className="w-full rounded-2xl object-contain"
-          />
+      {/* Categories */}
+      <div className="function-tabs mb-2">
+        {['All', 'Dress', 'Casual', 'Swimwear', 'Lingerie'].map((category) => (
           <button
-            onClick={() => {
-              setUploadedImage(null);
-              setImagePreview(null);
-            }}
-            className="w-full mt-4 btn-secondary"
+            key={category}
+            onClick={() => setActiveTab(category)}
+            className={`function-tab ${activeTab === category ? 'active' : ''}`}
           >
-            Change Photo
+            {category}
           </button>
-        </motion.div>
-      )}
-
-      {/* Result Display */}
-      {result && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-3xl overflow-hidden"
-        >
-          <img 
-            src={result.outputUrl} 
-            alt="Dress Up Result" 
-            className="w-full rounded-2xl object-contain"
-          />
-          <div className="flex gap-4 mt-4">
-            <button
-              onClick={() => {
-                setResult(null);
-                setUploadedImage(null);
-                setImagePreview(null);
-                setProgress(0);
-              }}
-              className="flex-1 btn-secondary"
-            >
-              Try Another
-            </button>
-            <button
-              onClick={() => window.open(result.outputUrl, '_blank')}
-              className="flex-1 btn-primary"
-            >
-              Download
-            </button>
-          </div>
-        </motion.div>
-      )}
+        ))}
+      </div>
 
       {/* Templates Grid */}
-      {!result && (
-        <>
-          <div className="tab-nav mb-4">
-            {['All', 'Dress', 'Casual', 'Swimwear', 'Lingerie'].map((category) => (
-              <button
-                key={category}
-                className={`tab-item ${category === 'All' ? 'active' : ''}`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          <div className="grid-cards">
-            {templates.map((template, index) => (
-              <motion.div
-                key={template.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                onClick={() => handleDressUp(template)}
-                className="card cursor-pointer relative"
-              >
-                <div className="card-image">
-                  <img
-                    src={template.thumbnail}
-                    alt={template.title}
-                    loading="lazy"
-                  />
-                  <div className="card-overlay">
-                    <div className="absolute top-3 right-3">
-                      {renderBadge(template)}
-                    </div>
-                    <div className="absolute top-3 left-3">
-                      <div className="w-8 h-8 rounded-lg bg-black/50 backdrop-blur-sm flex items-center justify-center">
-                        <Shirt className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-                    <h3 className="card-title">{template.title}</h3>
-                    {isProcessing && selectedTemplate?.id === template.id && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                        <Loader2 className="w-8 h-8 animate-spin text-white" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </>
-      )}
+      <div className="cards-grid">
+        {templates.map((template, index) => (
+          <TemplateCard
+            key={template.id}
+            template={template}
+            index={index}
+            onSelect={handleDressUp}
+          />
+        ))}
+      </div>
     </div>
   );
-}
-
-function renderBadge(template) {
-  if (template.tags.includes('super')) {
-    return <span className="badge badge-super">Super</span>;
-  }
-  if (template.tags.includes('new')) {
-    return <span className="badge badge-new">New</span>;
-  }
-  if (template.tags.includes('hot')) {
-    return <span className="badge badge-hot">Hot</span>;
-  }
-  if (template.tags.includes('viral')) {
-    return <span className="badge badge-viral">Viral</span>;
-  }
-  return null;
 }

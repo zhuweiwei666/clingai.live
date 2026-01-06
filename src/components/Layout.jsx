@@ -38,19 +38,35 @@ const AIVideoIcon = () => (
   </svg>
 );
 
-// HD 图标
-const HDIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <rect x="3" y="5" width="18" height="14" rx="2" />
-    <path d="M7 9v6M7 12h3M10 9v6M14 9v6h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2" />
+// Infinity Icon for Create
+const InfinityIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M18.178 8c5.096 0 5.096 8 0 8-2.548 0-5.096-4-7.644-4-2.548 0-5.096 4-7.644 4-5.096 0-5.096-8 0-8 2.548 0 5.096 4 7.644 4 2.548 0 5.096-4 7.644-4z" />
   </svg>
 );
 
-// Watermark 图标
-const WatermarkIcon = () => (
+// Pro Icon
+const ProIcon = () => (
+  <div className="px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm font-bold shadow-[0_0_10px_rgba(168,85,247,0.5)] cursor-pointer">
+    Pro
+  </div>
+);
+
+// Notification Icon
+const NotificationIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <polyline points="10 9 9 9 8 9" />
+  </svg>
+);
+
+// Dress Icon
+const DressIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 3v18M3 12h18" strokeDasharray="2 2" />
+    <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z" />
   </svg>
 );
 
@@ -83,10 +99,10 @@ const SaveIcon = () => (
 const featureTabs = [
   { path: '/remove', label: 'Remove', icon: RemoveIcon, badge: '19' },
   { path: '/chat-edit', label: 'Chat Edit', icon: ChatEditIcon, badge: '19' },
-  { path: '/ai-image', label: 'AI Image', icon: AIImageIcon, badge: '19', superBadge: true },
+  { path: '/ai-image', label: 'AI Image', icon: AIImageIcon, badge: '19' },
   { path: '/', label: 'AI Video', icon: AIVideoIcon, isMain: true, superBadge: true },
-  { path: '/hd', label: 'HD', icon: HDIcon },
-  { path: '/watermark', label: 'Watermark', icon: WatermarkIcon },
+  { path: '/face-swap', label: 'Face Swap', icon: GlassesIcon, superBadge: true },
+  { path: '/dress-up', label: 'Dress Up', icon: DressIcon, superBadge: true },
 ];
 
 export default function Layout() {
@@ -96,50 +112,25 @@ export default function Layout() {
   const { isAuthenticated, user } = useUserStore();
 
   // 显示顶部 Header 的页面
-  const showHeader = ['/', '/ai-image', '/ai-video', '/hd', '/remove', '/chat-edit', '/watermark', '/face-swap'].includes(currentPath);
+  const showHeader = ['/', '/ai-image', '/ai-video', '/remove', '/chat-edit', '/face-swap', '/dress-up', '/create'].includes(currentPath);
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
       {/* 顶部 Header */}
       {showHeader && (
-        <header className="sticky top-0 z-50 bg-black">
-          {/* Logo + Login */}
+        <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md">
+          {/* Logo + Actions */}
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-1">
               <span className="text-white text-2xl font-bold tracking-wider" style={{ fontFamily: 'Notable, sans-serif' }}>HOT</span>
-              <span className="px-3 py-1 bg-gradient-to-r from-purple-500 to-violet-600 rounded-full text-white text-lg font-bold" style={{ fontFamily: 'Notable, sans-serif' }}>AI</span>
+              <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-violet-600 rounded-full text-white text-lg font-bold" style={{ fontFamily: 'Notable, sans-serif' }}>AI</span>
             </div>
-            <div className="flex items-center gap-3">
-              {isAuthenticated ? (
-                <button 
-                  onClick={() => navigate('/profile')}
-                  className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center"
-                >
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-white text-xs font-bold">
-                      {user?.username?.[0]?.toUpperCase() || 'U'}
-                    </span>
-                  )}
-                </button>
-              ) : (
-                <button 
-                  onClick={() => navigate('/login')}
-                  className="px-4 py-1.5 bg-[#2a2a2a] rounded-full text-white text-sm font-medium"
-                >
-                  Log in
-                </button>
-              )}
-              <button 
-                onClick={() => navigate('/profile')}
-                className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white transition-colors"
-                title="Menu"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M7 7h10M7 12h10M7 17h10" />
-                </svg>
+            <div className="flex items-center gap-4">
+              <button onClick={() => navigate('/subscribe')} className="hover:scale-105 transition-transform">
+                <ProIcon />
+              </button>
+              <button className="text-white/80 hover:text-white transition-colors">
+                <NotificationIcon />
               </button>
             </div>
           </div>
@@ -193,12 +184,12 @@ export default function Layout() {
           </NavLink>
 
           <NavLink 
-            to="/face-swap" 
+            to="/create" 
             className="nav-item nav-item-center"
           >
             <div className="nav-item-center-button">
               <span className="super-badge">Super</span>
-              <GlassesIcon />
+              <InfinityIcon />
             </div>
           </NavLink>
 

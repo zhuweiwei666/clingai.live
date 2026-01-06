@@ -85,6 +85,16 @@ export const generationService = {
     return response.data;
   },
 
+  // Chat Edit
+  chatEdit: async (sourceImage, text) => {
+    const response = await apiClient.post('/generate/chat-edit', { 
+      sourceImage, 
+      text,
+      params: {}
+    });
+    return response.data; // Response interceptor returns data.data as response.data
+  },
+
   // Get image status (统一使用 task 端点)
   getImageStatus: async (taskId) => {
     const response = await apiClient.get(`/generate/task/${taskId}`);

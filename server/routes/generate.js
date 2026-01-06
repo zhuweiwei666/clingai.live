@@ -214,6 +214,9 @@ router.post('/remove', verifyToken, (req, res) => createGenerateTask(req, res, '
 // AI图像生成
 router.post('/aiimage', verifyToken, (req, res) => createGenerateTask(req, res, 'aiimage'));
 
+// 聊天编辑
+router.post('/chat-edit', verifyToken, (req, res) => createGenerateTask(req, res, 'chatedit'));
+
 // 查询任务状态
 router.get('/task/:id', verifyToken, async (req, res) => {
   try {
@@ -238,6 +241,7 @@ router.get('/task/:id', verifyToken, async (req, res) => {
           'aiimage': 'text-to-image',
           'remove': 'caption-removal',
           'hd': 'video-to-video',
+          'chatedit': 'talking-photo',
         };
         const a2eTaskType = taskTypeMap[task.type] || 'image-to-video';
         

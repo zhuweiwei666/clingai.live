@@ -1,18 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// 视频图标 - 两个矩形
+// 视频图标 - 两个矩形 (Consistent with Layout)
 const VideoIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="8" height="18" rx="2" />
-    <rect x="14" y="3" width="8" height="18" rx="2" />
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="2" y="4" width="8" height="16" rx="1" />
+    <rect x="14" y="4" width="8" height="16" rx="1" />
   </svg>
 );
 
-// 保存图标
+// 保存图标 (Consistent with Layout)
 const SaveIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="4" y="2" width="16" height="20" rx="2" />
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <rect x="5" y="3" width="14" height="18" rx="2" />
     <line x1="9" y1="11" x2="15" y2="11" />
     <line x1="12" y1="8" x2="12" y2="14" />
   </svg>
