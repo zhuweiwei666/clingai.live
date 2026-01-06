@@ -164,6 +164,14 @@ export default function All() {
       // Handle both direct response and nested data structure
       const newTemplates = response?.templates || response?.data?.templates || [];
       
+      console.log('[All] Loaded templates:', {
+        category,
+        pageNum,
+        count: newTemplates.length,
+        responseKeys: Object.keys(response || {}),
+        firstTemplate: newTemplates[0],
+      });
+      
       if (append) {
         setTemplates(prev => [...prev, ...newTemplates]);
       } else {
