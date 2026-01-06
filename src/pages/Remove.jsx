@@ -73,49 +73,9 @@ export default function Remove() {
         throw new Error('Failed to start removal');
       }
 
-      const taskId = generationResult.taskId;
-      setProgress(50);
-
-      // Step 3: Poll for task status
-      const maxAttempts = 60;
-      let attempts = 0;
-      let completed = false;
-
-      const statusInterval = setInterval(async () => {
-        try {
-          attempts++;
-          const status = await generationService.getImageStatus(taskId);
-          
-          if (status && status.task) {
-            setProgress(50 + (status.task.progress || 0) * 0.4);
-
-            if (status.task.status === 'completed') {
-              completed = true;
-              clearInterval(statusInterval);
-              setProgress(100);
-              
-              setResult({
-                outputUrl: status.task.output?.resultUrl,
-              });
-
-              toast.success(`${removeType === 'background' ? 'Background' : 'Watermark'} removed!`);
-              setIsProcessing(false);
-            } else if (status.task.status === 'failed') {
-              completed = true;
-              clearInterval(statusInterval);
-              throw new Error(status.task.error || 'Removal failed');
-            }
-          }
-
-          if (attempts >= maxAttempts && !completed) {
-            clearInterval(statusInterval);
-            throw new Error('Removal timeout');
-          }
-        } catch (error) {
-          clearInterval(statusInterval);
-          throw error;
-        }
-      }, 5000);
+      // Navigate to result page (benchmark parity: async task -> result page)
+      toast.success('Task created!', { id: 'upload' });
+      navigate(`/result?taskId=${generationResult.taskId}`);
 
     } catch (error) {
       console.error('Remove failed:', error);

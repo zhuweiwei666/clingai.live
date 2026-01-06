@@ -123,7 +123,11 @@ export default function MyWorks() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="glass-card rounded-2xl overflow-hidden aspect-[3/4] relative group"
+              className="glass-card rounded-2xl overflow-hidden aspect-[3/4] relative group cursor-pointer"
+              onClick={() => {
+                const taskId = work.taskId?._id || work.taskId || work._id;
+                if (taskId) navigate(`/result?taskId=${taskId}`);
+              }}
             >
               {work.type === 'video' || work.type === 'photo_to_video' ? (
                 <video

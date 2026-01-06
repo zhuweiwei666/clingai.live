@@ -42,12 +42,39 @@ export default function Result() {
 
   const loadTask = async () => {
     try {
+      // Use getVideoStatus for all task types (it's a generic task status endpoint)
       const response = await generationService.getVideoStatus(taskId);
-      if (response.success) {
-        setTask(response.data);
-        if (response.data.status === 'completed' && response.data.outputUrl) {
+      if (response.success && response.data) {
+        const taskData = response.data;
+        // Normalize task data structure
+        const normalizedTask = {
+          ...taskData,
+          outputUrl: taskData.output?.resultUrl || taskData.outputUrl || taskData.resultUrl,
+          type: taskData.type || 'video',
+          status: taskData.status,
+          error: taskData.error,
+        };
+        setTask(normalizedTask);
+        if (normalizedTask.status === 'completed' && normalizedTask.outputUrl) {
           setLoading(false);
-        } else if (response.data.status === 'failed') {
+        } else if (normalizedTask.status === 'failed') {
+          setLoading(false);
+          toast.error('Task failed');
+        }
+      } else {
+        // Handle case where response.data is the task directly
+        const taskData = response.data || response;
+        const normalizedTask = {
+          ...taskData,
+          outputUrl: taskData.output?.resultUrl || taskData.outputUrl || taskData.resultUrl,
+          type: taskData.type || 'video',
+          status: taskData.status,
+          error: taskData.error,
+        };
+        setTask(normalizedTask);
+        if (normalizedTask.status === 'completed' && normalizedTask.outputUrl) {
+          setLoading(false);
+        } else if (normalizedTask.status === 'failed') {
           setLoading(false);
           toast.error('Task failed');
         }

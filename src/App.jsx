@@ -71,6 +71,13 @@ function App() {
               <Route path="result" element={<Result />} />
               <Route path="paylist" element={<PaymentHistory />} />
               <Route path="payment-history" element={<PaymentHistory />} />
+              <Route path="subscribeSuper" element={<Subscribe />} />
+              <Route path="unsubscribe" element={<Settings />} />
+              <Route path="tools" element={<Create />} />
+              <Route path="generate" element={<Create />} />
+              <Route path="makeovergen" element={<FaceSwap />} />
+              <Route path="face" element={<FaceSwap />} />
+              <Route path="takeoff" element={<Remove />} />
               
               {/* Protected routes */}
               <Route path="create" element={

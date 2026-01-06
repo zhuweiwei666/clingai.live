@@ -105,11 +105,11 @@ router.post('/paypal/capture', verifyToken, async (req, res) => {
 
     const order = await Order.findOne({ orderId, userId: req.user.id });
     if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
+      return errorResponse(res, 'Order not found', 'ORDER_NOT_FOUND', 404);
     }
 
     if (order.status === 'paid') {
-      return res.json({ success: true, message: 'Already paid' });
+      return successResponse(res, { message: 'Already paid' });
     }
 
     // 捕获 PayPal 支付
@@ -124,10 +124,23 @@ router.post('/paypal/capture', verifyToken, async (req, res) => {
       // 发放金币/订阅
       const user = await User.findById(order.userId);
       if (order.type === 'coins') {
-        await user.addCoins(order.coins + order.bonusCoins);
+        await user.addCoins(order.coins + (order.bonusCoins || 0));
       } else if (order.type === 'subscription') {
-        user.plan = order.plan;
-        user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        // 根据 planId 设置正确的 plan 和过期时间
+        const planId = order.plan;
+        if (planId === 'super') {
+          // Yearly subscription: 365 days
+          user.plan = 'pro';
+          user.planExpireAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+        } else if (planId === 'monthly') {
+          // Monthly subscription: 30 days
+          user.plan = 'pro';
+          user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        } else {
+          // Default: 30 days
+          user.plan = planId || 'pro';
+          user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        }
         await user.save();
       }
 
@@ -135,17 +148,16 @@ router.post('/paypal/capture', verifyToken, async (req, res) => {
       await incrementStats('totalOrders');
       await incrementStats('totalRevenue', order.amount);
 
-      res.json({
-        success: true,
+      return successResponse(res, {
         coins: user.coins,
         plan: user.plan,
       });
     } else {
-      res.status(400).json({ error: captureResult.error || 'Payment failed' });
+      return errorResponse(res, captureResult.error || 'Payment failed', 'PAYMENT_FAILED', 400);
     }
   } catch (error) {
     console.error('PayPal capture error:', error);
-    res.status(500).json({ error: 'Payment capture failed' });
+    return errorResponse(res, 'Payment capture failed', 'CAPTURE_ERROR', 500);
   }
 });
 
@@ -175,10 +187,23 @@ router.post('/stripe/webhook', async (req, res) => {
         // 发放金币/订阅
         const user = await User.findById(order.userId);
         if (order.type === 'coins') {
-          await user.addCoins(order.coins + order.bonusCoins);
+          await user.addCoins(order.coins + (order.bonusCoins || 0));
         } else if (order.type === 'subscription') {
-          user.plan = order.plan;
-          user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          // 根据 planId 设置正确的 plan 和过期时间
+          const planId = order.plan;
+          if (planId === 'super') {
+            // Yearly subscription: 365 days
+            user.plan = 'pro';
+            user.planExpireAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+          } else if (planId === 'monthly') {
+            // Monthly subscription: 30 days
+            user.plan = 'pro';
+            user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          } else {
+            // Default: 30 days
+            user.plan = planId || 'pro';
+            user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          }
           await user.save();
         }
 
@@ -219,10 +244,23 @@ router.post('/paypal/webhook', async (req, res) => {
 
         const user = await User.findById(order.userId);
         if (order.type === 'coins') {
-          await user.addCoins(order.coins + order.bonusCoins);
+          await user.addCoins(order.coins + (order.bonusCoins || 0));
         } else if (order.type === 'subscription') {
-          user.plan = order.plan;
-          user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          // 根据 planId 设置正确的 plan 和过期时间
+          const planId = order.plan;
+          if (planId === 'super') {
+            // Yearly subscription: 365 days
+            user.plan = 'pro';
+            user.planExpireAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+          } else if (planId === 'monthly') {
+            // Monthly subscription: 30 days
+            user.plan = 'pro';
+            user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          } else {
+            // Default: 30 days
+            user.plan = planId || 'pro';
+            user.planExpireAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+          }
           await user.save();
         }
 
@@ -247,13 +285,13 @@ router.get('/:orderId', verifyToken, async (req, res) => {
     });
 
     if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
+      return errorResponse(res, 'Order not found', 'ORDER_NOT_FOUND', 404);
     }
 
-    res.json({ success: true, order });
+    return successResponse(res, { order });
   } catch (error) {
     console.error('Get order error:', error);
-    res.status(500).json({ error: 'Failed to get order' });
+    return errorResponse(res, 'Failed to get order', 'GET_ORDER_ERROR', 500);
   }
 });
 
@@ -261,9 +299,9 @@ router.get('/:orderId', verifyToken, async (req, res) => {
 router.get('/payment/status', async (req, res) => {
   try {
     const status = paymentService.getPaymentStatus();
-    res.json({ success: true, ...status });
+    return successResponse(res, status);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to get status' });
+    return errorResponse(res, 'Failed to get status', 'GET_STATUS_ERROR', 500);
   }
 });
 

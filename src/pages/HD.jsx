@@ -68,49 +68,9 @@ export default function HD() {
         throw new Error('Failed to start upscale');
       }
 
-      const taskId = generationResult.taskId;
-      setProgress(50);
-
-      // Step 3: Poll for task status
-      const maxAttempts = 60;
-      let attempts = 0;
-      let completed = false;
-
-      const statusInterval = setInterval(async () => {
-        try {
-          attempts++;
-          const status = await generationService.getImageStatus(taskId);
-          
-          if (status && status.task) {
-            setProgress(50 + (status.task.progress || 0) * 0.4);
-
-            if (status.task.status === 'completed') {
-              completed = true;
-              clearInterval(statusInterval);
-              setProgress(100);
-              
-              setResult({
-                outputUrl: status.task.output?.resultUrl,
-              });
-
-              toast.success('HD upscale complete!');
-              setIsProcessing(false);
-            } else if (status.task.status === 'failed') {
-              completed = true;
-              clearInterval(statusInterval);
-              throw new Error(status.task.error || 'Upscale failed');
-            }
-          }
-
-          if (attempts >= maxAttempts && !completed) {
-            clearInterval(statusInterval);
-            throw new Error('Upscale timeout');
-          }
-        } catch (error) {
-          clearInterval(statusInterval);
-          throw error;
-        }
-      }, 5000);
+      // Navigate to result page (benchmark parity: async task -> result page)
+      toast.success('Task created!', { id: 'upload' });
+      navigate(`/result?taskId=${generationResult.taskId}`);
 
     } catch (error) {
       console.error('Upscale failed:', error);
