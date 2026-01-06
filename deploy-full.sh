@@ -123,8 +123,9 @@ commit_code() {
 deploy_frontend() {
     log_info "部署前端代码..."
     
-    # 在服务器上拉取代码
-    ssh_exec "cd $SERVER_PROJECT_DIR && git pull origin main || (cd /root && git clone https://github.com/zhuweiwei666/clingai.live.git honeyai 2>/dev/null || true)"
+    # 在服务器上同步代码
+    # 注意：我们会进行 git 历史重写（force push），因此这里使用 fetch + reset，避免 git pull 非 fast-forward 失败
+    ssh_exec "if test -d $SERVER_PROJECT_DIR/.git; then cd $SERVER_PROJECT_DIR && git fetch origin main && git reset --hard origin/main && git clean -fd; else cd /root && git clone https://github.com/zhuweiwei666/clingai.live.git honeyai 2>/dev/null || true; fi"
     
     # 创建前端 .env 文件（用于构建时注入环境变量）
     log_info "创建前端环境变量文件..."
