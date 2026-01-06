@@ -128,7 +128,7 @@ export default function Layout() {
             <div className="flex items-center gap-4">
               <button onClick={() => navigate('/subscribe')} className="hover:scale-105 transition-transform">
                 <ProIcon />
-              </button>
+                </button>
               <button className="text-white/80 hover:text-white transition-colors">
                 <NotificationIcon />
               </button>

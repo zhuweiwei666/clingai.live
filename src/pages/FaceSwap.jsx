@@ -65,13 +65,13 @@ function TemplateCard({ template, index, onSelect }) {
             Super
           </span>
         )}
-        {template.badge === 'new' && (
+          {template.badge === 'new' && (
           <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[11px] font-bold text-white z-20">
             <span>🔥</span>
-            <span>New</span>
+              <span>New</span>
             <span>🔥</span>
-          </div>
-        )}
+            </div>
+          )}
 
         {/* Bottom Info */}
         <div className="card-bottom">

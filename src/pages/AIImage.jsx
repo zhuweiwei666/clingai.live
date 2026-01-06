@@ -91,7 +91,7 @@ export default function AIImage() {
           </label>
           <div className="grid grid-cols-3 gap-3">
             {styles.map((style) => (
-              <button
+          <button
                 key={style.id}
                 onClick={() => setSelectedStyle(style)}
                 className={`relative aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all ${
@@ -107,10 +107,10 @@ export default function AIImage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
                   <span className="text-[10px] font-bold text-white uppercase">{style.title}</span>
                 </div>
-              </button>
-            ))}
+          </button>
+        ))}
           </div>
-        </div>
+      </div>
 
         {/* Generate Button */}
         <button

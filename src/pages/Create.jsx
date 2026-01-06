@@ -19,7 +19,7 @@ export default function Create() {
         <span className="text-3xl">♾️</span>
         <h1 className="text-2xl font-bold text-white font-['Notable'] tracking-wider">Create</h1>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-4">
         {features.map((feature) => (
           <button

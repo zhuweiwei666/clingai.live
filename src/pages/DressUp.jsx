@@ -118,7 +118,7 @@ export default function DressUp() {
       return;
     }
 
-    setIsProcessing(true);
+      setIsProcessing(true);
     try {
       // 1. Upload image
       toast.loading('Uploading image...', { id: 'dressup' });
@@ -127,11 +127,11 @@ export default function DressUp() {
       if (!uploadResult || !uploadResult.url) {
         throw new Error('Failed to upload image');
       }
-
+      
       // 2. Start task
       toast.loading('Starting Dress Up...', { id: 'dressup' });
       const result = await generationService.dressUp(uploadResult.url, template.id);
-
+      
       if (result && result.taskId) {
         toast.success('Task created! Check My Works later.', { id: 'dressup' });
         navigate('/profile');
@@ -170,11 +170,11 @@ export default function DressUp() {
           
           <div className="upload-button-icon">
             {imagePreview ? (
-              <img 
-                src={imagePreview} 
+          <img 
+            src={imagePreview} 
                 alt="" 
                 className="w-full h-full object-cover rounded-xl"
-              />
+          />
             ) : (
               <ShirtIcon />
             )}
@@ -190,28 +190,28 @@ export default function DressUp() {
 
       {/* Categories */}
       <div className="function-tabs mb-2">
-        {['All', 'Dress', 'Casual', 'Swimwear', 'Lingerie'].map((category) => (
-          <button
-            key={category}
+            {['All', 'Dress', 'Casual', 'Swimwear', 'Lingerie'].map((category) => (
+              <button
+                key={category}
             onClick={() => setActiveTab(category)}
             className={`function-tab ${activeTab === category ? 'active' : ''}`}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+              >
+                {category}
+              </button>
+            ))}
+          </div>
 
       {/* Templates Grid */}
       <div className="cards-grid">
-        {templates.map((template, index) => (
+            {templates.map((template, index) => (
           <TemplateCard
-            key={template.id}
+                key={template.id}
             template={template}
             index={index}
             onSelect={handleDressUp}
           />
-        ))}
-      </div>
+            ))}
+          </div>
     </div>
   );
 }
