@@ -9,6 +9,7 @@ import Create from './pages/Create';
 import Profile from './pages/Profile';
 import MyWorks from './pages/MyWorks';
 import Settings from './pages/Settings';
+import Result from './pages/Result';
 import AIImage from './pages/AIImage';
 import FaceSwap from './pages/FaceSwap';
 import DressUp from './pages/DressUp';
@@ -64,6 +65,9 @@ function App() {
               {/* Profile - handles auth internally */}
               <Route path="profile" element={<Profile />} />
               <Route path="my" element={<Profile />} />
+              <Route path="history" element={<MyWorks />} />
+              <Route path="setting" element={<Settings />} />
+              <Route path="result" element={<Result />} />
               
               {/* Protected routes */}
               <Route path="create" element={

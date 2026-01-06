@@ -48,7 +48,7 @@ export default function AIImage() {
 
       if (result && result.taskId) {
         toast.success('Task created! Check My Works later.');
-        navigate('/profile');
+        navigate(`/result?taskId=${result.taskId}`);
       } else {
         toast.error('Failed to create task');
       }

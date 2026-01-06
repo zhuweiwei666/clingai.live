@@ -172,8 +172,8 @@ export default function FaceSwap() {
       }
 
       if (result && result.taskId) {
-        toast.success('Task created! Check My Works later.', { id: 'faceswap' });
-        navigate('/profile');
+        toast.success('Task created!', { id: 'faceswap' });
+        navigate(`/result?taskId=${result.taskId}`);
       } else {
         toast.error('Failed to create task', { id: 'faceswap' });
       }

@@ -135,7 +135,7 @@ export default function DressUp() {
       
       if (result && result.taskId) {
         toast.success('Task created! Check My Works later.', { id: 'dressup' });
-        navigate('/profile');
+        navigate(`/result?taskId=${result.taskId}`);
       } else {
         toast.error('Failed to create task', { id: 'dressup' });
       }
