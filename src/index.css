@@ -262,8 +262,15 @@ body {
 .section-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   padding: 20px 16px 16px;
+}
+
+.section-header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .section-header .fire-emoji {

@@ -175,12 +175,25 @@ function VideoCard({ template, index }) {
 }
 
 export default function Home() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen">
       {/* Section Header */}
       <div className="section-header">
-        <span className="fire-emoji">🔥</span>
-        <span className="title-text">Trending: Photo to video</span>
+        <div>
+          <span className="fire-emoji">🔥</span>
+          <span className="title-text">Trending: Photo to video</span>
+        </div>
+        <button
+          onClick={() => navigate('/create')}
+          className="flex items-center gap-1 text-white text-sm font-medium hover:opacity-80 transition-opacity"
+        >
+          See All
+          <svg className="w-4 h-4 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
 
       {/* 视频卡片网格 */}
