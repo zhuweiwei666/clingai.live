@@ -187,12 +187,13 @@ export default function All() {
     setPage(1);
     setTemplates([]);
     loadTemplates(activeCategory, 1, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
 
   // Infinite scroll handler
   useEffect(() => {
     const handleScroll = () => {
-      if (loadingMore || !hasMore) return;
+      if (loadingMore || !hasMore || loading) return;
 
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const windowHeight = window.innerHeight;
@@ -208,10 +209,11 @@ export default function All() {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [page, activeCategory, hasMore, loadingMore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, activeCategory, hasMore, loadingMore, loading]);
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="min-h-screen bg-black pb-24">
       {/* 分类 Tabs */}
       <div className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-[#262626]">
         <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
@@ -239,11 +241,13 @@ export default function All() {
       ) : (
         <>
           {/* 模板网格 */}
-          <div className="cards-grid px-4 py-6">
-            {templates.map((template, index) => (
-              <VideoCard key={template._id || template.id} template={template} index={index} />
-            ))}
-          </div>
+          {templates.length > 0 && (
+            <div className="cards-grid px-4 py-6">
+              {templates.map((template, index) => (
+                <VideoCard key={template._id || template.id} template={template} index={index} />
+              ))}
+            </div>
+          )}
 
           {/* 加载更多指示器 */}
           {loadingMore && (
