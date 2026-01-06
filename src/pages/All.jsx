@@ -187,7 +187,14 @@ export default function All() {
       }
     } catch (error) {
       console.error('Failed to load templates:', error);
-      toast.error('Failed to load templates');
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        category,
+        pageNum,
+      });
+      toast.error(error.message || 'Failed to load templates');
+      setTemplates([]);
     } finally {
       setLoading(false);
       setLoadingMore(false);
