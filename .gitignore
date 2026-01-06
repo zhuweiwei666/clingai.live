@@ -50,3 +50,6 @@ Thumbs.db
 video-resources/
 *.zip
 *.tar.gz
+
+# Template assets are served from R2 (not tracked in git)
+public/templates/
