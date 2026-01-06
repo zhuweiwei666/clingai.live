@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { generationService } from '../services/generationService';
 import useUserStore from '../store/userStore';
+import { assetUrl } from '../utils/assetUrl';
 
 // Icons
 const SendIcon = () => (
@@ -99,7 +100,7 @@ export default function AIImage() {
                 }`}
               >
                 <img 
-                  src={style.thumbnail} 
+                  src={assetUrl(style.thumbnail)} 
                   alt={style.title}
                   className="w-full h-full object-cover"
                   onError={(e) => e.target.src = 'https://via.placeholder.com/150'}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { assetUrl } from '../utils/assetUrl';
 
 // 视频图标 - 两个矩形 (Consistent with Layout)
 const VideoIcon = () => (
@@ -123,8 +124,8 @@ function VideoCard({ template, index }) {
       {/* 视频 - 主要显示 */}
       <video
         ref={videoRef}
-        src={template.video}
-        poster={template.thumbnail}
+        src={assetUrl(template.video)}
+        poster={assetUrl(template.thumbnail)}
         muted
         loop
         playsInline

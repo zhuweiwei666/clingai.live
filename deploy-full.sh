@@ -130,6 +130,7 @@ deploy_frontend() {
     log_info "创建前端环境变量文件..."
     cat > /tmp/frontend.env << EOF
 VITE_GOOGLE_CLIENT_ID=1031646438202-g9kg86khnp6tdh13b8e75f5p6r95jutg.apps.googleusercontent.com
+VITE_ASSET_BASE_URL=https://pub-17497f33464648bdb5f47bbbdbf732e7.r2.dev
 EOF
     
     # 上传前端 .env 文件

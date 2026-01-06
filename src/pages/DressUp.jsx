@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { generationService } from '../services/generationService';
 import { uploadService } from '../services/uploadService';
 import useUserStore from '../store/userStore';
+import { assetUrl } from '../utils/assetUrl';
 
 // Icons
 const ShirtIcon = () => (
@@ -49,7 +50,7 @@ function TemplateCard({ template, index, onSelect }) {
     >
       <div className="video-card-media">
         <img
-          src={template.thumbnail}
+          src={assetUrl(template.thumbnail)}
           alt=""
           loading="lazy"
           onLoad={() => setLoaded(true)}
