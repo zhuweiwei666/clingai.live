@@ -10,6 +10,7 @@ import Profile from './pages/Profile';
 import MyWorks from './pages/MyWorks';
 import Settings from './pages/Settings';
 import Result from './pages/Result';
+import PaymentHistory from './pages/PaymentHistory';
 import AIImage from './pages/AIImage';
 import FaceSwap from './pages/FaceSwap';
 import DressUp from './pages/DressUp';
@@ -68,6 +69,8 @@ function App() {
               <Route path="history" element={<MyWorks />} />
               <Route path="setting" element={<Settings />} />
               <Route path="result" element={<Result />} />
+              <Route path="paylist" element={<PaymentHistory />} />
+              <Route path="payment-history" element={<PaymentHistory />} />
               
               {/* Protected routes */}
               <Route path="create" element={

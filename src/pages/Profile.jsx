@@ -223,6 +223,7 @@ export default function Profile() {
           {[
             { label: 'My Works', path: '/my-works' },
             { label: 'Buy Coins', path: '/coins' },
+            { label: 'Payment History', path: '/paylist' },
             { label: 'Settings', path: '/settings' },
           ].map((item) => (
             <button 
