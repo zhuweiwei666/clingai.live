@@ -147,6 +147,21 @@ EOF
     log_info "前端部署完成"
 }
 
+# 2.1 部署管理后台
+deploy_admin() {
+    log_info "部署管理后台..."
+    
+    # 在服务器上构建管理后台
+    log_info "在服务器上构建管理后台..."
+    ssh_exec "cd $SERVER_PROJECT_DIR/admin && npm install && npm run build"
+    
+    # 部署管理后台文件
+    log_info "部署管理后台文件到 /var/www/honeyai-admin..."
+    ssh_exec "mkdir -p /var/www/honeyai-admin && cp -r $SERVER_PROJECT_DIR/admin/dist/* /var/www/honeyai-admin/ && chown -R www-data:www-data /var/www/honeyai-admin && chmod -R 755 /var/www/honeyai-admin"
+    
+    log_info "管理后台部署完成"
+}
+
 # 3. 部署后端
 deploy_backend() {
     log_info "部署后端代码..."
@@ -350,6 +365,7 @@ main() {
     # 执行部署步骤
     commit_code
     deploy_frontend
+    deploy_admin
     deploy_backend
     configure_env
     restart_services
