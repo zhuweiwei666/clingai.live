@@ -150,15 +150,23 @@ EOF
 # 2.1 部署管理后台
 deploy_admin() {
     log_info "部署管理后台..."
-    
-    # 在服务器上构建管理后台
-    log_info "在服务器上构建管理后台..."
-    ssh_exec "cd $SERVER_PROJECT_DIR/admin && npm install && npm run build"
-    
-    # 部署管理后台文件
+
+    # 本地构建管理后台（避免服务器 Node OOM）
+    log_info "本地构建管理后台..."
+    (cd /Users/zhuweiwei/ClingAI.live/admin && npm install && npm run build)
+
+    # 上传构建产物到服务器临时目录
+    log_info "上传管理后台构建产物到服务器..."
+    ssh_exec "rm -rf /tmp/honeyai-admin-dist && mkdir -p /tmp/honeyai-admin-dist"
+    scp_file "/Users/zhuweiwei/ClingAI.live/admin/dist/" "/tmp/honeyai-admin-dist"
+
+    # 部署管理后台文件到 /var/www/honeyai-admin
     log_info "部署管理后台文件到 /var/www/honeyai-admin..."
-    ssh_exec "mkdir -p /var/www/honeyai-admin && cp -r $SERVER_PROJECT_DIR/admin/dist/* /var/www/honeyai-admin/ && chown -R www-data:www-data /var/www/honeyai-admin && chmod -R 755 /var/www/honeyai-admin"
-    
+    ssh_exec "rm -rf /var/www/honeyai-admin && mkdir -p /var/www/honeyai-admin && cp -r /tmp/honeyai-admin-dist/dist/* /var/www/honeyai-admin/ && chown -R www-data:www-data /var/www/honeyai-admin && chmod -R 755 /var/www/honeyai-admin"
+
+    # 清理临时目录
+    ssh_exec "rm -rf /tmp/honeyai-admin-dist"
+
     log_info "管理后台部署完成"
 }
 
@@ -178,7 +186,8 @@ configure_env() {
     log_info "配置后端环境变量（智能合并模式）..."
     
     # 在服务器上备份现有 .env 文件
-    ssh_exec "if [ -f $SERVER_BACKEND_DIR/.env ]; then cp $SERVER_BACKEND_DIR/.env $SERVER_BACKEND_DIR/.env.backup.\$(date +%Y%m%d_%H%M%S); fi" || true
+    # 注意：避免在 expect/tcl 中使用 [] 触发解析错误
+    ssh_exec "if test -f $SERVER_BACKEND_DIR/.env; then cp $SERVER_BACKEND_DIR/.env $SERVER_BACKEND_DIR/.env.backup.\$(date +%Y%m%d_%H%M%S); fi" || true
     
     # 创建更新脚本，智能合并环境变量
     cat > /tmp/update_env.sh << 'ENVSCRIPT'
