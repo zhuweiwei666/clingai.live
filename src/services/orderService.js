@@ -1,6 +1,18 @@
 import apiClient from './api';
 
 export const orderService = {
+  // 获取金币套餐 (benchmark: /app/get_coins_prices)
+  getPackages: async () => {
+    const response = await apiClient.get('/order/packages');
+    return response.data;
+  },
+
+  // 获取订阅计划 (benchmark: /app/get_vip_price)
+  getPlans: async () => {
+    const response = await apiClient.get('/order/plans');
+    return response.data;
+  },
+
   // 创建订单
   createOrder: async (type, packageId, planId, paymentMethod = 'stripe') => {
     const response = await apiClient.post('/order/create', {

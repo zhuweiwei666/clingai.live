@@ -18,17 +18,33 @@ const Settings = mongoose.model('Settings', settingsSchema);
 
 // 默认配置
 export const DEFAULT_SETTINGS = {
+  // Benchmark parity: exact pricing from /coins page
   coinPackages: [
-    { id: 'pkg_50', coins: 50, price: 4.99, bonus: 0 },
-    { id: 'pkg_100', coins: 100, price: 8.99, bonus: 10 },
-    { id: 'pkg_200', coins: 200, price: 16.99, bonus: 30 },
-    { id: 'pkg_500', coins: 500, price: 39.99, bonus: 100 },
-    { id: 'pkg_1000', coins: 1000, price: 69.99, bonus: 300 },
+    { id: 1, coins: 10, price: 5, bonus: 10 },
+    { id: 2, coins: 100, price: 10, bonus: 100 },
+    { id: 3, coins: 210, price: 20, bonus: 210 },
+    { id: 4, coins: 550, price: 50, bonus: 550 },
+    { id: 5, coins: 1200, price: 100, bonus: 1200 },
+    { id: 6, coins: 2500, price: 200, bonus: 2500 },
   ],
+  // Benchmark parity: exact pricing from /subscribe page
   subscriptionPlans: [
-    { id: 'basic', name: 'Basic', price: 9.99, features: ['100 coins/month', 'Basic support'] },
-    { id: 'pro', name: 'Pro', price: 19.99, features: ['300 coins/month', 'Priority support', 'HD quality'] },
-    { id: 'unlimited', name: 'Unlimited', price: 49.99, features: ['Unlimited coins', 'VIP support', '4K quality', 'No watermark'] },
+    {
+      id: 'super',
+      name: 'SUPER',
+      period: 'Yearly access',
+      price: 59.99,
+      pricePerWeek: 1.15,
+      gradient: true,
+    },
+    {
+      id: 'monthly',
+      name: 'MONTHLY ACCESS',
+      period: 'just $19.99 per month',
+      price: 19.99,
+      pricePerDay: 0.60,
+      gradient: false,
+    },
   ],
   featureCosts: {
     photo2video: 5,

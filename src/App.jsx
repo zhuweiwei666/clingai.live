@@ -16,6 +16,8 @@ import HD from './pages/HD';
 import Remove from './pages/Remove';
 import ChatEdit from './pages/ChatEdit'; // Import ChatEdit
 import Pricing from './pages/Pricing';
+import Coins from './pages/Coins';
+import Subscribe from './pages/Subscribe';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Refund from './pages/Refund';
@@ -46,18 +48,22 @@ function App() {
               <Route path="ai-image" element={<AIImage />} />
               <Route path="ai-video" element={<Home />} />
               <Route path="face-swap" element={<FaceSwap />} />
+              <Route path="makeover" element={<FaceSwap />} />
               <Route path="dress-up" element={<DressUp />} />
               <Route path="hd" element={<HD />} />
               <Route path="remove" element={<Remove />} />
               <Route path="chat-edit" element={<ChatEdit />} />
               <Route path="watermark" element={<Remove />} />
               <Route path="pricing" element={<Pricing />} />
+              <Route path="coins" element={<Coins />} />
+              <Route path="subscribe" element={<Subscribe />} />
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="refund" element={<Refund />} />
               
               {/* Profile - handles auth internally */}
               <Route path="profile" element={<Profile />} />
+              <Route path="my" element={<Profile />} />
               
               {/* Protected routes */}
               <Route path="create" element={

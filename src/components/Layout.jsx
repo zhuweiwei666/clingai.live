@@ -112,7 +112,7 @@ export default function Layout() {
   const { isAuthenticated, user } = useUserStore();
 
   // 显示顶部 Header 的页面
-  const showHeader = ['/', '/ai-image', '/ai-video', '/remove', '/chat-edit', '/face-swap', '/dress-up', '/create'].includes(currentPath);
+  const showHeader = ['/', '/ai-image', '/ai-video', '/remove', '/chat-edit', '/face-swap', '/makeover', '/dress-up', '/create'].includes(currentPath);
 
   return (
     <div className="min-h-screen bg-black flex flex-col">
@@ -194,8 +194,8 @@ export default function Layout() {
           </NavLink>
 
           <NavLink 
-            to="/profile" 
-            className={`nav-item ${currentPath === '/profile' ? 'active' : ''}`}
+            to="/my" 
+            className={`nav-item ${(currentPath === '/profile' || currentPath === '/my') ? 'active' : ''}`}
           >
             <SaveIcon />
           </NavLink>

@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { generationService } from '../services/generationService';
 import { uploadService } from '../services/uploadService';
@@ -87,16 +87,33 @@ function TemplateCard({ template, index, onSelect }) {
 
 export default function FaceSwap() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated } = useUserStore();
   const fileInputRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('image');
+  
+  // Parse URL param to set initial tab (benchmark: /makeover?type=change_face_image)
+  const typeParam = searchParams.get('type');
+  const initialTab = typeParam === 'change_face_video' ? 'video' 
+    : typeParam === 'dress_up' ? 'dressup' 
+    : 'image';
+  
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [sourceFile, setSourceFile] = useState(null);
   const [sourcePreview, setSourcePreview] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Update tab when URL param changes
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type === 'change_face_video') setActiveTab('video');
+    else if (type === 'dress_up') setActiveTab('dressup');
+    else setActiveTab('image');
+  }, [searchParams]);
+
   const tabs = [
     { id: 'image', label: 'Image Face Swap' },
     { id: 'video', label: 'Video Face Swap' },
+    { id: 'dressup', label: 'Dress Up' },
   ];
 
   const handleFileSelect = (e) => {
@@ -139,7 +156,10 @@ export default function FaceSwap() {
       toast.loading('Starting Face Swap...', { id: 'faceswap' });
       
       let result;
-      if (template.type === 'video' || activeTab === 'video') {
+      if (activeTab === 'dressup') {
+        // Dress Up (Virtual Try-On)
+        result = await generationService.dressUp(uploadResult.url, template.id);
+      } else if (template.type === 'video' || activeTab === 'video') {
         // Video Face Swap (Template is target video)
         // Since templates have thumbnails only in mock, we assume template.id maps to a video url in backend or use a mock url
         // For real implementation, template should have .video url
@@ -166,9 +186,18 @@ export default function FaceSwap() {
   };
 
   // Filter templates based on active tab
-  const displayTemplates = templates.filter(t => 
-    activeTab === 'video' ? t.type === 'video' : t.type === 'image'
-  );
+  const displayTemplates = activeTab === 'dressup'
+    ? [
+        { id: '1', title: 'Elegant Dress', thumbnail: '/templates/1.jpg', type: 'dressup', badge: 'super' },
+        { id: '2', title: 'Casual Style', thumbnail: '/templates/2.jpg', type: 'dressup', badge: 'new' },
+        { id: '3', title: 'Swimwear', thumbnail: '/templates/3.jpg', type: 'dressup', badge: null },
+        { id: '4', title: 'Lingerie', thumbnail: '/templates/4.jpg', type: 'dressup', badge: null },
+        { id: '5', title: 'Office Wear', thumbnail: '/templates/5.jpg', type: 'dressup', badge: null },
+        { id: '6', title: 'Party Dress', thumbnail: '/templates/6.jpg', type: 'dressup', badge: 'super' },
+      ]
+    : templates.filter(t => 
+        activeTab === 'video' ? t.type === 'video' : t.type === 'image'
+      );
 
   return (
     <div className="min-h-screen pb-24">
@@ -206,12 +235,18 @@ export default function FaceSwap() {
               className="w-full h-full object-cover rounded-xl"
             />
           ) : (
-            <FaceIcon />
+            activeTab === 'dressup' ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M20.38 3.46L16 2a4 4 0 01-8 0L3.62 3.46a2 2 0 00-1.34 2.23l.58 3.47a1 1 0 00.99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 002-2V10h2.15a1 1 0 00.99-.84l.58-3.47a2 2 0 00-1.34-2.23z" />
+              </svg>
+            ) : (
+              <FaceIcon />
+            )
           )}
         </div>
         
         <div className="upload-button-text">
-          {isProcessing ? 'Processing...' : 'Upload Your Face'}
+          {isProcessing ? 'Processing...' : activeTab === 'dressup' ? 'Upload Your Photo' : 'Upload Your Face'}
         </div>
         
         {!isProcessing && <div className="upload-button-plus">+</div>}
