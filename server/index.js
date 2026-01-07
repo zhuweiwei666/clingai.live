@@ -107,12 +107,18 @@ async function start() {
     // 连接数据库
     await connectDB();
     
-    app.listen(PORT, '0.0.0.0', () => {
+    console.log('Attempting to bind to port ' + PORT);
+    app.listen(PORT, '127.0.0.1', (err) => {
+      if (err) {
+        console.error('Failed to listen:', err);
+        process.exit(1);
+      }
       console.log(`
 🚀 ClingAI Server is running!
    Port: ${PORT}
+   Host: 127.0.0.1
    Environment: ${process.env.NODE_ENV || 'development'}
-   API: http://localhost:${PORT}/api
+   API: http://127.0.0.1:${PORT}/api
       `);
     });
   } catch (error) {
