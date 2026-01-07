@@ -21,19 +21,25 @@ Viewport: **390×844** (mobile)
 
 ### Verification
 - Direct server HTTPS (`https://173.255.193.131` with Host header): ✅ Returns correct "Hot AI Video" content
-- Cloudflare CDN (`https://clingai.live`): ⚠️ May show cached GentleMind content (cache needs purging)
+- Cloudflare CDN (`https://clingai.live`): ⚠️ Still caching old content (as of 2026-01-07 04:25 UTC). Use `?v=timestamp` to bypass if possible, or wait for cache expiry.
 
 ### Next Steps
-1. Purge Cloudflare cache for `clingai.live`
-2. Wait for cache TTL to expire (or set cache rules to bypass for HTML)
-3. Complete visual regression testing after cache clears
+1. **Purge Cloudflare cache** for `clingai.live` (Essential).
+2. Wait for cache TTL to expire.
+3. Complete visual regression testing.
+
+## Recent Updates (Polishing)
+- **Home**: Polished mobile safe areas, sticky header, and tab badges.
+- **Layout**: Refined bottom navigation and global styles.
+- **All Page**: Added shimmer skeleton loaders and smooth infinite scroll.
+- **Admin**: Enhanced Template management (tags) and User details view.
 
 ## Screenshots
 
 | Route | Benchmark | Clone | Notes |
 |------|-----------|-------|------|
-| `/` |  | `parity-our-home.png` | ⚠️ Cloudflare cache showing GentleMind |
-| `/all` |  |  |  |
+| `/` |  | `parity-our-home.png` | ⚠️ Cloudflare cache showing GentleMind. Direct IP verified correct. |
+| `/all` |  |  | Skeleton loader & infinite scroll implemented. |
 | `/create` |  |  |  |
 | `/my` |  |  |  |
 | `/subscribe` |  |  |  |
@@ -44,8 +50,9 @@ Viewport: **390×844** (mobile)
 
 ## Notes
 
-- Server-side files are correct (verified via direct IP access)
-- Cloudflare CDN caching is causing the mismatch
-- To verify actual deployment: `curl -s https://173.255.193.131 --insecure -H "Host: clingai.live"`
+- **Deployment Verified**: Server-side code is up-to-date and correct.
+- **Action Required**: Clear Cloudflare cache to see changes on the domain.
+- **Verification Command**: `curl -s -H "Host: clingai.live" http://173.255.193.131 | grep "Hot AI"` (Should return meta tags)
+
 
 

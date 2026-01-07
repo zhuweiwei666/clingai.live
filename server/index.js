@@ -107,7 +107,7 @@ async function start() {
     // 连接数据库
     await connectDB();
     
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`
 🚀 ClingAI Server is running!
    Port: ${PORT}
