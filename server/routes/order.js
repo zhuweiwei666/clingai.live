@@ -332,8 +332,7 @@ router.get('/my_subscribe', verifyToken, async (req, res) => {
   }
 });
 
-// Stripe取消订阅 (benchmark: /app/order/stripe_unsubscribe)
-router.post('/stripe/unsubscribe', verifyToken, async (req, res) => {
+async function stripeUnsubscribe(req, res) {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -379,6 +378,11 @@ router.post('/stripe/unsubscribe', verifyToken, async (req, res) => {
     console.error('Unsubscribe error:', error);
     return errorResponse(res, 'Failed to unsubscribe', 'UNSUBSCRIBE_ERROR', 500);
   }
-});
+}
+
+// Stripe取消订阅 (benchmark: /app/order/stripe_unsubscribe)
+router.post('/stripe/unsubscribe', verifyToken, stripeUnsubscribe);
+// Alias for benchmark naming: /app/order/stripe_unsubscribe
+router.post('/stripe_unsubscribe', verifyToken, stripeUnsubscribe);
 
 export default router;

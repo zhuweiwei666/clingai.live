@@ -804,11 +804,14 @@ body {
 .skeleton-shimmer {
   animation: shimmer 2s infinite linear;
 }
+
+/* Mobile accessibility: minimum touch targets and prevent iOS zoom on inputs */
+@media (max-width: 640px) {
   button, .btn-primary, .btn-secondary {
     min-height: 44px;
     min-width: 44px;
   }
-  
+
   input, textarea {
     font-size: 16px !important;
   }

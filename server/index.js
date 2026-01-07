@@ -23,6 +23,7 @@ import guestRoutes from './routes/guest.js';
 import agentRoutes from './routes/agent.js';
 import adRoutes from './routes/ad.js';
 import adminRoutes from './routes/admin/index.js';
+import appCompatRoutes from './routes/appCompat.js';
 
 // 导入错误处理中间件
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
@@ -64,6 +65,8 @@ app.use('/api/guest', guestRoutes);
 app.use('/api/agent', agentRoutes);
 app.use('/api/ad', adRoutes);
 app.use('/api/admin', adminRoutes);
+// Benchmark-style compat endpoints (e.g. /api/get_ad, /api/get_coins_prices, /api/tools/*)
+app.use('/api', appCompatRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {

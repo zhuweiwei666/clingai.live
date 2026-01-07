@@ -1,0 +1,13 @@
+/* OnlyCrush rebuild foundation styles (kept minimal; most styles remain in src/index.css for now) */
+
+.oc-root {
+  min-height: 100vh;
+  background: #000;
+  color: #fff;
+}
+
+.oc-safe-bottom {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+

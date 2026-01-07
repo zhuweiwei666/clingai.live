@@ -174,6 +174,45 @@ router.get('/orders', verifyToken, async (req, res) => {
   }
 });
 
+// 支付历史（benchmark: POST /app/user/payment_history）- 支持未登录访问（返回空）
+router.post('/payment_history', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '') || '';
+    if (!token) {
+      return successResponse(res, { orders: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } });
+    }
+
+    try {
+      const jwt = await import('jsonwebtoken');
+      const decoded = jwt.default.verify(token, process.env.JWT_SECRET);
+      const userId = decoded.userId;
+
+      const { page = 1, limit = 20 } = req.body || {};
+      const orders = await Order.find({ userId })
+        .sort({ createdAt: -1 })
+        .skip((Number(page) - 1) * Number(limit))
+        .limit(Number(limit));
+      const total = await Order.countDocuments({ userId });
+
+      return successResponse(res, {
+        orders,
+        pagination: {
+          page: Number(page),
+          limit: Number(limit),
+          total,
+          pages: Math.ceil(total / Number(limit)),
+        },
+      });
+    } catch (jwtError) {
+      // Invalid token: benchmark behaves like logged-out
+      return successResponse(res, { orders: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } });
+    }
+  } catch (error) {
+    console.error('Payment history error:', error);
+    return errorResponse(res, 'Failed to get payment history', 'GET_PAYMENT_HISTORY_ERROR', 500);
+  }
+});
+
 // 获取用户反馈 (benchmark: /app/user/feedback)
 router.get('/feedback', verifyToken, async (req, res) => {
   try {
