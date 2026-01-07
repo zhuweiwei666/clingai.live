@@ -6,16 +6,69 @@ import { generationService } from '../services/generationService';
 import { uploadService } from '../services/uploadService';
 import templateService from '../services/templateService';
 import { assetUrl } from '../utils/assetUrl';
+import { handleApiError } from '../utils/errorHandler';
 
-const features = [
-  { title: 'AI Video', path: '/', color: 'from-purple-600 to-indigo-600', icon: '🎬' },
-  { title: 'Face Swap', path: '/face-swap', color: 'from-pink-600 to-rose-600', icon: '🎭' },
-  { title: 'Chat Edit', path: '/chat-edit', color: 'from-blue-600 to-cyan-600', icon: '💬' },
-  { title: 'Dress Up', path: '/dress-up', color: 'from-emerald-600 to-teal-600', icon: '👗' },
-  { title: 'AI Image', path: '/ai-image', color: 'from-orange-600 to-amber-600', icon: '🎨' },
-  { title: 'Remove', path: '/remove', color: 'from-red-600 to-orange-600', icon: '🧹' },
-  { title: 'HD Upscale', path: '/hd', color: 'from-violet-600 to-purple-600', icon: '✨' },
-];
+// Pro Icon Component
+const ProIcon = () => (
+  <div className="px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm font-bold shadow-[0_0_10px_rgba(168,85,247,0.5)]">
+    Pro
+  </div>
+);
+
+// Template Card Component for "More ways to play" section
+function TemplateCard({ template, onSelect }) {
+  const videoRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (videoRef.current && template.previewVideo) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [template.previewVideo]);
+
+  return (
+    <div
+      className="relative flex-shrink-0 w-[140px] aspect-[3/4] rounded-2xl overflow-hidden bg-[#141414] cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
+      onClick={() => onSelect(template)}
+    >
+      {template.previewVideo ? (
+        <video
+          ref={videoRef}
+          src={assetUrl(template.previewVideo)}
+          poster={assetUrl(template.thumbnail)}
+          muted
+          loop
+          playsInline
+          autoPlay
+          onLoadedData={() => setLoaded(true)}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <img
+          src={assetUrl(template.thumbnail)}
+          alt={template.name}
+          className="absolute inset-0 w-full h-full object-cover"
+          onLoad={() => setLoaded(true)}
+        />
+      )}
+      
+      {/* Gradient Overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-10"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.3) 40%, transparent 60%)'
+        }}
+      />
+      
+      {/* Title at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 p-2 z-20">
+        <div className="text-center text-[11px] font-bold text-white uppercase tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>
+          {template.name}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Create() {
   const navigate = useNavigate();
@@ -23,43 +76,30 @@ export default function Create() {
   const templateId = searchParams.get('template');
   const { isAuthenticated } = useUserStore();
   const fileInputRef = useRef(null);
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [templates, setTemplates] = useState([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
-  // Load template from API when templateId is provided
+  // Load templates for "More ways to play" section
   useEffect(() => {
-    if (templateId) {
-      setLoading(true);
-      templateService.getById(templateId)
-        .then((response) => {
-          if (response.template) {
-            const template = response.template;
-            // Transform API template to match expected format
-            setSelectedTemplate({
-              id: template._id || template.id,
-              title: template.name || template.title,
-              thumbnail: template.thumbnail,
-              video: template.previewVideo || template.video,
-              badge: template.isSuper ? 'super' : (template.isNew ? 'new' : null),
-            });
-          } else {
-            toast.error('Template not found');
-            navigate('/');
-          }
-        })
-        .catch((error) => {
-          console.error('Failed to load template:', error);
-          toast.error('Failed to load template');
-          navigate('/');
-        })
-        .finally(() => {
-          setLoading(false);
+    const loadTemplates = async () => {
+      try {
+        setLoadingTemplates(true);
+        const response = await templateService.getAll({ limit: 50 });
+        setTemplates(response?.templates || []);
+      } catch (error) {
+        handleApiError(error, {
+          defaultMessage: 'Failed to load templates',
+          showToast: false, // Don't show toast for background loading
         });
-    }
-  }, [templateId, navigate]);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+    loadTemplates();
+  }, []);
 
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
@@ -76,7 +116,7 @@ export default function Create() {
     reader.readAsDataURL(file);
   };
 
-  const handleGenerate = async () => {
+  const handleTemplateSelect = async (template) => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
@@ -84,11 +124,6 @@ export default function Create() {
 
     if (!uploadedImage) {
       toast.error('Please upload an image first');
-      return;
-    }
-
-    if (!selectedTemplate) {
-      toast.error('Please select a template');
       return;
     }
 
@@ -102,7 +137,7 @@ export default function Create() {
       }
 
       toast.loading('Creating video...', { id: 'create' });
-      const result = await generationService.generateVideo(uploadResult.url, selectedTemplate.id);
+      const result = await generationService.generateVideo(uploadResult.url, template._id || template.id);
 
       if (result && result.taskId) {
         toast.success('Task created!', { id: 'create' });
@@ -111,132 +146,134 @@ export default function Create() {
         throw new Error('Failed to create task');
       }
     } catch (error) {
-      console.error('Generation error:', error);
-      toast.error(error.message || 'Failed to create task', { id: 'create' });
+      handleApiError(error, {
+        defaultMessage: 'Failed to create task',
+        showToast: true,
+      });
+      toast.dismiss('create');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen pb-24 flex items-center justify-center">
-        <div className="text-white">Loading template...</div>
+  return (
+    <div className="min-h-screen bg-black pb-24">
+      {/* Header with Pro badge */}
+      <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-md px-4 py-3 flex items-center justify-end">
+        <button onClick={() => navigate('/subscribe')} className="hover:scale-105 transition-transform">
+          <ProIcon />
+        </button>
       </div>
-    );
-  }
 
-  // If template is selected, show upload + generate flow
-  if (selectedTemplate) {
-    return (
-      <div className="min-h-screen pb-24 px-4 pt-6">
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <h1 className="text-xl font-bold text-white">Create Video</h1>
-        </div>
-
-        {/* Template Preview */}
-        <div className="mb-6">
-          <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#141414]">
-            <video
-              src={assetUrl(selectedTemplate.video)}
-              poster={assetUrl(selectedTemplate.thumbnail)}
-              muted
-              loop
-              playsInline
-              autoPlay
+      {/* Top Section: Two Image Previews with Arrow */}
+      <div className="px-4 pt-6 pb-4 flex items-center justify-center gap-3">
+        {/* Left Image Preview */}
+        <div className="relative w-20 h-28 rounded-xl overflow-hidden bg-[#141414]">
+          {imagePreview ? (
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
               className="w-full h-full object-cover"
             />
-            {selectedTemplate.badge === 'super' && (
-              <span className="absolute top-2 right-2 px-3 py-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-xl text-xs font-bold text-white">
-                Super
-              </span>
-            )}
-          </div>
-          <p className="text-white text-center mt-2 font-medium">{selectedTemplate.title}</p>
-        </div>
-
-        {/* Upload Area */}
-        <div
-          onClick={() => !isProcessing && fileInputRef.current?.click()}
-          className="bg-[#141414] rounded-2xl p-8 border-2 border-dashed border-[#262626] text-center cursor-pointer hover:border-purple-500 transition-colors mb-6"
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          {imagePreview ? (
-            <img src={imagePreview} alt="Preview" className="max-w-full max-h-[300px] rounded-xl mx-auto" />
           ) : (
-            <>
-              <div className="w-16 h-16 rounded-full bg-[#262626] flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
+            <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+              <div className="w-8 h-8 rounded-full bg-[#262626] flex items-center justify-center">
+                <svg className="w-4 h-4 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
                 </svg>
               </div>
-              <p className="text-white font-medium mb-1">Upload Your Photo</p>
-              <p className="text-white/60 text-sm">Click to select an image</p>
-            </>
+            </div>
           )}
         </div>
 
-        {/* Generate Button */}
+        {/* Arrow Icon */}
+        <div className="flex-shrink-0">
+          <svg className="w-6 h-6 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </div>
+
+        {/* Right Image Preview */}
+        <div className="relative w-20 h-28 rounded-xl overflow-hidden bg-[#141414]">
+          {imagePreview ? (
+            <img 
+              src={imagePreview} 
+              alt="Preview" 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[#1a1a1a]">
+              <div className="w-8 h-8 rounded-full bg-[#262626] flex items-center justify-center">
+                <svg className="w-4 h-4 text-white/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" />
+                  <path d="M21 15l-5-5L5 21" />
+                </svg>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bikini Icon */}
+      <div className="flex justify-center mb-4">
+        <div className="w-8 h-8 flex items-center justify-center">
+          <svg className="w-6 h-6 text-pink-500" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+        </div>
+      </div>
+
+      {/* Upload Button - White Oval with Black Text */}
+      <div className="px-4 mb-6">
         <button
-          onClick={handleGenerate}
-          disabled={!uploadedImage || isProcessing}
-          className={`w-full py-4 rounded-xl font-bold text-white text-lg ${
-            !uploadedImage || isProcessing
-              ? 'bg-[#262626] text-[#666] cursor-not-allowed'
-              : 'bg-gradient-to-r from-purple-600 to-pink-600'
-          }`}
+          onClick={() => !isProcessing && fileInputRef.current?.click()}
+          disabled={isProcessing}
+          className="w-full bg-white rounded-full py-4 px-6 flex items-center justify-center gap-2 text-black font-bold text-base hover:bg-gray-100 active:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isProcessing ? 'Processing...' : 'Generate Video'}
+          <span>Upload Her Image</span>
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
         </button>
-      </div>
-    );
-  }
-
-  // Default: Feature selection
-  return (
-    <div className="min-h-screen pb-24 px-4 pt-6">
-      <div className="flex items-center gap-2 mb-8">
-        <span className="text-3xl">♾️</span>
-        <h1 className="text-2xl font-bold text-white font-['Notable'] tracking-wider">Create</h1>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {features.map((feature) => (
-          <button
-            key={feature.title}
-            onClick={() => navigate(feature.path)}
-            className={`aspect-[4/3] rounded-2xl bg-gradient-to-br ${feature.color} p-5 flex flex-col justify-between hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg`}
-          >
-             <div className="text-3xl bg-black/20 w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm">
-               {feature.icon}
-             </div>
-             <div className="flex justify-between items-end">
-               <span className="text-white font-bold text-lg leading-tight">{feature.title}</span>
-               <div className="bg-white/20 p-1.5 rounded-full backdrop-blur-sm">
-                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                 </svg>
-               </div>
-             </div>
-          </button>
-        ))}
+      {/* "More ways to play with her" Section */}
+      <div className="px-4">
+        <div className="text-white text-center text-sm font-medium mb-4">
+          More ways to play with her
+        </div>
+
+        {/* Horizontal Scrollable Template Grid */}
+        {loadingTemplates ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-white/60">Loading templates...</div>
+          </div>
+        ) : templates.length > 0 ? (
+          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2">
+            {templates.map((template) => (
+              <TemplateCard
+                key={template._id || template.id}
+                template={template}
+                onSelect={handleTemplateSelect}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-white/60">No templates available</div>
+          </div>
+        )}
       </div>
     </div>
   );

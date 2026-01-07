@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { assetUrl } from '../utils/assetUrl';
 import templateService from '../services/templateService';
+import { handleApiError, withLoadingState } from '../utils/errorHandler';
 import toast from 'react-hot-toast';
 
 // 视频图标
@@ -140,37 +141,28 @@ export default function All() {
 
       let response;
       if (category === 'all') {
-        const allResponse = await templateService.getAll({ page: pageNum, limit: 20 });
-        response = allResponse;
+        response = await templateService.getAll({ page: pageNum, limit: 20 });
       } else if (category === 'new') {
         const newResponse = await templateService.getNew(20);
         // Transform to match pagination format
+        const templates = newResponse?.templates || [];
         response = { 
-          templates: newResponse.templates || [], 
+          templates, 
           pagination: { 
             page: 1, 
             limit: 20, 
-            total: newResponse.templates?.length || 0, 
+            total: templates.length, 
             pages: 1 
           } 
         };
       } else {
         // For other categories (viral, cosplay, closeup, charm), use tag filter
-        // These are tags, not categories, so we need to filter by tag
-        const tagResponse = await templateService.getAll({ page: pageNum, limit: 20, tag: category });
-        response = tagResponse;
+        response = await templateService.getAll({ page: pageNum, limit: 20, tag: category });
       }
 
-      // Handle both direct response and nested data structure
-      const newTemplates = response?.templates || response?.data?.templates || [];
-      
-      console.log('[All] Loaded templates:', {
-        category,
-        pageNum,
-        count: newTemplates.length,
-        responseKeys: Object.keys(response || {}),
-        firstTemplate: newTemplates[0],
-      });
+      // apiClient interceptor already extracts data, so response is { templates, pagination }
+      const newTemplates = response?.templates || [];
+      const pagination = response?.pagination;
       
       if (append) {
         setTemplates(prev => [...prev, ...newTemplates]);
@@ -179,22 +171,20 @@ export default function All() {
       }
 
       // Check if there are more pages
-      const pagination = response?.pagination || response?.data?.pagination;
       if (pagination) {
         setHasMore(pageNum < pagination.pages);
       } else {
+        // If no pagination info, assume more if we got a full page
         setHasMore(newTemplates.length === 20);
       }
     } catch (error) {
-      console.error('Failed to load templates:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        category,
-        pageNum,
+      handleApiError(error, {
+        defaultMessage: 'Failed to load templates',
+        showToast: !append, // Don't show toast when loading more fails
       });
-      toast.error(error.message || 'Failed to load templates');
-      setTemplates([]);
+      if (!append) {
+        setTemplates([]);
+      }
     } finally {
       setLoading(false);
       setLoadingMore(false);

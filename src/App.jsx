@@ -86,11 +86,13 @@ function App() {
               <Route path="feedback" element={<Feedback />} />
               <Route path="quiz" element={<Quiz />} />
               <Route path="access" element={<Access />} />
+              <Route path="oncesubscribe" element={<Subscribe />} />
+              <Route path="token" element={<Access />} />
+              <Route path="vibe" element={<Home />} />
+              <Route path="pwa" element={<Home />} />
               
-              {/* Protected routes */}
-              <Route path="create" element={
-                <PrivateRoute><Create /></PrivateRoute>
-              } />
+              {/* Create should be publicly viewable (benchmark parity); generation is gated inside page */}
+              <Route path="create" element={<Create />} />
               <Route path="my-works" element={
                 <PrivateRoute><MyWorks /></PrivateRoute>
               } />

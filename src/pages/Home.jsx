@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { assetUrl } from '../utils/assetUrl';
 import templateService from '../services/templateService';
+import { handleApiError } from '../utils/errorHandler';
 import toast from 'react-hot-toast';
 
 // 视频图标 - 两个矩形 (Consistent with Layout)
@@ -144,13 +145,14 @@ export default function Home() {
         }
 
         setTemplates(response.templates || []);
-      } catch (error) {
-        console.error('Failed to load templates:', error);
-        toast.error('Failed to load templates');
-        setTemplates([]);
-      } finally {
-        setLoading(false);
-      }
+              } catch (error) {
+                handleApiError(error, {
+                  defaultMessage: 'Failed to load templates',
+                });
+                setTemplates([]);
+              } finally {
+                setLoading(false);
+              }
     };
 
     loadTemplates();

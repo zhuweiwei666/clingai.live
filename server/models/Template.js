@@ -15,7 +15,7 @@ const templateSchema = new mongoose.Schema({
   tags: {
     type: [String],
     default: [],
-    enum: ['viral', 'cosplay', 'closeup', 'charm'],
+    enum: ['new', 'hot', 'trending', 'viral', 'cosplay', 'closeup', 'charm'],
   },
   type: {
     type: String,

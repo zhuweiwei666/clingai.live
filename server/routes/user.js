@@ -7,6 +7,45 @@ import { successResponse, errorResponse } from '../utils/response.js';
 
 const router = Router();
 
+// 获取用户信息 (benchmark: /app/user/info) - 支持未登录访问（返回null）
+router.get('/info', async (req, res) => {
+  try {
+    // Try to get user from token if present
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      return successResponse(res, { user: null, plan: 'free', coins: 0 });
+    }
+
+    try {
+      const jwt = await import('jsonwebtoken');
+      const decoded = jwt.default.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.userId).select('-password');
+      
+      if (!user) {
+        return successResponse(res, { user: null, plan: 'free', coins: 0 });
+      }
+
+      return successResponse(res, {
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+          avatar: user.avatar,
+        },
+        plan: user.plan || 'free',
+        coins: user.coins || 0,
+        planExpireAt: user.planExpireAt,
+      });
+    } catch (jwtError) {
+      // Invalid token, return null user
+      return successResponse(res, { user: null, plan: 'free', coins: 0 });
+    }
+  } catch (error) {
+    console.error('Get user info error:', error);
+    return errorResponse(res, 'Failed to get user info', 'GET_USER_INFO_ERROR', 500);
+  }
+});
+
 // 获取当前用户信息
 router.get('/profile', verifyToken, async (req, res) => {
   try {
@@ -149,13 +188,27 @@ router.get('/feedback', verifyToken, async (req, res) => {
 // 提交用户反馈 (benchmark: /app/user/feedback)
 router.post('/feedback', verifyToken, async (req, res) => {
   try {
-    const { content, type } = req.body;
-    if (!content) {
+    const { subject, message, content, type } = req.body;
+    
+    // Support both subject/message format and content/type format
+    const feedbackContent = message || content || subject;
+    if (!feedbackContent) {
       return errorResponse(res, 'Feedback content is required', 'MISSING_FEEDBACK_CONTENT', 400);
     }
 
-    // TODO: Store feedback in database if needed
-    // For now, just return success
+    // Store feedback in user's feedback array
+    const user = await User.findById(req.user.id);
+    if (user) {
+      if (!user.feedback) user.feedback = [];
+      user.feedback.push({
+        subject: subject || 'Feedback',
+        message: feedbackContent,
+        type: type || 'general',
+        createdAt: new Date(),
+      });
+      await user.save();
+    }
+
     return successResponse(res, { message: 'Feedback submitted successfully' });
   } catch (error) {
     console.error('Submit feedback error:', error);

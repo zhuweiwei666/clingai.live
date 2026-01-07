@@ -57,6 +57,22 @@ export const DEFAULT_SETTINGS = {
   },
   maintenance: false,
   announcement: '',
+  tools: {
+    enabled: true,
+    categories: ['photo2video', 'faceswap', 'dressup', 'hd', 'remove', 'aiimage'],
+  },
+  adConfig: {
+    enabled: true,
+    interval: 5, // show ad every 5 actions
+    type: 'interstitial',
+    banners: [],
+    interstitials: [],
+  },
+  change_clothes_tips: [
+    'Upload a clear photo for best results',
+    'Ensure good lighting',
+    'Face should be clearly visible',
+  ],
 };
 
 // 获取设置

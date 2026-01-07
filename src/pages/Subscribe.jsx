@@ -67,7 +67,7 @@ export default function Subscribe() {
 
     try {
       setIsProcessing(true);
-      const result = await orderService.createOrder('subscription', null, selectedPlan, 'stripe');
+      const result = await orderService.createOrder('subscription', null, selectedPlan.id, 'stripe');
 
       if (result.success && result.paymentUrl) {
         window.location.href = result.paymentUrl;
@@ -108,7 +108,12 @@ export default function Subscribe() {
         </button>
 
         {/* Title: "Hot AI Pro+" */}
-        <h1 className="text-3xl font-bold text-white mb-2 text-center">Hot AI Pro+</h1>
+        <div className="mb-2 text-center">
+          <h1 className="text-3xl font-bold text-white mb-1">Hot AI</h1>
+          <span className="inline-block px-3 py-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full text-white text-lg font-bold">
+            Pro+
+          </span>
+        </div>
         <p className="text-white/70 text-sm text-center mb-8">
           UNLOCK ALL ENHANCEMENT FEATURES AND AI VIDEOS
         </p>
@@ -175,7 +180,7 @@ export default function Subscribe() {
               <div className="relative z-10">
                 <div className="text-white font-bold text-sm mb-1">{plan.name}</div>
                 <div className="text-white/80 text-xs mb-2">{plan.period}</div>
-                <div className="text-white font-bold text-lg">Just ${plan.price}</div>
+                <div className="text-white font-bold text-lg">Just ${plan.price}{plan.id === 'super' ? ' per year' : ''}</div>
                 {plan.pricePerWeek && (
                   <div className="text-white/70 text-xs">${plan.pricePerWeek} per week</div>
                 )}

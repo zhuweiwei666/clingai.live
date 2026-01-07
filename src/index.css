@@ -154,7 +154,7 @@ body {
   white-space: nowrap;
 }
 
-/* 红色角标 19 */
+/* 红色角标 18 (benchmark parity) */
 .feature-tab-badge {
   position: absolute;
   top: 4px;
@@ -170,6 +170,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  line-height: 1;
 }
 
 /* Super 粉红标签 */
@@ -274,7 +275,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 20px 16px 16px;
+  padding: 16px 16px 12px;
 }
 
 .section-header > div {
@@ -303,8 +304,8 @@ body {
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  padding: 0 10px 100px;
+  gap: 12px;
+  padding: 0 12px 100px;
 }
 
 @media (min-width: 640px) {

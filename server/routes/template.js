@@ -15,14 +15,14 @@ router.get('/', async (req, res) => {
     if (category) {
       // Check if it's a benchmark category tag
       if (['viral', 'cosplay', 'closeup', 'charm'].includes(category)) {
-        query.tags = category;
+        query.tags = { $in: [category] }; // Use $in for array field
       } else {
         query.category = category;
       }
     }
     
     if (tag) {
-      query.tags = tag;
+      query.tags = { $in: [tag] }; // Use $in for array field
     }
 
     const templates = await Template.find(query)
@@ -52,7 +52,14 @@ router.get('/', async (req, res) => {
 router.get('/trending', async (req, res) => {
   try {
     const { limit = 79 } = req.query;
-    const templates = await Template.find({ enabled: true, isTrending: true })
+    // Support both isTrending flag and 'trending' tag
+    const templates = await Template.find({ 
+      enabled: true, 
+      $or: [
+        { isTrending: true },
+        { tags: { $in: ['trending'] } }
+      ]
+    })
       .sort({ usageCount: -1, createdAt: -1 })
       .limit(Number(limit))
       .select('-aiParams');
@@ -68,7 +75,14 @@ router.get('/trending', async (req, res) => {
 router.get('/new', async (req, res) => {
   try {
     const { limit = 79 } = req.query;
-    const templates = await Template.find({ enabled: true, isNew: true })
+    // Support both isNew flag and 'new' tag
+    const templates = await Template.find({ 
+      enabled: true, 
+      $or: [
+        { isNew: true },
+        { tags: { $in: ['new'] } }
+      ]
+    })
       .sort({ createdAt: -1 })
       .limit(Number(limit))
       .select('-aiParams');
