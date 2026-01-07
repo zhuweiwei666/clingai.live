@@ -93,16 +93,16 @@ function VideoCard({ template, index }) {
       
       {/* Super 标签 */}
       {transformedTemplate.badge === 'super' && (
-        <span className="absolute top-0 right-0 px-3 py-1.5 bg-gradient-to-r from-pink-500 to-red-500 rounded-bl-[14px] rounded-tr-[24px] text-[11px] font-bold text-white z-20">
-          Super
+        <span className="absolute top-0 right-0 px-3 py-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-bl-[16px] rounded-tr-[20px] text-[10px] font-bold text-white z-20 shadow-md">
+          SUPER
         </span>
       )}
       
       {/* New 标签 */}
       {transformedTemplate.badge === 'new' && (
-        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[11px] font-bold text-white z-20">
+        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[10px] font-bold text-white z-20 shadow-lg shadow-orange-500/20">
           <span>🔥</span>
-          <span>New</span>
+          <span className="uppercase tracking-wider">New</span>
           <span>🔥</span>
         </div>
       )}
@@ -161,7 +161,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* 分类 Tabs */}
-      <div className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-[#262626]">
+      <div className="sticky top-[calc(60px+env(safe-area-inset-top))] z-40 bg-black/95 backdrop-blur-md border-b border-[#262626] pt-1 pb-1">
         <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
           {categoryTabs.map((tab) => (
             <button
@@ -169,7 +169,7 @@ export default function Home() {
               onClick={() => setActiveCategory(tab.id)}
               className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
                 activeCategory === tab.id
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/20'
                   : 'bg-[#141414] text-white/60 hover:text-white'
               }`}
             >

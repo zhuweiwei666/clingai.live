@@ -120,16 +120,18 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 12px 16px 8px;
-  min-width: 70px;
+  padding: 10px 14px 8px;
+  min-width: 68px;
   background: #1a1a1a;
   border-radius: 12px;
   text-decoration: none;
   transition: all 0.2s;
+  border: 1px solid transparent;
 }
 
 .feature-tab:hover {
   background: #252525;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .feature-tab.active {
@@ -251,6 +253,13 @@ body {
   height: 30px;
 }
 
+/* Super Badge Pulse Animation - Updated to match benchmark glow */
+@keyframes superPulse {
+  0% { transform: translateX(-50%) scale(1); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); }
+  50% { transform: translateX(-50%) scale(1.1); box-shadow: 0 0 10px 2px rgba(236, 72, 153, 0.5); }
+  100% { transform: translateX(-50%) scale(1); box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
+}
+
 .super-badge {
   position: absolute;
   top: -10px;
@@ -264,6 +273,9 @@ body {
   color: white;
   letter-spacing: 0.5px;
   white-space: nowrap;
+  animation: superPulse 2s infinite ease-in-out;
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.6);
+  z-index: 10;
 }
 
 /* ========================================
@@ -289,12 +301,13 @@ body {
 }
 
 .section-header .title-text {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   background: linear-gradient(90deg, #f97316, #fbbf24);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: -0.5px;
 }
 
 /* ========================================
@@ -327,11 +340,12 @@ body {
 .video-card {
   position: relative;
   aspect-ratio: 3 / 4;
-  border-radius: 24px;
+  border-radius: 20px;
   overflow: hidden;
   background: var(--bg-card);
   cursor: pointer;
   transition: transform 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .video-card:hover {
@@ -781,8 +795,15 @@ body {
   animation: fadeIn 0.25s ease-out;
 }
 
-/* 移动端优化 */
-@media (max-width: 640px) {
+/* 骨架屏闪光动画 */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-shimmer {
+  animation: shimmer 2s infinite linear;
+}
   button, .btn-primary, .btn-secondary {
     min-height: 44px;
     min-width: 44px;

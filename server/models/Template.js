@@ -78,6 +78,7 @@ const templateSchema = new mongoose.Schema({
   },
 }, {
   timestamps: true,
+  suppressReservedKeysWarning: true, // Allow isNew field
 });
 
 // 索引

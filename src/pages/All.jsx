@@ -32,6 +32,18 @@ const categoryTabs = [
   { id: 'charm', label: 'Charm' },
 ];
 
+// 骨架屏组件 - 优化深色模式效果
+const SkeletonCard = () => (
+  <div className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-[#1a1a1a]">
+    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#262626] to-transparent skeleton-shimmer" style={{ backgroundSize: '200% 100%' }} />
+    <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-10">
+      <div className="w-5 h-5 rounded-full bg-[#333]" />
+      <div className="flex-1 h-3 rounded bg-[#333] mx-2" />
+      <div className="w-5 h-5 rounded bg-[#333]" />
+    </div>
+  </div>
+);
+
 // 视频卡片组件
 function VideoCard({ template, index }) {
   const navigate = useNavigate();
@@ -199,32 +211,33 @@ export default function All() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
 
-  // Infinite scroll handler
+  // Infinite scroll handler using IntersectionObserver
+  const observerTarget = useRef(null);
+
   useEffect(() => {
-    const handleScroll = () => {
-      if (loadingMore || !hasMore || loading) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          const nextPage = page + 1;
+          setPage(nextPage);
+          loadTemplates(activeCategory, nextPage, true);
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
 
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const windowHeight = window.innerHeight;
-      const documentHeight = document.documentElement.scrollHeight;
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
 
-      // Load more when 200px from bottom
-      if (scrollTop + windowHeight >= documentHeight - 200) {
-        const nextPage = page + 1;
-        setPage(nextPage);
-        loadTemplates(activeCategory, nextPage, true);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, activeCategory, hasMore, loadingMore, loading]);
+  }, [hasMore, loadingMore, loading, page, activeCategory]);
 
   return (
     <div className="min-h-screen bg-black pb-24">
       {/* 分类 Tabs */}
-      <div className="sticky top-0 z-40 bg-black/95 backdrop-blur-md border-b border-[#262626]">
+      <div className="sticky top-[calc(60px+env(safe-area-inset-top))] z-40 bg-black/95 backdrop-blur-md border-b border-[#262626] pt-1 pb-1">
         <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
           {categoryTabs.map((tab) => (
             <button
@@ -232,7 +245,7 @@ export default function All() {
               onClick={() => setActiveCategory(tab.id)}
               className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
                 activeCategory === tab.id
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/20'
                   : 'bg-[#141414] text-white/60 hover:text-white'
               }`}
             >
@@ -244,8 +257,10 @@ export default function All() {
 
       {/* 加载状态 */}
       {loading && templates.length === 0 ? (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-white">Loading templates...</div>
+        <div className="cards-grid px-4 py-6">
+          {[...Array(6)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
         </div>
       ) : (
         <>
@@ -255,27 +270,28 @@ export default function All() {
               {templates.map((template, index) => (
                 <VideoCard key={template._id || template.id} template={template} index={index} />
               ))}
+              {/* 加载更多时的骨架屏 */}
+              {loadingMore && [...Array(4)].map((_, i) => (
+                <SkeletonCard key={`more-${i}`} />
+              ))}
             </div>
           )}
 
-          {/* 加载更多指示器 */}
-          {loadingMore && (
-            <div className="flex items-center justify-center py-6">
-              <div className="text-white/60">Loading more...</div>
-            </div>
-          )}
+          {/* 观察目标元素 */}
+          <div ref={observerTarget} className="h-4 w-full" />
 
           {/* 没有更多内容 */}
           {!hasMore && templates.length > 0 && (
-            <div className="flex items-center justify-center py-6">
-              <div className="text-white/60">No more templates</div>
+            <div className="flex items-center justify-center py-6 text-white/40 text-sm font-medium">
+              No more templates
             </div>
           )}
 
           {/* 空状态 */}
           {!loading && templates.length === 0 && (
-            <div className="flex items-center justify-center min-h-[60vh]">
-              <div className="text-white/60">No templates found</div>
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-white/60">
+              <span className="text-4xl mb-4">🎬</span>
+              <p>No templates found</p>
             </div>
           )}
         </>

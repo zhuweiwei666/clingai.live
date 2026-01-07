@@ -123,7 +123,7 @@ export default function Layout() {
     <div className="min-h-screen bg-black flex flex-col">
       {/* 顶部 Header */}
       {showHeader && (
-        <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md">
+        <header className="sticky top-0 z-50 bg-black/95 backdrop-blur-md pt-[max(12px,env(safe-area-inset-top))] transition-all duration-300">
           {/* Logo + Actions */}
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-1">

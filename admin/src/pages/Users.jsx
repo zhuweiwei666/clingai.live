@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Input, Select, Button, Tag, Space, Modal, InputNumber, message } from 'antd';
-import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Table, Input, Select, Button, Tag, Space, Modal, InputNumber, message, Drawer, Descriptions, Tabs, Image } from 'antd';
+import { SearchOutlined, ReloadOutlined, UserOutlined, FileImageOutlined, DollarOutlined } from '@ant-design/icons';
 import { usersApi } from '../services/api';
 import dayjs from 'dayjs';
 
@@ -18,6 +18,9 @@ export default function Users() {
   const [search, setSearch] = useState('');
   const [planFilter, setPlanFilter] = useState('');
   const [coinModal, setCoinModal] = useState({ visible: false, user: null, amount: 0 });
+  const [detailVisible, setDetailVisible] = useState(false);
+  const [userDetail, setUserDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const loadUsers = async (page = 1) => {
     setLoading(true);
@@ -29,6 +32,19 @@ export default function Users() {
       message.error('加载用户失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUserDetail = async (id) => {
+    setDetailLoading(true);
+    try {
+      const res = await usersApi.getDetail(id);
+      setUserDetail(res);
+      setDetailVisible(true);
+    } catch (error) {
+      message.error('获取详情失败');
+    } finally {
+      setDetailLoading(false);
     }
   };
 
@@ -93,6 +109,7 @@ export default function Users() {
       key: 'actions',
       render: (_, record) => (
         <Space>
+          <Button size="small" onClick={() => loadUserDetail(record._id)}>详情</Button>
           <Button
             size="small"
             onClick={() => setCoinModal({ visible: true, user: record, amount: 0 })}
@@ -170,6 +187,83 @@ export default function Users() {
           placeholder="正数增加，负数扣除"
         />
       </Modal>
+
+      <Drawer
+        title="用户详情"
+        width={800}
+        onClose={() => setDetailVisible(false)}
+        open={detailVisible}
+      >
+        {detailLoading || !userDetail ? (
+          <p>加载中...</p>
+        ) : (
+          <>
+            <Descriptions title="基本信息" bordered column={2}>
+              <Descriptions.Item label="ID">{userDetail.user._id}</Descriptions.Item>
+              <Descriptions.Item label="用户名">{userDetail.user.username}</Descriptions.Item>
+              <Descriptions.Item label="邮箱">{userDetail.user.email}</Descriptions.Item>
+              <Descriptions.Item label="会员等级">{planMap[userDetail.user.plan]}</Descriptions.Item>
+              <Descriptions.Item label="金币余额">{userDetail.user.coins}</Descriptions.Item>
+              <Descriptions.Item label="注册时间">{dayjs(userDetail.user.createdAt).format('YYYY-MM-DD HH:mm')}</Descriptions.Item>
+            </Descriptions>
+
+            <div style={{ marginTop: 24 }}>
+              <Tabs
+                items={[
+                  {
+                    key: 'stats',
+                    label: '数据统计',
+                    children: (
+                      <Descriptions bordered column={3}>
+                        <Descriptions.Item label="生成作品数">{userDetail.stats.works}</Descriptions.Item>
+                        <Descriptions.Item label="充值订单数">{userDetail.stats.orders}</Descriptions.Item>
+                        <Descriptions.Item label="任务总数">{userDetail.stats.tasks}</Descriptions.Item>
+                      </Descriptions>
+                    ),
+                  },
+                  {
+                    key: 'orders',
+                    label: '最近充值',
+                    children: (
+                      <Table
+                        dataSource={userDetail.recentOrders}
+                        rowKey="_id"
+                        pagination={false}
+                        size="small"
+                        columns={[
+                          { title: '订单号', dataIndex: 'orderId' },
+                          { title: '金额', dataIndex: 'amount', render: v => `$${v}` },
+                          { title: '金币', dataIndex: 'coins' },
+                          { title: '状态', dataIndex: 'status' },
+                          { title: '时间', dataIndex: 'createdAt', render: v => dayjs(v).format('MM-DD HH:mm') },
+                        ]}
+                      />
+                    ),
+                  },
+                  {
+                    key: 'works',
+                    label: '最近作品',
+                    children: (
+                      <Table
+                        dataSource={userDetail.recentWorks}
+                        rowKey="_id"
+                        pagination={false}
+                        size="small"
+                        columns={[
+                          { title: '类型', dataIndex: 'type' },
+                          { title: '缩略图', dataIndex: 'thumbnail', render: v => v ? <Image src={v} width={40} /> : '-' },
+                          { title: '结果', dataIndex: 'resultUrl', render: v => v ? <a href={v} target="_blank">查看</a> : '-' },
+                          { title: '时间', dataIndex: 'createdAt', render: v => dayjs(v).format('MM-DD HH:mm') },
+                        ]}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </div>
+          </>
+        )}
+      </Drawer>
     </div>
   );
 }

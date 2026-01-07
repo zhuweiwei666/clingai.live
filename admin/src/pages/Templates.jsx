@@ -38,6 +38,16 @@ export default function Templates() {
     loadTemplates();
   }, [categoryFilter]);
 
+  const allTags = [
+    { value: 'new', label: 'New' },
+    { value: 'hot', label: 'Hot' },
+    { value: 'trending', label: 'Trending' },
+    { value: 'viral', label: 'Viral' },
+    { value: 'cosplay', label: 'Cosplay' },
+    { value: 'closeup', label: 'Close-up' },
+    { value: 'charm', label: 'Charm' },
+  ];
+
   const handleSave = async (values) => {
     try {
       if (modal.editing) {
@@ -148,13 +158,16 @@ export default function Templates() {
     {
       title: '标签',
       key: 'tags',
-      width: 180,
+      width: 250,
       render: (_, r) => (
         <Space wrap>
           {r.isSuper && <Tag color="purple">Super</Tag>}
           {r.isNew && <Tag color="green">New</Tag>}
           {r.isHot && <Tag color="red">Hot</Tag>}
-          {r.isTrending && <Tag color="orange">热门</Tag>}
+          {r.isTrending && <Tag color="orange">Trending</Tag>}
+          {r.tags?.map(tag => (
+            <Tag key={tag} color="geekblue">{tag}</Tag>
+          ))}
         </Space>
       ),
     },
@@ -261,12 +274,15 @@ export default function Templates() {
               <InputNumber style={{ width: '100%' }} />
             </Form.Item>
           </Space>
-          <Form.Item label="标签" style={{ marginBottom: 8 }}>
+          <Form.Item name="tags" label="扩展标签">
+            <Select mode="multiple" placeholder="选择标签" options={allTags} />
+          </Form.Item>
+          <Form.Item label="状态标签" style={{ marginBottom: 8 }}>
             <Space>
               <Form.Item name="isSuper" valuePropName="checked" noStyle><Switch checkedChildren="Super" unCheckedChildren="Super" /></Form.Item>
               <Form.Item name="isNew" valuePropName="checked" noStyle><Switch checkedChildren="New" unCheckedChildren="New" /></Form.Item>
               <Form.Item name="isHot" valuePropName="checked" noStyle><Switch checkedChildren="Hot" unCheckedChildren="Hot" /></Form.Item>
-              <Form.Item name="isTrending" valuePropName="checked" noStyle><Switch checkedChildren="热门" unCheckedChildren="热门" /></Form.Item>
+              <Form.Item name="isTrending" valuePropName="checked" noStyle><Switch checkedChildren="Trending" unCheckedChildren="Trending" /></Form.Item>
             </Space>
           </Form.Item>
           <Form.Item name="enabled" valuePropName="checked" initialValue={true}>

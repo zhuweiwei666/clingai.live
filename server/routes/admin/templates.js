@@ -44,13 +44,13 @@ router.post('/', async (req, res) => {
     const {
       name, category, type, thumbnail, previewVideo,
       costCoins, isSuper, isNew, isHot, isTrending,
-      sortOrder, enabled, aiParams,
+      sortOrder, enabled, aiParams, tags,
     } = req.body;
 
     const template = new Template({
       name, category, type, thumbnail, previewVideo,
       costCoins, isSuper, isNew, isHot, isTrending,
-      sortOrder, enabled, aiParams,
+      sortOrder, enabled, aiParams, tags,
     });
 
     await template.save();
@@ -87,7 +87,7 @@ router.put('/:id', async (req, res) => {
     const allowedFields = [
       'name', 'category', 'type', 'thumbnail', 'previewVideo',
       'costCoins', 'isSuper', 'isNew', 'isHot', 'isTrending',
-      'sortOrder', 'enabled', 'aiParams',
+      'sortOrder', 'enabled', 'aiParams', 'tags',
     ];
 
     allowedFields.forEach(field => {
