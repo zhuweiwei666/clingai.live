@@ -72,6 +72,24 @@ router.get('/get_vip_price', async (req, res) => {
   }
 });
 
+// POST /api/get_vip_price & /api/app/get_vip_price (前端使用 POST 请求)
+const getVipPriceHandler = async (req, res) => {
+  try {
+    const subscriptionPlans = await getSetting('subscriptionPlans');
+    // 返回默认订阅计划（如果数据库中没有配置）
+    const defaultPlans = [
+      { id: 'super', name: 'SUPER', period: 'Yearly access', fullPrice: 59.99, price: 1.15, priceUnit: 'per week', gradient: true },
+      { id: 'monthly', name: 'MONTHLY ACCESS', period: 'just $19.99 per month', fullPrice: 19.99, price: 0.60, priceUnit: 'per day', gradient: false },
+    ];
+    return successResponse(res, { plans: subscriptionPlans?.length ? subscriptionPlans : defaultPlans });
+  } catch (error) {
+    console.error('Get vip price (compat POST) error:', error);
+    return errorResponse(res, 'Failed to get vip price', 'GET_VIP_PRICE_ERROR', 500);
+  }
+};
+router.post('/get_vip_price', getVipPriceHandler);
+router.post('/app/get_vip_price', getVipPriceHandler); // 前端调用 /api/app/get_vip_price
+
 // GET /app/coins_price (kept as alias for parity; returns same packs)
 router.get('/coins_price', async (req, res) => {
   try {

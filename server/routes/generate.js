@@ -223,8 +223,11 @@ router.post('/ai-image', verifyToken, (req, res) => createGenerateTask(req, res,
 // ==================== 聊天编辑 ====================
 router.post('/chat-edit', verifyToken, (req, res) => createGenerateTask(req, res, 'chatedit'));
 
-// 查询任务状态
-router.get('/task/:id', verifyToken, async (req, res) => {
+// ==================== 去衣/脱衣 (Takeoff) ====================
+router.post('/takeoff', verifyToken, (req, res) => createGenerateTask(req, res, 'remove'));
+
+// 查询任务状态处理函数
+async function getTaskStatus(req, res) {
   try {
     const task = await Task.findOne({
       _id: req.params.id,
@@ -279,23 +282,27 @@ router.get('/task/:id', verifyToken, async (req, res) => {
     }
 
     return successResponse(res, {
-      task: {
-        id: task._id,
-        type: task.type,
-        status: task.status,
-        progress: task.progress,
-        output: task.output,
-        error: task.error,
-        externalTaskId: task.externalTaskId, // 返回外部任务ID用于调试
-        createdAt: task.createdAt,
-        completedAt: task.completedAt,
-      },
+      id: task._id,
+      type: task.type,
+      status: task.status,
+      progress: task.progress || 0,
+      output: task.output,
+      outputUrl: task.output?.resultUrl,
+      resultUrl: task.output?.resultUrl,
+      error: task.error,
+      externalTaskId: task.externalTaskId,
+      createdAt: task.createdAt,
+      completedAt: task.completedAt,
     });
   } catch (error) {
     console.error('[Generate] Get task error:', error);
     return errorResponse(res, 'Failed to get task', 'GET_TASK_ERROR', 500);
   }
-});
+}
+
+// 查询任务状态路由
+router.get('/task/:id', verifyToken, getTaskStatus);
+router.get('/status/:id', verifyToken, getTaskStatus); // 别名，前端使用此路径
 
 // 获取任务历史
 router.get('/history', verifyToken, async (req, res) => {

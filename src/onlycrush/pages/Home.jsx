@@ -2,6 +2,18 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
+// Mock templates for fallback when API is unavailable
+const MOCK_TEMPLATES = [
+  { id: '1', title: 'Bikini Beach', thumbnail: '/images/face-swap/face-1.jpg', video: '/videos/trending/video-1.mp4', isTrending: true },
+  { id: '2', title: 'Summer Pool', thumbnail: '/images/face-swap/face-2.jpg', video: '/videos/trending/video-2.mp4', isTrending: true },
+  { id: '3', title: 'Sunset Dance', thumbnail: '/images/face-swap/face-3.jpg', video: '/videos/trending/video-3.mp4', isNew: true },
+  { id: '4', title: 'Night Club', thumbnail: '/images/face-swap/face-4.jpg', video: '/videos/trending/video-4.mp4' },
+  { id: '5', title: 'Beach Party', thumbnail: '/images/face-swap/face-5.jpg', video: '/videos/all/video-1.mp4', isTrending: true },
+  { id: '6', title: 'Poolside', thumbnail: '/images/face-swap/face-6.jpg', video: '/videos/all/video-2.mp4', isNew: true },
+  { id: '7', title: 'Glamour', thumbnail: '/images/face-swap/face-7.jpg', video: '/videos/all/video-3.mp4' },
+  { id: '8', title: 'Elegant', thumbnail: '/images/face-swap/face-8.jpg', video: '/videos/all/video-4.mp4' },
+];
+
 // Assets helper
 const assetUrl = (url) => {
   if (!url) return '';
@@ -137,8 +149,14 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef(null);
 
-  // Fetch templates
+  // Fetch templates - with fallback to mock data
   const fetchTemplates = useCallback(async (cat, pg = 1, append = false) => {
+    // Only fetch page 1, disable infinite scroll when using mock data
+    if (pg > 1) {
+      setHasMore(false);
+      return;
+    }
+    
     try {
       if (pg === 1) setLoading(true);
       let res;
@@ -151,15 +169,25 @@ export default function Home() {
       }
       const data = res.data || res;
       const list = data.templates || [];
-      if (append) {
-        setTemplates((prev) => [...prev, ...list]);
+      if (list.length > 0) {
+        if (append) {
+          setTemplates((prev) => [...prev, ...list]);
+        } else {
+          setTemplates(list);
+        }
+        setHasMore(list.length >= 20);
       } else {
-        setTemplates(list);
+        // API returned empty, use mock data
+        setTemplates(MOCK_TEMPLATES);
+        setHasMore(false);
       }
-      setHasMore(list.length >= 20);
     } catch (err) {
       console.error('Fetch templates error:', err);
-      if (!append) setTemplates([]);
+      // Use mock data on error
+      if (!append) {
+        setTemplates(MOCK_TEMPLATES);
+      }
+      setHasMore(false); // Stop infinite scroll on error
     } finally {
       setLoading(false);
     }
