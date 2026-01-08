@@ -35,6 +35,16 @@ apiClient.interceptors.response.use(
       if (response.data.success === true && response.data.data !== undefined) {
         // 标准格式：{ success: true, data: ... }
         response.data = response.data.data;
+      } else if (typeof response.data.code === 'number') {
+        // OnlyCrush upstream-style format: { code: 100, msg: "OK", data: ... }
+        if (response.data.code === 100) {
+          response.data = response.data.data;
+        } else {
+          const error = new Error(response.data.msg || 'Request failed');
+          error.code = response.data.code;
+          error.response = response;
+          return Promise.reject(error);
+        }
       } else if (response.data.success === false) {
         // 错误格式：{ success: false, error: ... }
         const error = new Error(response.data.error || 'Request failed');
