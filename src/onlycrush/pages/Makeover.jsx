@@ -234,7 +234,8 @@ export default function Makeover() {
           .filter((it) => it?.url)
           .map((it) => ({
             id: String(it.id ?? it.url),
-            thumbnailUrl: it.url,
+            thumbnailUrl: activeTab === 'image' ? it.url : '',
+            videoUrl: activeTab === 'video' ? it.url : '',
             isSuper: false,
             fileType: sourceType,
           }));
@@ -297,7 +298,10 @@ export default function Makeover() {
         >
           <FaceSwapIcon />
           <PlusIcon />
-          <span>Custom {activeTab === 'dressup' ? 'Dress Up' : 'Image Face Swap'}</span>
+          <span>
+            Custom{' '}
+            {activeTab === 'dressup' ? 'Dress Up' : activeTab === 'video' ? 'Video Face Swap' : 'Image Face Swap'}
+          </span>
         </button>
         <input
           ref={fileInputRef}
@@ -337,8 +341,8 @@ export default function Makeover() {
                 <div key={idx} className="aspect-[3/4] rounded-2xl bg-[#1a1a1a] animate-pulse" />
               ))
             : templates.map((template) =>
-                activeTab === 'dressup' ? (
-                  <ImageCard key={template.id} template={template} onClick={handleTemplateClick} />
+                activeTab === 'video' ? (
+                  <VideoCard key={template.id} template={template} onClick={handleTemplateClick} />
                 ) : (
                   <ImageCard key={template.id} template={template} onClick={handleTemplateClick} />
                 )
