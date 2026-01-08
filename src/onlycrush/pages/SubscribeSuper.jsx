@@ -18,10 +18,10 @@ export default function SubscribeSuper() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.post('/app/get_vip_price', {});
-        const plans = res?.data?.plans;
-        const superPlan = Array.isArray(plans) ? plans.find((p) => p.id === 'super') : null;
-        if (superPlan?.price) setPrice({ price: superPlan.price, pricePerWeek: superPlan.pricePerWeek || 1.15 });
+        // Target site: GET /app/get_vip_price -> { code, msg, data: { yearly: [...] } }
+        const res = await api.get('/app/get_vip_price');
+        const yearly = res?.data?.data?.yearly?.[0];
+        if (yearly?.price) setPrice({ price: Number(yearly.price), pricePerWeek: 1.15 });
       } catch {
         // ignore
       }

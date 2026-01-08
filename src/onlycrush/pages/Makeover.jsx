@@ -31,13 +31,8 @@ const videoFaceSwapTemplates = [
   { id: 'vid-4', videoUrl: '/videos/video-faceswap/video-4.mp4', thumbnailUrl: '/images/face-swap/face-4.jpg', isSuper: false },
 ];
 
-// Dress Up templates
-const dressUpTemplates = [
-  { id: 'dress-1', videoUrl: '/videos/trending/video-1.mp4', thumbnailUrl: '/images/face-swap/face-5.jpg', isSuper: false },
-  { id: 'dress-2', videoUrl: '/videos/trending/video-2.mp4', thumbnailUrl: '/images/face-swap/face-6.jpg', isSuper: true },
-  { id: 'dress-3', videoUrl: '/videos/trending/video-3.mp4', thumbnailUrl: '/images/face-swap/face-7.jpg', isSuper: false },
-  { id: 'dress-4', videoUrl: '/videos/trending/video-4.mp4', thumbnailUrl: '/images/face-swap/face-8.jpg', isSuper: false },
-];
+// Dress Up templates are fetched from upstream:
+// GET /app/tools/change_clothes_setting?page=1&size=...
 
 // Icons
 function FaceSwapIcon() {
@@ -152,6 +147,8 @@ export default function Makeover() {
 
   const [sourceFile, setSourceFile] = useState(null);
   const [sourcePreview, setSourcePreview] = useState(null);
+  const [dressUpTemplates, setDressUpTemplates] = useState([]);
+  const [dressUpLoading, setDressUpLoading] = useState(false);
 
   const tabs = [
     { id: 'image', label: 'Image Face Swap', type: 'change_face_image' },
@@ -187,6 +184,45 @@ export default function Makeover() {
     }
     fileInputRef.current?.click();
   }, [isAuthenticated, navigate]);
+
+  // Fetch Dress Up templates from upstream (1:1)
+  useEffect(() => {
+    if (activeTab !== 'dressup') return;
+    let cancelled = false;
+    (async () => {
+      setDressUpLoading(true);
+      try {
+        // Target format: { code: 100, msg: "OK", data: { list: [...], total } }
+        const res = await api.get('/app/tools/change_clothes_setting?page=1&size=200');
+        const list = res?.data?.data?.list;
+        if (!Array.isArray(list)) {
+          throw new Error('Invalid dressup list');
+        }
+        const normalized = list
+          .filter((it) => it?.url)
+          .map((it) => ({
+            id: String(it.tools_id ?? it.id),
+            thumbnailUrl: it.url,
+            // Some entries are paid / super-like
+            isSuper: Number(it.coins || 0) >= 20,
+            coins: Number(it.coins || 0),
+            toolsId: it.tools_id,
+            fileType: it.file_type,
+          }));
+        if (!cancelled) setDressUpTemplates(normalized);
+      } catch (e) {
+        if (!cancelled) {
+          console.error('Fetch dress up templates error:', e);
+          setDressUpTemplates([]);
+        }
+      } finally {
+        if (!cancelled) setDressUpLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
 
   // Get templates based on active tab
   const templates = activeTab === 'video'
@@ -264,21 +300,17 @@ export default function Makeover() {
       {/* Template grid - 2 columns, no titles on cards */}
       <div className="px-4">
         <div className="grid grid-cols-2 gap-3">
-          {templates.map((template) =>
-            activeTab === 'video' || activeTab === 'dressup' ? (
-              <VideoCard
-                key={template.id}
-                template={template}
-                onClick={handleTemplateClick}
-              />
-            ) : (
-              <ImageCard
-                key={template.id}
-                template={template}
-                onClick={handleTemplateClick}
-              />
-            )
-          )}
+          {activeTab === 'dressup' && dressUpLoading
+            ? Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="aspect-[3/4] rounded-2xl bg-[#1a1a1a] animate-pulse" />
+              ))
+            : templates.map((template) =>
+                activeTab === 'video' ? (
+                  <VideoCard key={template.id} template={template} onClick={handleTemplateClick} />
+                ) : (
+                  <ImageCard key={template.id} template={template} onClick={handleTemplateClick} />
+                )
+              )}
         </div>
       </div>
 
