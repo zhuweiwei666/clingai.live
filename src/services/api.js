@@ -38,7 +38,9 @@ apiClient.interceptors.response.use(
       } else if (typeof response.data.code === 'number') {
         // OnlyCrush upstream-style format: { code: 100, msg: "OK", data: ... }
         if (response.data.code === 100) {
-          response.data = response.data.data;
+          // Keep original payload (some endpoints include extra keys like total/group)
+          // Pages that need the inner data should read response.data.data
+          return response;
         } else {
           const error = new Error(response.data.msg || 'Request failed');
           error.code = response.data.code;

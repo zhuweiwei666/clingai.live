@@ -37,11 +37,20 @@ export default function Coins() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.post('/app/get_coins_prices', {});
-        const pkgs = res?.data?.packages;
+        // Target site: GET /app/get_coins_prices -> { code, msg, data: { list: [...] } }
+        const res = await api.get('/app/get_coins_prices');
+        const pkgs = res?.data?.data?.list;
         if (Array.isArray(pkgs) && pkgs.length) {
-          setPackages(pkgs);
-          setSelectedId(pkgs[0]?.id);
+          // Normalize to current UI shape
+          const normalized = pkgs.map((p) => ({
+            id: p.id,
+            coins: p.coins,
+            price: p.price,
+            bonus: p.coins_text?.gift_coins ?? p.coins_text?.origin_coins ?? p.coins,
+            icon: p.icon,
+          }));
+          setPackages(normalized);
+          setSelectedId(normalized[0]?.id);
         }
       } catch {
         // keep fallback

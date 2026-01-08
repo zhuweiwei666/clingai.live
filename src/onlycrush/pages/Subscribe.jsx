@@ -52,9 +52,38 @@ export default function Subscribe() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.post('/app/get_vip_price', {});
-        const serverPlans = res?.data?.plans;
-        if (Array.isArray(serverPlans) && serverPlans.length) setPlans(serverPlans);
+        // Target site: GET /app/get_vip_price -> { code, msg, data: { yearly, monthly, weekly } }
+        const res = await api.get('/app/get_vip_price');
+        const vip = res?.data?.data;
+        const yearly = vip?.yearly?.[0];
+        const monthly = vip?.monthly?.[0];
+        if (yearly && monthly) {
+          // Build UI cards 1:1 using target copy (use button text fields for display parity)
+          const nextPlans = [
+            {
+              id: 'yearly',
+              name: 'SUPER',
+              period: yearly.price_data?.button_text || 'Yearly access',
+              fullPrice: Number(yearly.price) || 59.99,
+              price: 1.15,
+              priceUnit: 'per week',
+              gradient: true,
+              raw: yearly,
+            },
+            {
+              id: 'monthly',
+              name: 'MONTHLY ACCESS',
+              period: monthly.price_data?.button_price_text || 'just $19.99 per month',
+              fullPrice: 19.99,
+              price: 0.60,
+              priceUnit: 'per day',
+              gradient: false,
+              raw: monthly,
+            },
+          ];
+          setPlans(nextPlans);
+          setSelectedId('yearly');
+        }
       } catch {
         // ignore
       }
