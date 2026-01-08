@@ -203,11 +203,16 @@ export async function dressUp(sourceImage, targetClothing, params = {}) {
 
 /**
  * 高清放大 (HD Upscale)
- * @param {string} sourceImage - 源图片
+ * @param {string} sourceImage - 源图片或视频 URL
  * @param {number} scale - 放大倍数 (2x, 4x)
  */
 export async function hdUpscale(sourceImage, scale = 2) {
   console.log('[AI] hdUpscale called, scale:', scale);
+  
+  // 优先使用 A2E 服务 (通过 Video to Video)
+  if (USE_A2E) {
+    return a2eService.videoToVideo(sourceImage, { scale, quality: 'high' });
+  }
   
   if (!AI_ENABLED) return mockResponse();
 
@@ -265,6 +270,31 @@ export async function generateImage(prompt, params = {}) {
 }
 
 /**
+ * 聊天编辑 / 让照片说话 (Chat Edit / Talking Photo)
+ * @param {string} sourceImage - 人物图片 URL
+ * @param {string} text - 要说的话
+ * @param {string} voiceId - 声音 ID
+ * @param {object} params - 额外参数
+ */
+export async function chatEdit(sourceImage, text, voiceId, params = {}) {
+  console.log('[AI] chatEdit called');
+  
+  // 优先使用 A2E 服务
+  if (USE_A2E) {
+    return a2eService.chatEdit(sourceImage, text, voiceId, params);
+  }
+  
+  if (!AI_ENABLED) return mockResponse();
+
+  return callAIApi('/v1/chat-edit', {
+    image: sourceImage,
+    text,
+    voiceId,
+    ...params,
+  });
+}
+
+/**
  * 获取 AI 服务状态
  */
 export function getServiceStatus() {
@@ -289,5 +319,6 @@ export default {
   hdUpscale,
   removeBackground,
   generateImage,
+  chatEdit,
   getServiceStatus,
 };

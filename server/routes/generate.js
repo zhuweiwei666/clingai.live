@@ -193,28 +193,34 @@ async function createGenerateTask(req, res, type) {
   }
 }
 
-// 图生视频
+// ==================== 图生视频 ====================
 router.post('/photo2video', verifyToken, (req, res) => createGenerateTask(req, res, 'photo2video'));
+router.post('/video', verifyToken, (req, res) => createGenerateTask(req, res, 'photo2video')); // 别名
 
-// 换脸（图片）
+// ==================== 换脸（图片）====================
 router.post('/faceswap', verifyToken, (req, res) => createGenerateTask(req, res, 'faceswap'));
+router.post('/face-swap-image', verifyToken, (req, res) => createGenerateTask(req, res, 'faceswap')); // 别名
 
-// 换脸（视频）
+// ==================== 换脸（视频）====================
 router.post('/faceswap-video', verifyToken, (req, res) => createGenerateTask(req, res, 'faceswap_video'));
+router.post('/face-swap-video', verifyToken, (req, res) => createGenerateTask(req, res, 'faceswap_video')); // 别名
 
-// 换装
+// ==================== 换装 ====================
 router.post('/dressup', verifyToken, (req, res) => createGenerateTask(req, res, 'dressup'));
+router.post('/dress-up', verifyToken, (req, res) => createGenerateTask(req, res, 'dressup')); // 别名
 
-// 高清放大
+// ==================== 高清放大 ====================
 router.post('/hd', verifyToken, (req, res) => createGenerateTask(req, res, 'hd'));
+router.post('/hd-upscale', verifyToken, (req, res) => createGenerateTask(req, res, 'hd')); // 别名
 
-// 去背景/水印
+// ==================== 去背景/水印 ====================
 router.post('/remove', verifyToken, (req, res) => createGenerateTask(req, res, 'remove'));
 
-// AI图像生成
+// ==================== AI图像生成 ====================
 router.post('/aiimage', verifyToken, (req, res) => createGenerateTask(req, res, 'aiimage'));
+router.post('/ai-image', verifyToken, (req, res) => createGenerateTask(req, res, 'aiimage')); // 别名
 
-// 聊天编辑
+// ==================== 聊天编辑 ====================
 router.post('/chat-edit', verifyToken, (req, res) => createGenerateTask(req, res, 'chatedit'));
 
 // 查询任务状态
