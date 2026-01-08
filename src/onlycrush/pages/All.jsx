@@ -40,10 +40,12 @@ function HeartIcon() {
   );
 }
 
-// VideoCard component - 3 column optimized
+// VideoCard component - 3 column optimized with lazy play
 function VideoCard({ template, index }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const cardRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   const tpl = {
     id: template._id || template.id,
@@ -51,18 +53,36 @@ function VideoCard({ template, index }) {
     thumbnail: template.thumbnail,
     video: template.previewVideo || template.video,
     badge: template.isTrending ? 'trending' : template.isNew ? 'new' : null,
+    isSuper: template.isSuper,
   };
 
+  // IntersectionObserver for lazy video play
   useEffect(() => {
-    if (videoRef.current && tpl.video) {
-      videoRef.current.play().catch(() => {});
-    }
-  }, [tpl.video]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+        if (entry.isIntersecting && videoRef.current) {
+          videoRef.current.play().catch(() => {});
+        } else if (!entry.isIntersecting && videoRef.current) {
+          videoRef.current.pause();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div
-      className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#1a1a1a] cursor-pointer transition-transform duration-200 active:scale-95"
+      ref={cardRef}
+      className="video-card relative aspect-[3/4] overflow-hidden cursor-pointer group"
       onClick={() => navigate(`/create?template=${tpl.id}`)}
+      style={{
+        borderRadius: '12px',
+        background: '#0a0a0a',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.3)',
+      }}
     >
       {tpl.video ? (
         <video
@@ -72,24 +92,36 @@ function VideoCard({ template, index }) {
           muted
           loop
           playsInline
-          autoPlay
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       ) : (
         <img
           src={assetUrl(tpl.thumbnail)}
           alt={tpl.title}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       )}
 
-      {/* Hot AI watermark */}
-      <div className="absolute top-2 right-2 z-10">
+      {/* Super badge - top right corner */}
+      {tpl.isSuper && (
         <span
-          className="text-[10px] font-bold italic"
+          className="absolute top-0 right-0 px-1.5 py-0.5 text-[8px] font-bold text-white z-20"
           style={{
-            color: 'rgba(255,255,255,0.4)',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+            background: 'linear-gradient(135deg, #ec4899 0%, #ef4444 100%)',
+            borderRadius: '0 12px 0 6px',
+          }}
+        >
+          Super
+        </span>
+      )}
+
+      {/* Hot AI watermark */}
+      <div className="absolute top-1.5 left-1.5 z-10">
+        <span
+          className="text-[8px] font-bold"
+          style={{
+            color: 'rgba(255,255,255,0.2)',
+            fontFamily: 'Notable, sans-serif',
           }}
         >
           Hot AI
@@ -97,25 +129,42 @@ function VideoCard({ template, index }) {
       </div>
 
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 25%, transparent 50%)',
+        }}
+      />
 
-      {/* Badge */}
+      {/* Badge - smaller for 3-col */}
       {tpl.badge === 'new' && (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white flex items-center gap-1 z-20"
-          style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}>
-          <span>🔥</span> New <span>🔥</span>
+        <div className="absolute bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[8px] font-bold text-white flex items-center gap-0.5 z-20"
+          style={{ 
+            background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)',
+            boxShadow: '0 2px 8px rgba(249,115,22,0.3)',
+          }}>
+          🔥 New 🔥
         </div>
       )}
       {tpl.badge === 'trending' && (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white flex items-center gap-1 z-20"
-          style={{ background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)' }}>
-          <span>🔥</span> Trending <span>🔥</span>
+        <div className="absolute bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[8px] font-bold text-white flex items-center gap-0.5 z-20"
+          style={{ 
+            background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)',
+            boxShadow: '0 2px 8px rgba(236,72,153,0.3)',
+          }}>
+          🔥 Hot 🔥
         </div>
       )}
 
-      {/* Title */}
-      <div className="absolute bottom-2 left-0 right-0 text-center z-20 px-1">
-        <span className="text-white text-xs font-medium" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
+      {/* Title - smaller */}
+      <div className="absolute bottom-1.5 left-0 right-0 text-center z-20 px-1">
+        <span 
+          className="text-white text-[10px] font-medium uppercase tracking-wide"
+          style={{ 
+            textShadow: '0 1px 6px rgba(0,0,0,1)',
+            fontFamily: 'Livvic, sans-serif',
+          }}
+        >
           {tpl.title}
         </span>
       </div>

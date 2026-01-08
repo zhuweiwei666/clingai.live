@@ -221,8 +221,8 @@ export default function Makeover() {
         </div>
       </div>
 
-      {/* Custom button - matching target design */}
-      <div className="px-4 pt-4 pb-4">
+      {/* Custom upload + Search - matching target design */}
+      <div className="px-4 pt-4 pb-2">
         <button
           onClick={handleCustomClick}
           className="w-full bg-[#1a1a1a] hover:bg-[#222] rounded-2xl py-4 flex items-center justify-center gap-3 text-white font-bold transition-all border border-white/10"
@@ -238,6 +238,27 @@ export default function Makeover() {
           onChange={handleFileSelect}
           className="hidden"
         />
+      </div>
+
+      {/* Search box - matching target */}
+      <div className="px-4 pb-4">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search templates..."
+            className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl py-3 px-4 pl-11 text-white placeholder-white/40 text-sm focus:outline-none focus:border-purple-500/50 transition-colors"
+          />
+          <svg
+            className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="M21 21l-4.35-4.35" />
+          </svg>
+        </div>
       </div>
 
       {/* Template grid - 2 columns, no titles on cards */}

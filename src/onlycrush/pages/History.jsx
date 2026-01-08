@@ -1,23 +1,46 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-      <path d="M15 18l-6-6 6-6" />
-    </svg>
-  );
-}
+// Icons
+const BackIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6">
+    <path d="M15 18l-6-6 6-6" strokeLinecap="round" />
+  </svg>
+);
 
+const PlayIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+    <polygon points="5,3 19,12 5,21" />
+  </svg>
+);
+
+const ImageIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <circle cx="8.5" cy="8.5" r="1.5" />
+    <path d="M21 15l-5-5L5 21" />
+  </svg>
+);
+
+const TrashIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+    <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6" />
+  </svg>
+);
+
+// Filter chip
 function Chip({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`px-5 py-3 rounded-full text-[16px] font-extrabold ${
-        active ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-white/10 text-white/60'
+      className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+        active
+          ? 'text-white shadow-lg'
+          : 'bg-white/5 text-white/50 hover:text-white/80'
       }`}
+      style={active ? { background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)' } : {}}
     >
       {children}
     </button>
@@ -26,6 +49,92 @@ function Chip({ active, onClick, children }) {
 
 function isVideoType(t) {
   return t === 'video' || t === 'photo_to_video' || t === 'photo2video';
+}
+
+// Work card with hover effect
+function WorkCard({ work, onClick }) {
+  const videoRef = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const isVideo = isVideoType(work.type);
+  const thumb = work.thumbnail || work.outputUrl || work.output?.resultUrl || work.output?.videoUrl;
+  
+  // Random height for masonry effect (between 1 and 1.5)
+  const heightMultiplier = useMemo(() => 1 + Math.random() * 0.5, []);
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
+
+  return (
+    <button
+      className="relative w-full rounded-2xl overflow-hidden bg-[#1a1a1a] group"
+      style={{ aspectRatio: `3/${4 * heightMultiplier}` }}
+      onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {thumb ? (
+        isVideo ? (
+          <video
+            ref={videoRef}
+            src={thumb}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            muted
+            loop
+            playsInline
+            poster={thumb}
+          />
+        ) : (
+          <img
+            src={thumb}
+            alt=""
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        )
+      ) : (
+        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 via-transparent to-pink-500/20" />
+      )}
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      {/* Type indicator */}
+      <div className="absolute top-2 left-2 w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white">
+        {isVideo ? <PlayIcon /> : <ImageIcon />}
+      </div>
+
+      {/* Status badge */}
+      {work.status === 'processing' && (
+        <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-yellow-500/80 text-black text-[10px] font-bold">
+          Processing...
+        </div>
+      )}
+      {work.status === 'failed' && (
+        <div className="absolute top-2 right-2 px-2 py-1 rounded-full bg-red-500/80 text-white text-[10px] font-bold">
+          Failed
+        </div>
+      )}
+
+      {/* Hover actions */}
+      <div className={`absolute bottom-0 left-0 right-0 p-3 transition-all ${isHovered ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+        <div className="text-white text-xs font-medium truncate">
+          {work.title || new Date(work.createdAt).toLocaleDateString()}
+        </div>
+      </div>
+    </button>
+  );
 }
 
 export default function History() {
@@ -39,6 +148,17 @@ export default function History() {
     if (filter === 'image') return works.filter((w) => !isVideoType(w.type));
     return works;
   }, [filter, works]);
+
+  // Split into two columns for masonry
+  const [leftColumn, rightColumn] = useMemo(() => {
+    const left = [];
+    const right = [];
+    filtered.forEach((w, i) => {
+      if (i % 2 === 0) left.push(w);
+      else right.push(w);
+    });
+    return [left, right];
+  }, [filtered]);
 
   useEffect(() => {
     (async () => {
@@ -60,20 +180,28 @@ export default function History() {
     })();
   }, [navigate]);
 
+  const handleWorkClick = (work) => {
+    const id = work.taskId?._id || work.taskId || work._id || work.id;
+    if (id) navigate(`/result?taskId=${id}`);
+  };
+
   return (
     <div className="min-h-screen bg-black pb-24 text-white">
-      <div className="px-5 pt-4 flex items-center gap-4">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-md px-4 py-3 flex items-center gap-4 pt-[max(12px,env(safe-area-inset-top))]">
         <button
           onClick={() => navigate(-1)}
-          className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center"
-          aria-label="Back"
+          className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
         >
           <BackIcon />
         </button>
-        <div className="text-[26px] font-extrabold">My Works</div>
+        <h1 className="text-xl font-bold">My Works</h1>
+        <div className="flex-1" />
+        <span className="text-white/50 text-sm">{works.length} items</span>
       </div>
 
-      <div className="px-5 mt-5 flex gap-3">
+      {/* Filters */}
+      <div className="px-4 py-4 flex gap-2 overflow-x-auto scrollbar-hide">
         <Chip active={filter === 'all'} onClick={() => setFilter('all')}>
           All
         </Chip>
@@ -86,51 +214,56 @@ export default function History() {
       </div>
 
       {loading ? (
-        <div className="px-5 mt-8 grid grid-cols-2 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="aspect-[3/4] rounded-[22px] bg-white/5 animate-pulse" />
-          ))}
+        /* Loading skeleton */
+        <div className="px-4 flex gap-3">
+          <div className="flex-1 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-2xl bg-white/5 animate-pulse" style={{ aspectRatio: `3/${4 + i * 0.2}` }} />
+            ))}
+          </div>
+          <div className="flex-1 space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-2xl bg-white/5 animate-pulse" style={{ aspectRatio: `3/${4.5 - i * 0.2}` }} />
+            ))}
+          </div>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="px-5 mt-20 text-center">
-          <div className="text-white/60 text-[18px] mb-6">No works yet</div>
-          <button
-            onClick={() => navigate('/create')}
-            className="px-10 py-4 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[18px] font-extrabold"
+        /* Empty state */
+        <div className="flex flex-col items-center justify-center py-20 px-6">
+          <div
+            className="w-24 h-24 rounded-3xl mb-6 flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, rgba(139,92,246,0.2) 0%, rgba(236,72,153,0.2) 100%)' }}
           >
-            Create Your First Work
+            <svg className="w-10 h-10 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <path d="M21 15l-5-5L5 21" />
+            </svg>
+          </div>
+          <p className="text-white/60 text-lg mb-6">No works yet</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-8 py-4 rounded-full font-bold text-white text-lg shadow-xl active:scale-95 transition-transform"
+            style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)' }}
+          >
+            Create Your First Work ✨
           </button>
         </div>
       ) : (
-        <div className="px-5 mt-6 grid grid-cols-2 gap-4">
-          {filtered.map((w) => {
-            const id = w.taskId?._id || w.taskId || w._id || w.id;
-            const thumb = w.thumbnail || w.outputUrl || w.output?.resultUrl || w.output?.videoUrl;
-            return (
-              <button
-                key={w._id || w.id}
-                className="relative aspect-[3/4] rounded-[22px] overflow-hidden bg-white/5"
-                onClick={() => id && navigate(`/result?taskId=${id}`)}
-              >
-                {thumb ? (
-                  isVideoType(w.type) ? (
-                    <video src={thumb} className="w-full h-full object-cover" muted loop playsInline />
-                  ) : (
-                    <img src={thumb} alt={w.title || 'Work'} className="w-full h-full object-cover" />
-                  )
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-white/10 via-white/5 to-transparent" />
-                )}
-                <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur flex items-center justify-center">
-                  {isVideoType(w.type) ? '▶' : '▢'}
-                </div>
-              </button>
-            );
-          })}
+        /* Masonry grid */
+        <div className="px-4 flex gap-3">
+          <div className="flex-1 space-y-3">
+            {leftColumn.map((w) => (
+              <WorkCard key={w._id || w.id} work={w} onClick={() => handleWorkClick(w)} />
+            ))}
+          </div>
+          <div className="flex-1 space-y-3">
+            {rightColumn.map((w) => (
+              <WorkCard key={w._id || w.id} work={w} onClick={() => handleWorkClick(w)} />
+            ))}
+          </div>
         </div>
       )}
     </div>
   );
 }
-
-

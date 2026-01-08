@@ -111,15 +111,67 @@ export default function OnlyCrushLayout() {
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
-  // Only show header on home, my, history pages
-  const showHeader = ['/', '/my', '/history'].includes(currentPath);
-  const showFeatureTabs = currentPath === '/';
+  // Home page: Feature Tabs only (no header)
+  // My/History pages: Full header with logo + actions
+  const isHomePage = currentPath === '/';
+  const showFullHeader = ['/my', '/history'].includes(currentPath);
+  const showFeatureTabs = isHomePage;
 
   return (
     <div className="oc-root min-h-screen bg-black">
-      {showHeader && (
+      {/* Home Page: Feature Tabs at very top */}
+      {isHomePage && (
         <header className="sticky top-0 z-50 bg-black pt-[max(12px,env(safe-area-inset-top))]">
-          {/* Top bar: Logo + Actions */}
+          <div className="flex gap-3 px-4 py-3 overflow-x-auto scrollbar-hide">
+            {featureTabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = tab.isMain ? currentPath === '/' : location.pathname === tab.path;
+              return (
+                <NavLink
+                  key={tab.path}
+                  to={tab.path}
+                  className="relative flex flex-col items-center gap-1.5 min-w-[56px]"
+                >
+                  {/* Badge - 18+ or Super */}
+                  {tab.badge && (
+                    <span className="absolute -top-0.5 right-0 w-4 h-4 bg-red-500 rounded-full text-white text-[8px] font-bold flex items-center justify-center z-10">
+                      {tab.badge}
+                    </span>
+                  )}
+                  {tab.superBadge && (
+                    <span
+                      className="absolute -top-0.5 right-0 px-1.5 py-0.5 rounded text-white text-[7px] font-bold z-10"
+                      style={{ background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)' }}
+                    >
+                      Super
+                    </span>
+                  )}
+
+                  {/* Icon container */}
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+                      isActive ? 'bg-[#2a2a2a]' : 'bg-[#1a1a1a]'
+                    }`}
+                  >
+                    <div className={isActive ? 'text-white' : 'text-white/50'}>
+                      <Icon />
+                    </div>
+                  </div>
+
+                  {/* Label - two lines max */}
+                  <span className={`text-[10px] font-medium text-center leading-tight max-w-[56px] ${isActive ? 'text-white' : 'text-white/50'}`}>
+                    {tab.label}
+                  </span>
+                </NavLink>
+              );
+            })}
+          </div>
+        </header>
+      )}
+
+      {/* My/History Pages: Full header with logo */}
+      {showFullHeader && (
+        <header className="sticky top-0 z-50 bg-black pt-[max(12px,env(safe-area-inset-top))]">
           <div className="flex items-center justify-between px-4 py-3">
             {/* Logo */}
             <div className="flex items-center gap-0.5">
@@ -154,54 +206,6 @@ export default function OnlyCrushLayout() {
               </button>
             </div>
           </div>
-
-          {/* Feature Tabs Row */}
-          {showFeatureTabs && (
-            <div className="flex gap-3 px-4 py-2 overflow-x-auto scrollbar-hide">
-              {featureTabs.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = tab.isMain ? currentPath === '/' : location.pathname === tab.path;
-                return (
-                  <NavLink
-                    key={tab.path}
-                    to={tab.path}
-                    className="relative flex flex-col items-center gap-1 min-w-[60px]"
-                  >
-                    {/* Badge - 18+ or Super */}
-                    {tab.badge && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-[9px] font-bold flex items-center justify-center z-10">
-                        {tab.badge}
-                      </span>
-                    )}
-                    {tab.superBadge && (
-                      <span
-                        className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-white text-[8px] font-bold z-10"
-                        style={{ background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)' }}
-                      >
-                        Super
-                      </span>
-                    )}
-
-                    {/* Icon container */}
-                    <div
-                      className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                        isActive ? 'bg-[#2a2a2a]' : 'bg-[#1a1a1a]'
-                      }`}
-                    >
-                      <div className={isActive ? 'text-white' : 'text-white/60'}>
-                        <Icon />
-                      </div>
-                    </div>
-
-                    {/* Label */}
-                    <span className={`text-[11px] font-medium whitespace-nowrap ${isActive ? 'text-white' : 'text-white/60'}`}>
-                      {tab.label}
-                    </span>
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
         </header>
       )}
 
