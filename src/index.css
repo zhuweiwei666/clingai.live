@@ -816,3 +816,142 @@ body {
     font-size: 16px !important;
   }
 }
+
+/* ========================================
+   OnlyCrush Layout Root
+   ======================================== */
+
+.oc-root {
+  min-height: 100vh;
+  background: #000000;
+}
+
+.oc-safe-bottom {
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+/* ========================================
+   Enhanced Animations
+   ======================================== */
+
+/* Card entrance animation */
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-enter {
+  animation: cardEnter 0.4s ease-out;
+}
+
+/* Staggered grid animation */
+.grid > *:nth-child(1) { animation-delay: 0ms; }
+.grid > *:nth-child(2) { animation-delay: 50ms; }
+.grid > *:nth-child(3) { animation-delay: 100ms; }
+.grid > *:nth-child(4) { animation-delay: 150ms; }
+.grid > *:nth-child(5) { animation-delay: 200ms; }
+.grid > *:nth-child(6) { animation-delay: 250ms; }
+
+/* Video card hover effect */
+.video-card-hover {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.video-card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+}
+
+/* Glow effect for buttons */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.8); }
+}
+
+.glow-effect {
+  animation: glow 2s infinite ease-in-out;
+}
+
+/* Smooth tab transition */
+.tab-transition {
+  transition: all 0.2s ease;
+}
+
+/* Page fade transition */
+@keyframes pageFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.page-fade {
+  animation: pageFade 0.3s ease-out;
+}
+
+/* Watermark text styling */
+.watermark-text {
+  font-family: 'Notable', 'Livvic', sans-serif;
+  font-size: 10px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.3);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Hot AI Logo styling */
+.hot-ai-logo {
+  font-family: 'Notable', sans-serif;
+  letter-spacing: 2px;
+}
+
+/* Purple gradient background */
+.bg-purple-gradient {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+/* Pink gradient background */
+.bg-pink-gradient {
+  background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
+}
+
+/* Orange-pink gradient background */
+.bg-orange-gradient {
+  background: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Scale on press */
+.press-scale {
+  transition: transform 0.1s ease;
+}
+
+.press-scale:active {
+  transform: scale(0.95);
+}

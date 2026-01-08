@@ -9,38 +9,25 @@ const assetUrl = (url) => {
   return url.startsWith('/') ? url : `/${url}`;
 };
 
-// Category tabs
+// Category tabs - matching target exactly
 const categoryTabs = [
   { id: 'all', label: 'All' },
-  { id: 'trending', label: 'Trending' },
   { id: 'new', label: 'New' },
-  { id: 'viral', label: 'Viral' },
-  { id: 'cosplay', label: 'Cosplay' },
-  { id: 'closeup', label: 'Close-up' },
+  { id: 'cosplay', label: 'CosPlay' },
+  { id: 'closeup', label: 'Close-up action' },
   { id: 'charm', label: 'Charm' },
 ];
 
 // Icons
-const BackIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-    <path d="M19 12H5M12 19l-7-7 7-7" />
-  </svg>
-);
-const VideoIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="2" y="4" width="8" height="16" rx="1" />
-    <rect x="14" y="4" width="8" height="16" rx="1" />
-  </svg>
-);
-const SaveIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <rect x="5" y="3" width="14" height="18" rx="2" />
-    <line x1="9" y1="11" x2="15" y2="11" />
-    <line x1="12" y1="8" x2="12" y2="14" />
-  </svg>
-);
+function HeartIcon() {
+  return (
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+    </svg>
+  );
+}
 
-// VideoCard component
+// VideoCard component - 3 column optimized
 function VideoCard({ template, index }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
@@ -50,7 +37,7 @@ function VideoCard({ template, index }) {
     title: template.name || template.title || '',
     thumbnail: template.thumbnail,
     video: template.previewVideo || template.video,
-    badge: template.isSuper ? 'super' : template.isNew ? 'new' : null,
+    badge: template.isTrending ? 'trending' : template.isNew ? 'new' : null,
   };
 
   useEffect(() => {
@@ -61,8 +48,7 @@ function VideoCard({ template, index }) {
 
   return (
     <div
-      className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-[#141414] cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
-      style={{ animationDelay: `${index * 0.05}s` }}
+      className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#1a1a1a] cursor-pointer transition-transform duration-200 active:scale-95"
       onClick={() => navigate(`/create?template=${tpl.id}`)}
     >
       {tpl.video ? (
@@ -84,39 +70,41 @@ function VideoCard({ template, index }) {
         />
       )}
 
-      {/* Gradient overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none z-10"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.3) 40%, transparent 60%)' }}
-      />
-
-      {/* Super badge */}
-      {tpl.badge === 'super' && (
-        <span className="absolute top-0 right-0 px-3 py-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-bl-[16px] rounded-tr-[20px] text-[10px] font-bold text-white z-20 shadow-md">
-          SUPER
+      {/* Hot AI watermark */}
+      <div className="absolute top-2 right-2 z-10">
+        <span
+          className="text-[10px] font-bold italic"
+          style={{
+            color: 'rgba(255,255,255,0.4)',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+          }}
+        >
+          Hot AI
         </span>
-      )}
+      </div>
 
-      {/* New badge */}
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+      {/* Badge */}
       {tpl.badge === 'new' && (
-        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[10px] font-bold text-white z-20 shadow-lg">
-          <span>🔥</span>
-          <span className="uppercase tracking-wider">New</span>
-          <span>🔥</span>
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white flex items-center gap-1 z-20"
+          style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}>
+          <span>🔥</span> New <span>🔥</span>
+        </div>
+      )}
+      {tpl.badge === 'trending' && (
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white flex items-center gap-1 z-20"
+          style={{ background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)' }}>
+          <span>🔥</span> Trending <span>🔥</span>
         </div>
       )}
 
-      {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-20">
-        <div className="text-white/90">
-          <VideoIcon />
-        </div>
-        <div className="flex-1 text-center text-[11px] font-bold text-white uppercase tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>
+      {/* Title */}
+      <div className="absolute bottom-2 left-0 right-0 text-center z-20 px-1">
+        <span className="text-white text-xs font-medium" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
           {tpl.title}
-        </div>
-        <div className="text-white/90">
-          <SaveIcon />
-        </div>
+        </span>
       </div>
     </div>
   );
@@ -125,8 +113,8 @@ function VideoCard({ template, index }) {
 // Skeleton card
 function SkeletonCard() {
   return (
-    <div className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-[#141414] animate-pulse">
-      <div className="absolute inset-0 skeleton-shimmer" />
+    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#1a1a1a] animate-pulse">
+      <div className="absolute inset-0 bg-gradient-to-t from-[#2a2a2a] to-[#1a1a1a]" />
     </div>
   );
 }
@@ -148,14 +136,12 @@ export default function All() {
     try {
       if (pg === 1) setLoading(true);
       let res;
-      if (cat === 'trending') {
-        res = await api.get(`/templates/trending?limit=20&page=${pg}`);
-      } else if (cat === 'new') {
-        res = await api.get(`/templates/new?limit=20&page=${pg}`);
+      if (cat === 'new') {
+        res = await api.get(`/templates/new?limit=21&page=${pg}`);
       } else if (cat === 'all') {
-        res = await api.get(`/templates?limit=20&page=${pg}`);
+        res = await api.get(`/templates?limit=21&page=${pg}`);
       } else {
-        res = await api.get(`/templates?category=${cat}&limit=20&page=${pg}`);
+        res = await api.get(`/templates?category=${cat}&limit=21&page=${pg}`);
       }
       const data = res.data || res;
       const list = data.templates || [];
@@ -164,7 +150,7 @@ export default function All() {
       } else {
         setTemplates(list);
       }
-      setHasMore(list.length >= 20);
+      setHasMore(list.length >= 21);
     } catch (err) {
       console.error('Fetch templates error:', err);
       if (!append) setTemplates([]);
@@ -197,25 +183,23 @@ export default function All() {
 
   return (
     <div className="min-h-screen bg-black pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-black/95 backdrop-blur-md px-4 py-3 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-[#141414] flex items-center justify-center text-white">
-          <BackIcon />
-        </button>
-        <h1 className="text-xl font-bold text-white">All Templates</h1>
-      </div>
+      {/* Category Tabs - sticky at top */}
+      <div className="sticky top-0 z-50 bg-black pt-2 pb-3">
+        <div className="flex items-center gap-2 px-3 overflow-x-auto scrollbar-hide">
+          {/* Heart icon */}
+          <button className="w-9 h-9 rounded-full bg-transparent flex items-center justify-center text-white/40 flex-shrink-0">
+            <HeartIcon />
+          </button>
 
-      {/* Category Tabs */}
-      <div className="sticky top-[56px] z-40 bg-black/95 backdrop-blur-md border-b border-[#262626]">
-        <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
+          {/* Tabs */}
           {categoryTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveCategory(tab.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                 activeCategory === tab.id
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'bg-[#141414] text-white/60 hover:text-white'
+                  ? 'bg-white text-black'
+                  : 'text-white/60 hover:text-white'
               }`}
             >
               {tab.label}
@@ -224,18 +208,18 @@ export default function All() {
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="px-4 pt-4">
+      {/* 3-Column Grid */}
+      <div className="px-3 pt-2">
         {loading && templates.length === 0 ? (
-          <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 6 }).map((_, i) => (
+          <div className="grid grid-cols-3 gap-2">
+            {Array.from({ length: 9 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
           </div>
         ) : templates.length === 0 ? (
           <div className="text-center py-20 text-white/60">No templates found</div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             {templates.map((tpl, i) => (
               <VideoCard key={tpl._id || tpl.id || i} template={tpl} index={i} />
             ))}
@@ -247,4 +231,3 @@ export default function All() {
     </div>
   );
 }
-

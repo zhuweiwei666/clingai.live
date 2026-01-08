@@ -9,38 +9,26 @@ const assetUrl = (url) => {
   return url.startsWith('/') ? url : `/${url}`;
 };
 
-// Category tabs
+// Category tabs - no emojis in button, matching target
 const categoryTabs = [
-  { id: 'trending', label: '🔥 🔥 Trending' },
+  { id: 'trending', label: 'Trending', isDefault: true },
   { id: 'all', label: 'All' },
   { id: 'new', label: 'New' },
-  { id: 'viral', label: 'Viral' },
-  { id: 'cosplay', label: 'Cosplay' },
+  { id: 'cosplay', label: 'CosPlay' },
   { id: 'closeup', label: 'Close-up action' },
   { id: 'charm', label: 'Charm' },
 ];
 
 // Icons
-const VideoIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <rect x="2" y="4" width="8" height="16" rx="1" />
-    <rect x="14" y="4" width="8" height="16" rx="1" />
-  </svg>
-);
-const SaveIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-    <rect x="5" y="3" width="14" height="18" rx="2" />
-    <line x1="9" y1="11" x2="15" y2="11" />
-    <line x1="12" y1="8" x2="12" y2="14" />
-  </svg>
-);
-const ArrowRightIcon = () => (
-  <svg className="w-4 h-4 text-purple-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <path d="M5 12h14M12 5l7 7-7 7" />
-  </svg>
-);
+function ArrowRightIcon() {
+  return (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
-// VideoCard component
+// VideoCard component - matching target design
 function VideoCard({ template, index }) {
   const navigate = useNavigate();
   const videoRef = useRef(null);
@@ -50,7 +38,7 @@ function VideoCard({ template, index }) {
     title: template.name || template.title || '',
     thumbnail: template.thumbnail,
     video: template.previewVideo || template.video,
-    badge: template.isSuper ? 'super' : template.isNew ? 'new' : null,
+    badge: template.isTrending ? 'trending' : template.isNew ? 'new' : null,
   };
 
   useEffect(() => {
@@ -61,8 +49,7 @@ function VideoCard({ template, index }) {
 
   return (
     <div
-      className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-[#141414] cursor-pointer transition-transform duration-300 hover:scale-[1.02] active:scale-[0.98]"
-      style={{ animationDelay: `${index * 0.05}s` }}
+      className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#1a1a1a] cursor-pointer transition-transform duration-200 active:scale-95"
       onClick={() => navigate(`/create?template=${tpl.id}`)}
     >
       {tpl.video ? (
@@ -84,39 +71,49 @@ function VideoCard({ template, index }) {
         />
       )}
 
-      {/* Gradient overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none z-10"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 20%, rgba(0,0,0,0.3) 40%, transparent 60%)' }}
-      />
-
-      {/* Super badge */}
-      {tpl.badge === 'super' && (
-        <span className="absolute top-0 right-0 px-3 py-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-bl-[16px] rounded-tr-[20px] text-[10px] font-bold text-white z-20 shadow-md">
-          SUPER
+      {/* Hot AI watermark */}
+      <div className="absolute top-2 right-2 z-10">
+        <span
+          className="text-xs font-bold italic"
+          style={{
+            color: 'rgba(255,255,255,0.3)',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+            fontFamily: 'Notable, sans-serif',
+          }}
+        >
+          Hot AI
         </span>
-      )}
+      </div>
 
-      {/* New badge */}
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+
+      {/* Badge - New or Trending */}
       {tpl.badge === 'new' && (
-        <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl text-[10px] font-bold text-white z-20 shadow-lg">
-          <span>🔥</span>
-          <span className="uppercase tracking-wider">New</span>
-          <span>🔥</span>
+        <div
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold text-white flex items-center gap-1 z-20"
+          style={{ background: 'linear-gradient(135deg, #f97316 0%, #ec4899 100%)' }}
+        >
+          <span>🔥</span> New <span>🔥</span>
+        </div>
+      )}
+      {tpl.badge === 'trending' && (
+        <div
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-bold text-white flex items-center gap-1 z-20"
+          style={{ background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)' }}
+        >
+          <span>🔥</span> Trending <span>🔥</span>
         </div>
       )}
 
-      {/* Bottom bar */}
-      <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center gap-2 z-20">
-        <div className="text-white/90">
-          <VideoIcon />
-        </div>
-        <div className="flex-1 text-center text-[11px] font-bold text-white uppercase tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.9)' }}>
+      {/* Title at bottom - sentence case */}
+      <div className="absolute bottom-3 left-0 right-0 text-center z-20 px-2">
+        <span
+          className="text-white text-sm font-bold uppercase tracking-wide"
+          style={{ textShadow: '0 2px 8px rgba(0,0,0,0.9)' }}
+        >
           {tpl.title}
-        </div>
-        <div className="text-white/90">
-          <SaveIcon />
-        </div>
+        </span>
       </div>
     </div>
   );
@@ -125,8 +122,8 @@ function VideoCard({ template, index }) {
 // Skeleton card
 function SkeletonCard() {
   return (
-    <div className="relative aspect-[3/4] rounded-[24px] overflow-hidden bg-[#141414] animate-pulse">
-      <div className="absolute inset-0 skeleton-shimmer" />
+    <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-[#1a1a1a] animate-pulse">
+      <div className="absolute inset-0 bg-gradient-to-t from-[#2a2a2a] to-[#1a1a1a]" />
     </div>
   );
 }
@@ -191,40 +188,29 @@ export default function Home() {
   }, [hasMore, loading, page, activeCategory, fetchTemplates]);
 
   return (
-    <div className="min-h-screen bg-black">
-      {/* Category Tabs */}
-      <div className="sticky top-[calc(60px+env(safe-area-inset-top))] z-40 bg-black/95 backdrop-blur-md border-b border-[#262626] pt-1 pb-1">
-        <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
-          {categoryTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveCategory(tab.id)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
-                activeCategory === tab.id
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/20'
-                  : 'bg-[#141414] text-white/60 hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-black pb-24">
       {/* Section Header */}
-      <div className="section-header flex justify-between items-center px-4 py-3">
+      <div className="flex justify-between items-center px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="fire-emoji text-lg">🔥</span>
+          <span className="text-lg">🔥</span>
           <span className="text-white text-sm font-bold">Trending: Photo to video</span>
         </div>
-        <button onClick={() => navigate('/all')} className="flex items-center gap-1 text-white text-sm font-medium hover:opacity-80 transition-opacity">
+        <button
+          onClick={() => navigate('/all')}
+          className="flex items-center gap-1 text-white/80 text-sm font-medium hover:text-white transition-colors"
+        >
           See All
-          <ArrowRightIcon />
+          <span className="text-purple-400">
+            <ArrowRightIcon />
+          </span>
         </button>
       </div>
 
-      {/* Grid */}
-      <div className="px-4 pb-24">
+      {/* Category Tabs - hidden as they're now part of the All page per target */}
+      {/* The home page on target doesn't show category tabs, just trending */}
+
+      {/* 2-Column Grid */}
+      <div className="px-4">
         {loading && templates.length === 0 ? (
           <div className="grid grid-cols-2 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -246,4 +232,3 @@ export default function Home() {
     </div>
   );
 }
-
