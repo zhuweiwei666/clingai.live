@@ -15,8 +15,13 @@ function CloseIcon() {
 
 function CrownIcon() {
   return (
-    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
-      <path d="M12 2L9 9l-7 1 5 5-1.5 7L12 18l6.5 4L17 15l5-5-7-1-3-7z" />
+    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path
+        d="M3 8l4.5 4L12 6l4.5 6L21 8v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      <path d="M3 18h18" strokeLinecap="round" />
     </svg>
   );
 }
@@ -145,18 +150,7 @@ export default function Subscribe() {
         {/* Hero section */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-20">
           {/* Title */}
-          <h1 className="text-center">
-            <span
-              className="text-5xl font-bold"
-              style={{
-                background: 'linear-gradient(135deg, #c084fc 0%, #a855f7 50%, #7c3aed 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              Hot AI Pro+
-            </span>
-          </h1>
+          <h1 className="text-center text-5xl font-bold text-white">Hot AI Pro+</h1>
 
           {/* Subtitle */}
           <p className="mt-3 text-white/80 text-sm text-center uppercase tracking-wide">
@@ -218,6 +212,7 @@ export default function Subscribe() {
           <div className="grid grid-cols-2 gap-3 mb-4">
             {plans.map((p) => {
               const active = p.id === selectedId;
+              const priceText = Number.isFinite(Number(p.price)) ? Number(p.price).toFixed(2) : String(p.price ?? '');
               return (
                 <button
                   key={p.id}
@@ -233,14 +228,10 @@ export default function Subscribe() {
                   <div className="text-white font-bold text-sm uppercase">{p.name}</div>
                   <div className="text-white/60 text-xs mt-0.5">{p.period}</div>
 
-                  {p.gradient && (
-                    <div className="text-white/40 text-xs mt-1 line-through">
-                      Just ${p.fullPrice} per year
-                    </div>
-                  )}
+                  {p.gradient && <div className="text-white/40 text-xs mt-1">Just ${p.fullPrice} per year</div>}
 
                   <div className="mt-3">
-                    <span className="text-white font-bold text-2xl">${p.price}</span>
+                    <span className="text-white font-bold text-2xl">${priceText}</span>
                   </div>
                   <div className="text-white/60 text-xs">{p.priceUnit}</div>
 
