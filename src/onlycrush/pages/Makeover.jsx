@@ -12,24 +12,10 @@ const assetUrl = (url) => {
 };
 
 // Image Face Swap templates
-const imageFaceSwapTemplates = [
-  { id: 'img-1', thumbnailUrl: '/images/face-swap/face-1.jpg', label: 'Nurse', isSuper: false },
-  { id: 'img-2', thumbnailUrl: '/images/face-swap/face-2.jpg', label: 'Bikini', isSuper: false },
-  { id: 'img-3', thumbnailUrl: '/images/face-swap/face-3.jpg', label: 'Maid', isSuper: true },
-  { id: 'img-4', thumbnailUrl: '/images/face-swap/face-4.jpg', label: 'Teacher', isSuper: false },
-  { id: 'img-5', thumbnailUrl: '/images/face-swap/face-5.jpg', label: 'Office', isSuper: false },
-  { id: 'img-6', thumbnailUrl: '/images/face-swap/face-6.jpg', label: 'Gym', isSuper: true },
-  { id: 'img-7', thumbnailUrl: '/images/face-swap/face-7.jpg', label: 'Beach', isSuper: false },
-  { id: 'img-8', thumbnailUrl: '/images/face-swap/face-8.jpg', label: 'Pool', isSuper: false },
-];
+const imageFaceSwapTemplates = [];
 
 // Video Face Swap templates
-const videoFaceSwapTemplates = [
-  { id: 'vid-1', videoUrl: '/videos/video-faceswap/video-1.mp4', thumbnailUrl: '/images/face-swap/face-1.jpg', isSuper: false },
-  { id: 'vid-2', videoUrl: '/videos/video-faceswap/video-2.mp4', thumbnailUrl: '/images/face-swap/face-2.jpg', isSuper: true },
-  { id: 'vid-3', videoUrl: '/videos/video-faceswap/video-3.mp4', thumbnailUrl: '/images/face-swap/face-3.jpg', isSuper: false },
-  { id: 'vid-4', videoUrl: '/videos/video-faceswap/video-4.mp4', thumbnailUrl: '/images/face-swap/face-4.jpg', isSuper: false },
-];
+const videoFaceSwapTemplates = [];
 
 // Dress Up templates are fetched from upstream:
 // GET /app/tools/change_clothes_setting?page=1&size=...
@@ -149,6 +135,9 @@ export default function Makeover() {
   const [sourcePreview, setSourcePreview] = useState(null);
   const [dressUpTemplates, setDressUpTemplates] = useState([]);
   const [dressUpLoading, setDressUpLoading] = useState(false);
+  const [faceImages, setFaceImages] = useState([]);
+  const [faceVideos, setFaceVideos] = useState([]);
+  const [faceLoading, setFaceLoading] = useState(false);
 
   const tabs = [
     { id: 'image', label: 'Image Face Swap', type: 'change_face_image' },
@@ -224,12 +213,55 @@ export default function Makeover() {
     };
   }, [activeTab]);
 
+  // Fetch system photos for face swap (1:1)
+  useEffect(() => {
+    if (activeTab !== 'image' && activeTab !== 'video') return;
+    let cancelled = false;
+    (async () => {
+      setFaceLoading(true);
+      try {
+        const sourceType = activeTab === 'image' ? 'change_face_image' : 'change_face_video';
+        const res = await api.post('/app/photos', {
+          is_system: true,
+          page: 1,
+          size: 99,
+          type: '',
+          source_type: sourceType,
+        });
+        const list = res?.data?.data?.list;
+        if (!Array.isArray(list)) throw new Error('Invalid photos list');
+        const normalized = list
+          .filter((it) => it?.url)
+          .map((it) => ({
+            id: String(it.id ?? it.url),
+            thumbnailUrl: it.url,
+            isSuper: false,
+            fileType: sourceType,
+          }));
+        if (cancelled) return;
+        if (activeTab === 'image') setFaceImages(normalized);
+        else setFaceVideos(normalized);
+      } catch (e) {
+        console.error('Fetch system photos error:', e);
+        if (!cancelled) {
+          if (activeTab === 'image') setFaceImages([]);
+          else setFaceVideos([]);
+        }
+      } finally {
+        if (!cancelled) setFaceLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
+
   // Get templates based on active tab
   const templates = activeTab === 'video'
-    ? videoFaceSwapTemplates
+    ? faceVideos
     : activeTab === 'dressup'
     ? dressUpTemplates
-    : imageFaceSwapTemplates;
+    : faceImages;
 
   return (
     <div className="min-h-screen bg-black pb-24">
@@ -300,13 +332,13 @@ export default function Makeover() {
       {/* Template grid - 2 columns, no titles on cards */}
       <div className="px-4">
         <div className="grid grid-cols-2 gap-3">
-          {activeTab === 'dressup' && dressUpLoading
+          {(activeTab === 'dressup' && dressUpLoading) || ((activeTab === 'image' || activeTab === 'video') && faceLoading)
             ? Array.from({ length: 6 }).map((_, idx) => (
                 <div key={idx} className="aspect-[3/4] rounded-2xl bg-[#1a1a1a] animate-pulse" />
               ))
             : templates.map((template) =>
-                activeTab === 'video' ? (
-                  <VideoCard key={template.id} template={template} onClick={handleTemplateClick} />
+                activeTab === 'dressup' ? (
+                  <ImageCard key={template.id} template={template} onClick={handleTemplateClick} />
                 ) : (
                   <ImageCard key={template.id} template={template} onClick={handleTemplateClick} />
                 )

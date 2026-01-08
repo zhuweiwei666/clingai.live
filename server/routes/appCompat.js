@@ -54,6 +54,52 @@ async function loadOnlycrushUpstream() {
   }
 }
 
+const ONLYCRUSH_ORIGIN = 'https://onlycrush.app';
+const proxyCache = new Map(); // key -> { at:number, payload:any }
+const PROXY_TTL_MS = 10_000;
+
+function cacheKey(method, url, body) {
+  const b = body ? JSON.stringify(body) : '';
+  return `${method} ${url} ${b}`;
+}
+
+async function proxyOnlycrush({ path: p, method = 'GET', query, body }) {
+  const url = new URL(ONLYCRUSH_ORIGIN + p);
+  if (query && typeof query === 'object') {
+    for (const [k, v] of Object.entries(query)) {
+      if (v === undefined || v === null) continue;
+      url.searchParams.set(k, String(v));
+    }
+  }
+
+  const key = cacheKey(method, url.toString(), body);
+  const cached = proxyCache.get(key);
+  if (cached && Date.now() - cached.at < PROXY_TTL_MS) return cached.payload;
+
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (ClingAI Proxy)',
+    Accept: 'application/json,text/plain,*/*',
+  };
+  const res = await fetch(url.toString(), {
+    method,
+    headers: body ? { ...headers, 'Content-Type': 'application/json' } : headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`OnlyCrush non-JSON ${method} ${p}: ${text.slice(0, 200)}`);
+  }
+  if (!res.ok) {
+    throw new Error(`OnlyCrush HTTP ${res.status} ${method} ${p}: ${text.slice(0, 200)}`);
+  }
+
+  proxyCache.set(key, { at: Date.now(), payload: json });
+  return json;
+}
+
 function getBearerToken(req) {
   return req.headers.authorization?.replace('Bearer ', '') || '';
 }
@@ -86,8 +132,73 @@ router.get('/app/settings/get', async (req, res) => passthrough('settings_get', 
 router.get('/settings/get', async (req, res) => passthrough('settings_get', res));
 
 // /app/tools/get
-router.get('/app/tools/get', async (req, res) => passthrough('tools_get', res));
-router.post('/app/tools/get', async (req, res) => passthrough('tools_get', res));
+router.get('/app/tools/get', async (req, res) => {
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/tools/get', method: 'GET', query: req.query });
+    return sendUpstream(res, payload);
+  } catch {
+    return passthrough('tools_get', res);
+  }
+});
+router.post('/app/tools/get', async (req, res) => {
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/tools/get', method: 'POST', query: req.query, body: req.body });
+    return sendUpstream(res, payload);
+  } catch {
+    return passthrough('tools_get', res);
+  }
+});
+
+// /app/tools/get_by_file_type (dynamic payload)
+router.post('/app/tools/get_by_file_type', async (req, res) => {
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/tools/get_by_file_type', method: 'POST', body: req.body });
+    return sendUpstream(res, payload);
+  } catch (e) {
+    console.warn('[compat] proxy tools/get_by_file_type failed:', String(e?.message || e));
+    return sendErr(res, 'UPSTREAM_PROXY_FAILED', 502, null);
+  }
+});
+
+// /app/tools/config (dynamic payload)
+router.post('/app/tools/config', async (req, res) => {
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/tools/config', method: 'POST', body: req.body });
+    return sendUpstream(res, payload);
+  } catch (e) {
+    console.warn('[compat] proxy tools/config failed:', String(e?.message || e));
+    return sendErr(res, 'UPSTREAM_PROXY_FAILED', 502, null);
+  }
+});
+
+// /app/agent/*
+router.post('/app/agent/list', async (req, res) => {
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/agent/list', method: 'POST', body: req.body });
+    return sendUpstream(res, payload);
+  } catch (e) {
+    console.warn('[compat] proxy agent/list failed:', String(e?.message || e));
+    return sendErr(res, 'UPSTREAM_PROXY_FAILED', 502, null);
+  }
+});
+router.post('/app/agent/photos', async (req, res) => {
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/agent/photos', method: 'POST', body: req.body });
+    return sendUpstream(res, payload);
+  } catch (e) {
+    console.warn('[compat] proxy agent/photos failed:', String(e?.message || e));
+    return sendErr(res, 'UPSTREAM_PROXY_FAILED', 502, null);
+  }
+});
+router.get('/app/agent/info', async (req, res) => {
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/agent/info', method: 'GET', query: req.query });
+    return sendUpstream(res, payload);
+  } catch (e) {
+    console.warn('[compat] proxy agent/info failed:', String(e?.message || e));
+    return sendErr(res, 'UPSTREAM_PROXY_FAILED', 502, null);
+  }
+});
 
 // /app/get_vip_price
 router.get('/app/get_vip_price', async (req, res) => passthrough('vip_price', res));
@@ -112,11 +223,28 @@ router.get('/app/change_clothes_tips', async (req, res) => passthrough('change_c
 router.get('/change_clothes_tips', async (req, res) => passthrough('change_clothes_tips', res));
 
 // /app/photos
-router.post('/app/photos', async (req, res) => passthrough('photos', res));
+router.post('/app/photos', async (req, res) => {
+  // Dynamic payload: is_system/page/size/type/source_type (target Makeover depends on this)
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/photos', method: 'POST', body: req.body });
+    return sendUpstream(res, payload);
+  } catch (e) {
+    console.warn('[compat] proxy photos failed, falling back to snapshot:', String(e?.message || e));
+    return passthrough('photos', res);
+  }
+});
 router.post('/photos', async (req, res) => passthrough('photos', res));
 
 // /app/tools/change_clothes_setting
-router.get('/app/tools/change_clothes_setting', async (req, res) => passthrough('change_clothes_setting', res));
+router.get('/app/tools/change_clothes_setting', async (req, res) => {
+  try {
+    const payload = await proxyOnlycrush({ path: '/app/tools/change_clothes_setting', method: 'GET', query: req.query });
+    return sendUpstream(res, payload);
+  } catch (e) {
+    console.warn('[compat] proxy change_clothes_setting failed, falling back to snapshot:', String(e?.message || e));
+    return passthrough('change_clothes_setting', res);
+  }
+});
 
 // ------------------------
 // App-owned endpoints (auth-dependent, not pure upstream)
